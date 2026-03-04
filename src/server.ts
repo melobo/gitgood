@@ -15,8 +15,8 @@ import { echo, clear } from '../src/debug';
 import { handleError } from '../src/errors';
 import { errorHandler } from './middleware/errorHandler';
 import docs from '../src/docsMiddleware';
-import healthRouter from './routes/health';
-import invoiceRouter from './routes/invoice';
+import healthRouter from './health';
+import invoiceRouter from './invoice';
 
 const app = express();
 app.use(json());
