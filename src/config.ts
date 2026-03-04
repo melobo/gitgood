@@ -1,10 +1,14 @@
 export default {
-  /** The IP address to listen on when starting the server */
-  ip: process.env.IP ?? '127.0.0.1',
-  /** The port to listen on when starting the server */
-  port: parseInt(process.env.PORT ?? '3200'),
-  /** Whether to enable the server's debug routes, such as echo and clear. */
-  debug: true,
-  /** Show swagger.yaml documentation when visiting the server root */
-  showDocs: true
+  ip: process.env.IP ?? '0.0.0.0',       // must be 0.0.0.0 on Render, not 127.0.0.1
+  port: parseInt(process.env.PORT ?? '3000'),
+  debug: process.env.NODE_ENV !== 'production',
+  showDocs: true,
+  aws: {
+    region: process.env.AWS_REGION ?? 'ap-southeast-2',
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? '',
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? '',
+    dynamoTableName: process.env.DYNAMODB_TABLE_NAME ?? 'invoices',
+    s3BucketName: process.env.S3_BUCKET_NAME ?? 'invoice-files',
+  },
+  apiKey: process.env.API_KEY ?? '',
 };

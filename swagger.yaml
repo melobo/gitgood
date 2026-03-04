@@ -1,0 +1,429 @@
+openapi: 3.0.3
+info:
+  title: GitGood Invoice Processing API
+  description: >
+    A cloud-based REST API for generating, converting, validating, finalising,
+    and downloading UBL 2.1 compliant electronic invoices.
+  version: 1.0.0
+
+servers:
+  - url: https://gitgood-invoice-api.onrender.com/v1
+    description: Production (Render)
+  - url: http://localhost:3000/v1
+    description: Local development
+
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+
+  schemas:
+    Item:
+      type: object
+      required: [item_name, quantity, unit_price, unit_code, total_price]
+      properties:
+        item_name:
+          type: string
+        quantity:
+          type: integer
+        unit_price:
+          type: number
+        unit_code:
+          type: string
+          example: kg
+        total_price:
+          type: number
+
+    PaymentDetails:
+      type: object
+      required: [bank_name, account_number, bsb_abn_number, payment_method]
+      properties:
+        bank_name:
+          type: string
+        account_number:
+          type: string
+        bsb_abn_number:
+          type: string
+        payment_method:
+          type: string
+          example: bank_transfer
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Returns the current status of the service. No authentication required.
+      security: []
+      tags: [Health]
+      responses:
+        '200':
+          description: Service is running
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /invoice:
+    post:
+      summary: Create a new invoice
+      description: Creates a new invoice from manually entered data in draft status.
+      tags: [Invoice Creation]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - buyer_name
+                - buyer_abn
+                - supplier_name
+                - supplier_abn
+                - issue_date
+                - payment_due_date
+                - items_list
+                - tax_rate
+                - payment_details
+              properties:
+                buyer_name:
+                  type: string
+                buyer_abn:
+                  type: string
+                supplier_name:
+                  type: string
+                supplier_abn:
+                  type: string
+                issue_date:
+                  type: string
+                  format: date
+                payment_due_date:
+                  type: string
+                  format: date
+                items_list:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Item'
+                tax_rate:
+                  type: number
+                  example: 0.1
+                payment_details:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/PaymentDetails'
+                additional_notes:
+                  type: string
+      responses:
+        '201':
+          description: Invoice created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoice_id:
+                    type: string
+                  status:
+                    type: string
+                    example: draft
+                  created_at:
+                    type: string
+                    format: date-time
+        '400':
+          description: Missing or invalid fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      summary: List all invoices
+      description: Returns a paginated list of invoices with optional date filters.
+      tags: [Invoice Management]
+      parameters:
+        - in: query
+          name: from_date
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: to_date
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit_per_page
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of invoices
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoices:
+                    type: array
+                    items:
+                      type: object
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+        '400':
+          description: Invalid filter values
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /invoice/{invoice_id}:
+    get:
+      summary: Get a specific invoice
+      tags: [Invoice Management]
+      parameters:
+        - in: path
+          name: invoice_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invoice details
+        '404':
+          description: Invoice not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      summary: Update an invoice
+      description: Update a draft invoice. Only provided fields are updated.
+      tags: [Invoice Management]
+      parameters:
+        - in: path
+          name: invoice_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                buyer_name:
+                  type: string
+                buyer_abn:
+                  type: string
+                supplier_name:
+                  type: string
+                supplier_abn:
+                  type: string
+                issue_date:
+                  type: string
+                  format: date
+                payment_due_date:
+                  type: string
+                  format: date
+                items_list:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Item'
+                tax_rate:
+                  type: number
+                payment_details:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/PaymentDetails'
+                additional_notes:
+                  type: string
+      responses:
+        '200':
+          description: Invoice updated
+        '400':
+          description: Invalid fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Invoice not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete an invoice
+      tags: [Invoice Management]
+      parameters:
+        - in: path
+          name: invoice_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invoice deleted
+        '404':
+          description: Invoice not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /invoice/{invoice_id}/convert:
+    post:
+      summary: Convert invoice to UBL XML
+      tags: [Invoice Processing]
+      parameters:
+        - in: path
+          name: invoice_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invoice converted to UBL XML
+        '404':
+          description: Invoice not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Invoice already converted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Insufficient data for conversion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /invoice/{invoice_id}/validate:
+    post:
+      summary: Validate a converted invoice against UBL 2.1 standards
+      tags: [Invoice Processing]
+      parameters:
+        - in: path
+          name: invoice_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Validation result
+        '404':
+          description: Invoice not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Invoice not yet converted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /invoice/{invoice_id}/final:
+    post:
+      summary: Finalise a validated invoice
+      tags: [Invoice Processing]
+      parameters:
+        - in: path
+          name: invoice_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invoice finalised
+        '404':
+          description: Invoice not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Invoice not yet validated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /invoice/{invoice_id}/download:
+    get:
+      summary: Download a finalised invoice
+      tags: [Invoice Download]
+      parameters:
+        - in: path
+          name: invoice_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: format
+          schema:
+            type: string
+            enum: [xml, json]
+            default: xml
+      responses:
+        '200':
+          description: Invoice file download
+        '400':
+          description: Invalid format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Invoice not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Invoice not yet finalised
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

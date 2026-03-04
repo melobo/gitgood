@@ -32,11 +32,18 @@ export class ServerError extends Error {
 
 export function errorToStatus(e: string): number {
   switch (e) {
-    // TODO: Add other error types here
     case 'UNAUTHORIZED':
       return 401;
-    // If we don't recognise the error type, we should give an error to help us find the place where
-    // we need to add the mapping.
+    case 'INVALID_REQUEST':
+      return 400;
+    case 'NOT_FOUND':
+      return 404;
+    case 'INSUFFICIENT_DATA':
+      return 422;
+    case 'CONFLICT':
+      return 409;
+    case 'INTERNAL_SERVER_ERROR':
+      return 500;
     default:
       throw new Error(`Missing status code definition for error type '${e}'!`);
   }

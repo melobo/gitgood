@@ -1,49 +1,40 @@
 /**
- * # `server.ts`
+ * server.ts
  *
  * The entrypoint to the express app.
- *
- * This file is responsible for defining the endpoints of your server.
+ * Responsible for middleware setup, route registration, and starting the server.
  */
+
 import process from 'process';
+import 'dotenv/config';
 import express, { json, Response } from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
 import config from './config';
-import { echo, clear } from './debug';
-import { handleError } from './errors';
-import docs from './docsMiddleware';
+import { echo, clear } from '../src/debug';
+import { handleError } from '../src/errors';
+import { errorHandler } from './middleware/errorHandler';
+import docs from '../src/docsMiddleware';
+import healthRouter from './routes/health';
+import invoiceRouter from './routes/invoice';
 
 const app = express();
 app.use(json());
 app.use(cors());
 app.use(morgan('dev'));
 
+// Swagger docs at root
 if (config.showDocs) {
   app.use(docs());
 } else {
   app.get('/', (req, res) => {
-    res.send(`
-      <!DOCTYPE html>
-      <html>
-      <head></head>
-      <body>
-        <h1>1531 Template Server</h1>
-        <p>
-          🐝 Congrats on finishing COMP1531! Here's a template that you can use for
-          your own projects! Enjoy!
-        </p>
-      </body>
-      </html>
-    `);
+    res.send('<h1>GitGood Invoice API</h1>');
   });
 }
 
 /**
- * Adds the error handler to the given route.
- *
- * This attempts to call `callback`. If any error is thrown, it is passed to `handleError` to send
- * the correct response code.
+ * Wraps a route handler with error handling.
+ * Passes any thrown errors to handleError for structured error responses.
  */
 function withErrorHandler<T>(res: Response, callback: () => T): T | undefined {
   try {
@@ -53,19 +44,14 @@ function withErrorHandler<T>(res: Response, callback: () => T): T | undefined {
   }
 }
 
-// Debug routes
-// ==================================================
-// To disable these for production, set `debug` to false in `config.ts`.
-
+// Debug routes — disabled in production
 if (config.debug) {
-  /** GET /debug/echo?value=ping */
   app.get('/debug/echo', (req, res) => {
     withErrorHandler(res, () => {
       res.json(echo(req.query.value as string));
     });
   });
 
-  /** DELETE /debug/clear */
   app.delete('/debug/clear', (req, res) => {
     withErrorHandler(res, () => {
       clear();
@@ -74,19 +60,25 @@ if (config.debug) {
   });
 }
 
-// TODO: Add your routes here
-// ==================================================
+// API routes
+app.use('/v1', healthRouter);
+app.use('/v1/invoice', invoiceRouter);
+
+// Global error handler — must be registered last
+app.use(errorHandler);
 
 // Start server
 const server = app.listen(config.port, config.ip, () => {
-  console.log(`🐝 Your server is up and running! http://${config.ip}:${config.port}/`);
+  console.log(`🐝 Server running at http://${config.ip}:${config.port}/`);
 });
 
-// For coverage, handle Ctrl+C gracefully
+// Graceful shutdown for coverage tools
 process.on('SIGINT', () => {
-  console.log('\n🌱 Shutting down server gracefully...');
+  console.log('\n🌱 Shutting down gracefully...');
   server.close(() => {
     console.log('🍂 Goodbye!');
     process.exit();
   });
 });
+
+export default app;
