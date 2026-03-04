@@ -1,5 +1,4 @@
 {
-  "packageManager": "npm@10.9.2",
   "scripts": {
     "test": "jest",
     "tsc": "tsc --project tsconfig.json",
