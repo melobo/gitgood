@@ -35,7 +35,7 @@ components:
           type: number
         unit_code:
           type: string
-          example: kg
+          description: "(example: kg)"
         total_price:
           type: number
 
@@ -51,15 +51,17 @@ components:
           type: string
         payment_method:
           type: string
-          example: bank_transfer
+          descripton: "(example: bank_transfer)"
 
     Error:
       type: object
       properties:
         error:
           type: string
+          example: "NOT_FOUND"
         message:
           type: string
+          example: "Unable to complete"
 
 paths:
   /health:
@@ -82,6 +84,19 @@ paths:
                   timestamp:
                     type: string
                     format: date-time
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: down
+                  reason:
+                    type: string
+                    example: "Database connection failed"
 
   /invoice:
     post:
@@ -125,7 +140,7 @@ paths:
                     $ref: '#/components/schemas/Item'
                 tax_rate:
                   type: number
-                  example: 0.1
+                  description: "(example: 0.1)"
                 payment_details:
                   type: array
                   items:
@@ -154,16 +169,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                  error: "INVALID_REQUEST"
+                  message: Missing or Invalid Fields
         '500':
           description: Internal server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                  error: "INTERNAL_SERVER_ERROR"
+                  message: Unexpected error on the server side.
 
     get:
       summary: List all invoices
-      description: Returns a paginated list of invoices with optional date filters.
+      description: Returns list of invoices with optional date filters.
       tags: [Invoice Management]
       parameters:
         - in: query
@@ -188,7 +209,7 @@ paths:
             default: 20
       responses:
         '200':
-          description: List of invoices
+          description: List of Invoices generated successfully
           content:
             application/json:
               schema:
@@ -208,6 +229,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                  error: "INVALID_REQUEST"
+                  message: Missing or Invalid Fields
 
   /invoice/{invoice_id}:
     get:
@@ -222,16 +246,68 @@ paths:
       responses:
         '200':
           description: Invoice details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoice_id:
+                    type: string
+                  status:
+                    type: string
+                    example: draft
+                  buyer_name:
+                    type: string
+                  supplier_name:
+                    typw: string
+                  issue_date:
+                    type: string
+                    format: date
+                  payment_due_date:
+                    type: string
+                    format: date
+                  items_list:
+                    type: array
+                    items:
+                     type: object
+                  tax_rate: 
+                    type: number
+                  tax_amount: 
+                    type: number
+                  tax_payable:
+                    type: number
+                  ubl_xml: 
+                    type: string
+                  created_at:
+                    type: string
+                    format: date-time
+                  updated_at: 
+                    type: string
+                    format: date-time
+
         '404':
           description: Invoice not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                  error: "NOT_FOUND"
+                  message: Invoice not found
+        '400':
+          description: Invalid parameter value 
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                  error: "INVALID_REQUEST"
+                  message: Missing or Invalid Fields
+
 
     put:
-      summary: Update an invoice
-      description: Update a draft invoice. Only provided fields are updated.
+      summary: Update an invoice 
+      description: Update an invoice using its ID
       tags: [Invoice Management]
       parameters:
         - in: path
@@ -274,21 +350,41 @@ paths:
       responses:
         '200':
           description: Invoice updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoice_id:
+                    type: string
+                  status:
+                    type: string
+                    example: draft
+                  updated_at:
+                    type: string
+                    format: date
         '400':
-          description: Invalid fields
+          description: Invalid parameter value
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                  error: "INVALID_REQUEST"
+                  message: Missing or Invalid Fields
         '404':
           description: Invoice not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                  error: "NOT_FOUND"
+                  message: Invoice not found
 
     delete:
       summary: Delete an invoice
+      description: delete an invoice from database
       tags: [Invoice Management]
       parameters:
         - in: path
@@ -298,18 +394,40 @@ paths:
             type: string
       responses:
         '200':
-          description: Invoice deleted
+          description: Invoice deleted Successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoice_id:
+                    type: string
+                  message:
+                    type: string 
+                    example: Invoice successfully deleted
+        '400':
+          description: Invalid parameter value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                  error: "INVALID_REQUEST"
+                  message: Missing or Invalid Fields
         '404':
           description: Invoice not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                  error: "NOT_FOUND"
+                  message: Invoice not found
 
   /invoice/{invoice_id}/convert:
     post:
       summary: Convert invoice to UBL XML
-      tags: [Invoice Processing]
+      tags: [Invoice Conversion]
       parameters:
         - in: path
           name: invoice_id
@@ -318,30 +436,52 @@ paths:
             type: string
       responses:
         '200':
-          description: Invoice converted to UBL XML
+          description: Invoice converted to UBL XML Successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoice_id:
+                    type: string
+                  ubl_xml:
+                    type: string 
+                  status:
+                    type: string 
+                    example: "converted"
         '404':
           description: Invoice not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                  error: "NOT_FOUND"
+                  message: Invoice not found
         '409':
           description: Invoice already converted
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                  error: "ALREADY_CONVERTED"
+                  message: Invoice has already been converted
         '422':
           description: Insufficient data for conversion
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                  error: "INSUFFICIENT_DATA"
+                  message: Data is Insufficient for conversion
 
   /invoice/{invoice_id}/validate:
     post:
-      summary: Validate a converted invoice against UBL 2.1 standards
-      tags: [Invoice Processing]
+      summary: Validate an invoice
+      description: Validate an invoice converted to UBL XML format
+      tags: [Invoice Validation]
       parameters:
         - in: path
           name: invoice_id
@@ -351,23 +491,48 @@ paths:
       responses:
         '200':
           description: Validation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoice_id:
+                    type: string
+                  valid:
+                    type: boolean 
+                  errors:
+                    type: array
+                    items:
+                     type: object
+                    description: "empty if valid"
+                  status:
+                    type: string
+                    example: validated
+
         '404':
           description: Invoice not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                  error: "NOT_FOUND"
+                  message: Invoice not found
         '409':
           description: Invoice not yet converted
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                  error: "INVOICE_NOT_CONVERTED"
+                  message: Invoice not yet converted
 
   /invoice/{invoice_id}/final:
     post:
       summary: Finalise a validated invoice
-      tags: [Invoice Processing]
+      description: Finalise invoice to be ready to download/email/etc
+      tags: [Invoice Finalisation]
       parameters:
         - in: path
           name: invoice_id
@@ -377,22 +542,44 @@ paths:
       responses:
         '200':
           description: Invoice finalised
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoice_id:
+                    type: string
+                  ubl_xml:
+                    type: string 
+                  status:
+                    type: string 
+                    example: "finalised"
+                  finalised_at:
+                    type: string
+                    format: date
         '404':
           description: Invoice not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                  error: "NOT_FOUND"
+                  message: Invoice not found
         '409':
           description: Invoice not yet validated
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                  error: "INVOICE_NOT_VALIDATED"
+                  message: Invoice not yet validated
 
   /invoice/{invoice_id}/download:
     get:
-      summary: Download a finalised invoice
+      summary: Download invoice
+      description: Download a finalised invoice
       tags: [Invoice Download]
       parameters:
         - in: path
@@ -408,22 +595,32 @@ paths:
             default: xml
       responses:
         '200':
-          description: Invoice file download
+          description: Invoice file downloaded Successfully
         '400':
           description: Invalid format
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                  error: "INVALID_REQUEST"
+                  message: Missing or Invalid Fields
         '404':
           description: Invoice not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                  error: "NOT_FOUND"
+                  message: Invoice not found
+
         '409':
           description: Invoice not yet finalised
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                  error: "INVOICE_NOT_READY"
+                  message: Invoice not yet converted/validated
