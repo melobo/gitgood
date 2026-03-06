@@ -381,6 +381,18 @@ paths:
               example:
                   error: "NOT_FOUND"
                   message: Invoice not found
+        '409':
+          description: Invoice already finalised
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                  error: "ALREADY_FINALISED"
+                  message: Invoice has already been fianlised
+
+
+
 
     delete:
       summary: Delete an invoice
