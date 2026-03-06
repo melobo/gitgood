@@ -97,6 +97,24 @@ paths:
                   reason:
                     type: string
                     example: "Database connection failed"
+        '404':
+          description: Invalid url
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                  error: "INVALID_REQUEST"
+                  message: Missing or Invalid Fields
+        '405':
+          description: Invalid Method
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                  error: "METHOD_NOT_ALLOWED"
+                  message: Not allowed to call this method
 
   /invoice:
     post:
