@@ -6,7 +6,7 @@
  */
 
 import { Router } from 'express';
-import { authenticate } from './middleware/auth';
+import { authenticate } from '../middleware/auth';
 import {
   createInvoice,
   listInvoices,
@@ -17,7 +17,7 @@ import {
   validateInvoice,
   finaliseInvoice,
   downloadInvoice,
-} from './invoiceController';
+} from '../features/invoiceController';
 
 const router = Router();
 
