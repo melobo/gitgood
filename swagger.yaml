@@ -7,10 +7,8 @@ info:
   version: 1.0.0
 
 servers:
-  - url: https://gitgood-invoice-api.onrender.com/v1
+  - url: https://gitgood.onrender.com/
     description: Production (Render)
-  - url: http://localhost:3000/v1
-    description: Local development
 
 security:
   - ApiKeyAuth: []
