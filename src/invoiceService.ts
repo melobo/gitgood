@@ -53,3 +53,13 @@ export function listInvoice(filters: InvoiceListFilters): {
     page,
   };
 }
+
+export function getInvoice(invoice_id: string): Invoice {
+  const invoice = invoices.find(inv => inv.invoice_id === invoice_id);
+
+  if (!invoice) {
+    throw new ServerError('NOT_FOUND', 'Invoice not found');
+  }
+
+  return invoice;
+}
