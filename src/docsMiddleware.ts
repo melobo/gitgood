@@ -1,10 +1,3 @@
-/**
- * docsMiddleware.ts
- *
- * Serves the Swagger UI at the server root, rendering swagger.yaml as interactive API docs.
- * Only active when config.showDocs is true.
- */
-
 import { Router } from 'express';
 import swaggerUi from 'swagger-ui-express';
 import { readFileSync } from 'fs';
