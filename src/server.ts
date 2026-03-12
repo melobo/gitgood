@@ -13,10 +13,9 @@ import cors from 'cors';
 import config from './config';
 import { echo, clear } from '../src/debug';
 import { handleError } from '../src/errors';
-import { errorHandler } from './middleware/errorHandler';
+import { errorHandler } from './errorHandler';
 import docs from '../src/docsMiddleware';
-import healthRouter from './routes/healthRoutes';
-import invoiceRouter from './routes/invoiceRoutes';
+import healthRouter from './healthRoute';
 
 const app = express();
 app.use(json());
@@ -62,7 +61,7 @@ if (config.debug) {
 
 // API routes
 app.use('/v1', healthRouter);
-app.use('/v1/invoice', invoiceRouter);
+//app.use('/v1/invoice', invoiceRouter);
 
 // Global error handler — must be registered last
 app.use(errorHandler);
