@@ -7,8 +7,8 @@
 import { Request, Response, NextFunction } from 'express';
 
 export function errorHandler(
-  err: Error, 
-  req: Request, 
+  err: Error,
+  req: Request,
   res: Response,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   next: NextFunction
@@ -19,4 +19,3 @@ export function errorHandler(
     message: 'Unexpected error on the server side.',
   });
 }
-

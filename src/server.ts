@@ -12,13 +12,10 @@ import healthRouter from './healthRoute';
 import { listInvoice, getInvoice } from './invoiceService';
 import { authenticate } from './auth';
 
-
-
 const app = express();
 app.use(json());
 app.use(cors());
 app.use(morgan('dev'));
-
 
 if (config.showDocs) {
   app.use(docs());
@@ -28,7 +25,6 @@ if (config.showDocs) {
   });
 }
 
-
 if (config.debug) {
   app.get('/debug/echo', (req: Request, res: Response) => {
     try {
@@ -37,7 +33,6 @@ if (config.debug) {
       handleError(res, err);
     }
   });
-
 
   app.delete('/debug/clear', (req: Request, res: Response) => {
     try {
@@ -49,12 +44,9 @@ if (config.debug) {
   });
 }
 
-
 app.use('/v1', healthRouter);
 
-
 // ===== ADD YOUR ENDPOINTS BELOW HERE ===== //
-
 
 app.get('/v1/invoice', authenticate, (req: Request, res: Response) => {
   const { from_date, to_date, page, limit_per_page } = req.query;
@@ -81,18 +73,13 @@ app.get('/v1/invoice/:invoice_id', authenticate, (req: Request, res: Response) =
   }
 });
 
-
-
 // ========================================= //
 
-
 app.use(errorHandler);
-
 
 const server = app.listen(config.port, config.ip, () => {
   console.log(`🐝 Server running at http://${config.ip}:${config.port}/`);
 });
-
 
 process.on('SIGINT', () => {
   console.log('\n🌱 Shutting down gracefully...');
@@ -101,6 +88,5 @@ process.on('SIGINT', () => {
     process.exit();
   });
 });
-
 
 export default app;

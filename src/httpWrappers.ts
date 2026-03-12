@@ -2,15 +2,16 @@ import request from 'sync-request-curl';
 import { InvoiceItem, PaymentDetails } from './invoiceInterface';
 
 const SERVER_URL = 'https://gitgood.onrender.com';
+const TIMEOUT_MS = 5 * 1000;
 const API_KEY = process.env.API_KEY ?? '';
 
 export const requestClear = () => {
-  const res = request('DELETE', `${SERVER_URL}/debug/clear`);
+  const res = request('DELETE', `${SERVER_URL}/debug/clear`, { timeout: TIMEOUT_MS });
   return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
 };
 
 export const requestHealth = () => {
-  const res = request('GET', `${SERVER_URL}/v1/health`);
+  const res = request('GET', `${SERVER_URL}/v1/health`, { timeout: TIMEOUT_MS });
   return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
 };
 
@@ -24,7 +25,7 @@ export const requestCreateInvoice = (
   items_list: InvoiceItem[],
   tax_rate: number,
   payment_details: PaymentDetails[],
-  additional_notes?: string,
+  additional_notes?: string
 ) => {
   const res = request('POST', `${SERVER_URL}/v1/invoice`, {
     headers: { 'x-api-key': API_KEY },
@@ -40,6 +41,7 @@ export const requestCreateInvoice = (
       payment_details,
       ...(additional_notes !== undefined && { additional_notes }),
     },
+    timeout: TIMEOUT_MS,
   });
   return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
 };
@@ -48,7 +50,7 @@ export const requestListInvoices = (
   from_date?: string,
   to_date?: string,
   page?: number,
-  limit_per_page?: number,
+  limit_per_page?: number
 ) => {
   const params = new URLSearchParams();
   if (from_date) params.append('from_date', from_date);
@@ -59,6 +61,7 @@ export const requestListInvoices = (
 
   const res = request('GET', `${SERVER_URL}/v1/invoice${qs}`, {
     headers: { 'x-api-key': API_KEY },
+    timeout: TIMEOUT_MS,
   });
   return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
 };
@@ -66,6 +69,7 @@ export const requestListInvoices = (
 export const requestGetInvoice = (invoice_id: string) => {
   const res = request('GET', `${SERVER_URL}/v1/invoice/${invoice_id}`, {
     headers: { 'x-api-key': API_KEY },
+    timeout: TIMEOUT_MS,
   });
   return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
 };
@@ -74,6 +78,7 @@ export const requestUpdateInvoice = (invoice_id: string, updates: object) => {
   const res = request('PUT', `${SERVER_URL}/v1/invoice/${invoice_id}`, {
     headers: { 'x-api-key': API_KEY },
     json: updates,
+    timeout: TIMEOUT_MS,
   });
   return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
 };
@@ -81,6 +86,7 @@ export const requestUpdateInvoice = (invoice_id: string, updates: object) => {
 export const requestValidateInvoice = (invoice_id: string) => {
   const res = request('POST', `${SERVER_URL}/v1/invoice/${invoice_id}/validate`, {
     headers: { 'x-api-key': API_KEY },
+    timeout: TIMEOUT_MS,
   });
   return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
 };
@@ -89,7 +95,7 @@ export const requestListInvoice = (
   from_date?: string,
   to_date?: string,
   page?: number,
-  limit_per_page?: number,
+  limit_per_page?: number
 ) => {
   const params = new URLSearchParams();
   if (from_date) params.append('from_date', from_date);
@@ -100,6 +106,7 @@ export const requestListInvoice = (
 
   const res = request('GET', `${SERVER_URL}/v1/invoice${qs}`, {
     headers: { 'x-api-key': API_KEY },
+    timeout: TIMEOUT_MS,
   });
   return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
 };
@@ -107,6 +114,7 @@ export const requestListInvoice = (
 export const requestDeleteInvoice = (invoice_id: string) => {
   const res = request('DELETE', `${SERVER_URL}/v1/invoice/${invoice_id}`, {
     headers: { 'x-api-key': API_KEY },
+    timeout: TIMEOUT_MS,
   });
   return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
 };
@@ -114,6 +122,7 @@ export const requestDeleteInvoice = (invoice_id: string) => {
 export const requestConvertInvoice = (invoice_id: string) => {
   const res = request('POST', `${SERVER_URL}/v1/invoice/${invoice_id}/convert`, {
     headers: { 'x-api-key': API_KEY },
+    timeout: TIMEOUT_MS,
   });
   return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
 };
@@ -121,6 +130,7 @@ export const requestConvertInvoice = (invoice_id: string) => {
 export const requestFinaliseInvoice = (invoice_id: string) => {
   const res = request('POST', `${SERVER_URL}/v1/invoice/${invoice_id}/final`, {
     headers: { 'x-api-key': API_KEY },
+    timeout: TIMEOUT_MS,
   });
   return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
 };
@@ -128,6 +138,7 @@ export const requestFinaliseInvoice = (invoice_id: string) => {
 export const requestDownloadInvoice = (invoice_id: string, format: string) => {
   const res = request('GET', `${SERVER_URL}/v1/invoice/${invoice_id}/download?format=${format}`, {
     headers: { 'x-api-key': API_KEY },
+    timeout: TIMEOUT_MS,
   });
   return { statusCode: res.statusCode, body: res.body.toString() };
 };
