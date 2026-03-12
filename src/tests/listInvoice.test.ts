@@ -1,7 +1,7 @@
 import request from 'sync-request-curl';
 
 
-const SERVER_URL = 'http://localhost:3000/v1';
+const SERVER_URL = 'https://gitgood-invoice-api.onrender.com/v1';
 const TIMEOUT_MS = 5 * 1000;
 const API_KEY = process.env.API_KEY;
 
@@ -45,6 +45,8 @@ function createInvoice(): any {
    timeout: TIMEOUT_MS,
  });
 }
+
+
 
 
 describe('GET /invoice — listInvoices', () => {
