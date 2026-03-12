@@ -7,12 +7,14 @@ const API_KEY = process.env.API_KEY ?? '';
 
 export const requestClear = () => {
   const res = request('DELETE', `${SERVER_URL}/debug/clear`, { timeout: TIMEOUT_MS });
-  return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
 };
 
 export const requestHealth = () => {
   const res = request('GET', `${SERVER_URL}/v1/health`, { timeout: TIMEOUT_MS });
-  return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
 };
 
 export const requestCreateInvoice = (
@@ -43,7 +45,8 @@ export const requestCreateInvoice = (
     },
     timeout: TIMEOUT_MS,
   });
-  return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
 };
 
 export const requestListInvoices = (
@@ -63,7 +66,8 @@ export const requestListInvoices = (
     headers: { 'x-api-key': API_KEY },
     timeout: TIMEOUT_MS,
   });
-  return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
 };
 
 export const requestGetInvoice = (invoice_id: string) => {
@@ -71,7 +75,8 @@ export const requestGetInvoice = (invoice_id: string) => {
     headers: { 'x-api-key': API_KEY },
     timeout: TIMEOUT_MS,
   });
-  return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
 };
 
 export const requestUpdateInvoice = (invoice_id: string, updates: object) => {
@@ -80,7 +85,8 @@ export const requestUpdateInvoice = (invoice_id: string, updates: object) => {
     json: updates,
     timeout: TIMEOUT_MS,
   });
-  return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
 };
 
 export const requestValidateInvoice = (invoice_id: string) => {
@@ -88,7 +94,8 @@ export const requestValidateInvoice = (invoice_id: string) => {
     headers: { 'x-api-key': API_KEY },
     timeout: TIMEOUT_MS,
   });
-  return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
 };
 
 export const requestListInvoice = (
@@ -108,7 +115,8 @@ export const requestListInvoice = (
     headers: { 'x-api-key': API_KEY },
     timeout: TIMEOUT_MS,
   });
-  return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
 };
 
 export const requestDeleteInvoice = (invoice_id: string) => {
@@ -116,7 +124,8 @@ export const requestDeleteInvoice = (invoice_id: string) => {
     headers: { 'x-api-key': API_KEY },
     timeout: TIMEOUT_MS,
   });
-  return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
 };
 
 export const requestConvertInvoice = (invoice_id: string) => {
@@ -124,7 +133,8 @@ export const requestConvertInvoice = (invoice_id: string) => {
     headers: { 'x-api-key': API_KEY },
     timeout: TIMEOUT_MS,
   });
-  return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
 };
 
 export const requestFinaliseInvoice = (invoice_id: string) => {
@@ -132,7 +142,8 @@ export const requestFinaliseInvoice = (invoice_id: string) => {
     headers: { 'x-api-key': API_KEY },
     timeout: TIMEOUT_MS,
   });
-  return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
 };
 
 export const requestDownloadInvoice = (invoice_id: string, format: string) => {
@@ -140,5 +151,6 @@ export const requestDownloadInvoice = (invoice_id: string, format: string) => {
     headers: { 'x-api-key': API_KEY },
     timeout: TIMEOUT_MS,
   });
-  return { statusCode: res.statusCode, body: res.body.toString() };
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
 };

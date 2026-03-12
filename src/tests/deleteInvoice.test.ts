@@ -1,5 +1,5 @@
 import request from 'sync-request-curl';
-import { requestDeleteInvoice } from '../httpWrappers';
+import { requestCreateInvoice, requestDeleteInvoice } from '../httpWrappers';
 
 const SERVER_URL = 'https://gitgood-invoice-api.onrender.com/v1';
 const TIMEOUT_MS = 5 * 1000;
@@ -9,7 +9,7 @@ const error = { error: expect.any(String) };
 const headers = { 'x-api-key': API_KEY };
 
 // creating a valid draft invoice
-function createInvoice(): string {
+/*  function createInvoice(): string {
   const res = request('POST', SERVER_URL + '/invoice', {
     json: {
       buyer_name: 'Test Buyer',
@@ -41,6 +41,36 @@ function createInvoice(): string {
     timeout: TIMEOUT_MS,
   });
   return JSON.parse(res.body.toString()).invoice_id;
+} */
+
+function createInvoice(): string {
+  const res = requestCreateInvoice(
+    'Test Buyer',
+    '12345678901',
+    'Test Supplier',
+    '98765432101',
+    new Date('2025-01-01'),
+    new Date('2025-02-01'),
+    [
+      {
+        item_name: 'item',
+        quantity: 2,
+        unit_price: 50.0,
+        unit_code: 'ea',
+        total_price: 100.0,
+      },
+    ],
+    0.1,
+    [
+      {
+        bank_name: 'ANZ',
+        account_number: '123456789',
+        bsb_abn_number: '012-345',
+        payment_method: 'bank_transfer',
+      },
+    ]
+  );
+  return res.body.invoice_id;
 }
 
 /*  // delete invoice by id

@@ -1,15 +1,15 @@
-import request from 'sync-request-curl';
-import { requestListInvoice } from '../httpWrappers';
+// import request from 'sync-request-curl';
+import { /* requestCreateInvoice, */ requestListInvoice } from '../httpWrappers';
 
-const SERVER_URL = 'https://gitgood-invoice-api.onrender.com/v1';
-const TIMEOUT_MS = 5 * 1000;
-const API_KEY = process.env.API_KEY;
+// const SERVER_URL = 'https://gitgood-invoice-api.onrender.com/v1';
+// const TIMEOUT_MS = 5 * 1000;
+// const API_KEY = process.env.API_KEY;
 
 const error = { error: expect.any(String) };
-const headers = { 'x-api-key': API_KEY };
+// const headers = { 'x-api-key': API_KEY };
 
 // creating a valid draft invoice
-function createInvoice(): string {
+/*  function createInvoice(): string {
   const res = request('POST', SERVER_URL + '/invoice', {
     json: {
       buyer_name: 'Test Buyer',
@@ -41,7 +41,37 @@ function createInvoice(): string {
     timeout: TIMEOUT_MS,
   });
   return JSON.parse(res.body.toString()).invoice_id;
-}
+} */
+
+/*  function createInvoice(): string {
+  const res = requestCreateInvoice(
+    'Test Buyer',
+    '12345678901',
+    'Test Supplier',
+    '98765432101',
+    new Date('2025-01-01'),
+    new Date('2025-02-01'),
+    [
+      {
+        item_name: 'item',
+        quantity: 2,
+        unit_price: 50.0,
+        unit_code: 'ea',
+        total_price: 100.0,
+      },
+    ],
+    0.1,
+    [
+      {
+        bank_name: 'ANZ',
+        account_number: '123456789',
+        bsb_abn_number: '012-345',
+        payment_method: 'bank_transfer',
+      },
+    ]
+  );
+  return res.body.invoice_id;
+} */
 
 describe('GET /invoice — listInvoices', () => {
   // successful case
@@ -50,22 +80,20 @@ describe('GET /invoice — listInvoices', () => {
       const res = requestListInvoice();
 
       expect(res.statusCode).toBe(200);
-      const body = JSON.parse(res.body.toString());
-      expect(body).toHaveProperty('invoices');
-      expect(Array.isArray(body.invoices)).toBe(true);
-      expect(body).toHaveProperty('total');
-      expect(body).toHaveProperty('page');
+      expect(res.body).toHaveProperty('invoices');
+      expect(Array.isArray(res.body.invoices)).toBe(true);
+      expect(res.body).toHaveProperty('total');
+      expect(res.body).toHaveProperty('page');
     });
 
     test('returns 200 with valid from_date and to_date', () => {
-      createInvoice();
+      // createInvoice();
 
-      const res = requestListInvoice('2024-01-01', '2026-12-31');
+      const res = requestListInvoice('2024-01-01', '2026-12-31', undefined, undefined);
 
       expect(res.statusCode).toBe(200);
-      const body = JSON.parse(res.body.toString());
-      expect(body).toHaveProperty('invoices');
-      expect(Array.isArray(body.invoices)).toBe(true);
+      expect(res.body).toHaveProperty('invoices');
+      expect(Array.isArray(res.body.invoices)).toBe(true);
     });
 
     test('returns 200 with valid page and limit_per_page', () => {
@@ -77,8 +105,7 @@ describe('GET /invoice — listInvoices', () => {
       const res = requestListInvoice(undefined, undefined, 1, 5);
 
       expect(res.statusCode).toBe(200);
-      const body = JSON.parse(res.body.toString());
-      expect(body).toHaveProperty('page');
+      expect(res.body).toHaveProperty('page');
     });
   });
 
@@ -92,7 +119,7 @@ describe('GET /invoice — listInvoices', () => {
       }); */
 
       expect(res.statusCode).toBe(400);
-      expect(JSON.parse(res.body.toString())).toStrictEqual(error);
+      expect(res.body).toStrictEqual(error);
     });
 
     test('returns 400 when to_date is before from_date', () => {
@@ -103,7 +130,7 @@ describe('GET /invoice — listInvoices', () => {
       }); */
 
       expect(res.statusCode).toBe(400);
-      expect(JSON.parse(res.body.toString())).toStrictEqual(error);
+      expect(res.body).toStrictEqual(error);
     });
   });
 
