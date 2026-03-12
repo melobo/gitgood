@@ -78,6 +78,32 @@ export const requestUpdateInvoice = (invoice_id: string, updates: object) => {
   return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
 };
 
+export const requestValidateInvoice = (invoice_id: string) => {
+  const res = request('POST', `${SERVER_URL}/v1/invoice/${invoice_id}/validate`, {
+    headers: { 'x-api-key': API_KEY },
+  });
+  return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
+};
+
+export const requestListInvoice = (
+  from_date?: string,
+  to_date?: string,
+  page?: number,
+  limit_per_page?: number,
+) => {
+  const params = new URLSearchParams();
+  if (from_date) params.append('from_date', from_date);
+  if (to_date) params.append('to_date', to_date);
+  if (page !== undefined) params.append('page', String(page));
+  if (limit_per_page !== undefined) params.append('limit_per_page', String(limit_per_page));
+  const qs = params.toString() ? `?${params.toString()}` : '';
+
+  const res = request('GET', `${SERVER_URL}/v1/invoice${qs}`, {
+    headers: { 'x-api-key': API_KEY },
+  });
+  return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
+};
+
 export const requestDeleteInvoice = (invoice_id: string) => {
   const res = request('DELETE', `${SERVER_URL}/v1/invoice/${invoice_id}`, {
     headers: { 'x-api-key': API_KEY },
@@ -87,13 +113,6 @@ export const requestDeleteInvoice = (invoice_id: string) => {
 
 export const requestConvertInvoice = (invoice_id: string) => {
   const res = request('POST', `${SERVER_URL}/v1/invoice/${invoice_id}/convert`, {
-    headers: { 'x-api-key': API_KEY },
-  });
-  return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
-};
-
-export const requestValidateInvoice = (invoice_id: string) => {
-  const res = request('POST', `${SERVER_URL}/v1/invoice/${invoice_id}/validate`, {
     headers: { 'x-api-key': API_KEY },
   });
   return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
