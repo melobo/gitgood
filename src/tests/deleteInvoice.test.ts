@@ -104,4 +104,9 @@ describe('DELETE /invoice/{invoice_id} — deleteInvoice', () => {
       });
     });
   });
+<<<<<<< HEAD
 });
+=======
+});
+ 
+>>>>>>> origin/s2-ananya-testfiles

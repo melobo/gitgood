@@ -22,8 +22,8 @@ export interface Invoice {
   buyer_abn: string;
   supplier_name: string;
   supplier_abn: string;
-  issue_date: string;
-  payment_due_date: string;
+  issue_date: Date;
+  payment_due_date: Date;
   items_list: InvoiceItem[];
   tax_rate: number;
   tax_amount: number;
@@ -41,8 +41,8 @@ export interface CreateInvoiceInput {
   buyer_abn: string;
   supplier_name: string;
   supplier_abn: string;
-  issue_date: string;
-  payment_due_date: string;
+  issue_date: Date;
+  payment_due_date: Date;
   items_list: InvoiceItem[];
   tax_rate: number;
   payment_details: PaymentDetails[];
@@ -54,8 +54,8 @@ export interface UpdateInvoiceInput {
   buyer_abn?: string;
   supplier_name?: string;
   supplier_abn?: string;
-  issue_date?: string;
-  payment_due_date?: string;
+  issue_date?: Date;
+  payment_due_date?: Date;
   items_list?: InvoiceItem[];
   tax_rate?: number;
   payment_details?: PaymentDetails[];
@@ -67,4 +67,9 @@ export interface InvoiceListFilters {
   to_date?: string;
   page?: number;
   limit_per_page?: number;
+}
+
+export interface HttpReturnObject<T> {
+  statusCode: number;
+  body: T;
 }
