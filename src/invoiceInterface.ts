@@ -1,4 +1,6 @@
 export type InvoiceStatus = 'draft' | 'converted' | 'validated' | 'finalised';
+export const validBanks = ['ANZ', 'CommBank', 'Westpac', 'StGeorge', 'ApplePay', 'NAB', 'PayPal'];
+export const validPaymentMethods = ['bankTransfer', 'directDebit', 'creditCard'];
 
 export interface InvoiceItem {
   item_name: string;
@@ -22,8 +24,8 @@ export interface Invoice {
   buyer_abn: string;
   supplier_name: string;
   supplier_abn: string;
-  issue_date: Date;
-  payment_due_date: Date;
+  issue_date: string;
+  payment_due_date: string;
   items_list: InvoiceItem[];
   tax_rate: number;
   tax_amount: number;
@@ -41,8 +43,8 @@ export interface CreateInvoiceInput {
   buyer_abn: string;
   supplier_name: string;
   supplier_abn: string;
-  issue_date: Date;
-  payment_due_date: Date;
+  issue_date: string;
+  payment_due_date: string;
   items_list: InvoiceItem[];
   tax_rate: number;
   payment_details: PaymentDetails[];
@@ -54,8 +56,8 @@ export interface UpdateInvoiceInput {
   buyer_abn?: string;
   supplier_name?: string;
   supplier_abn?: string;
-  issue_date?: Date;
-  payment_due_date?: Date;
+  issue_date?: string;
+  payment_due_date?: string;
   items_list?: InvoiceItem[];
   tax_rate?: number;
   payment_details?: PaymentDetails[];
@@ -69,7 +71,33 @@ export interface InvoiceListFilters {
   limit_per_page?: number;
 }
 
+export interface ValidateInvoice {
+  from_date?: string;
+  to_date?: string;
+  page?: number;
+  limit_per_page?: number;
+}
+
+export interface ValidationError {
+  field: string;
+  message: string;
+}
+
+export interface ValidateInvoiceResponse {
+  invoice_id: string;
+  valid: boolean;
+  errors: ValidationError[];
+  status: InvoiceStatus;
+}
+
+export interface ErrorObject {
+  error: string;
+  message: string;
+}
+
 export interface HttpReturnObject<T> {
   statusCode: number;
   body: T;
 }
+
+export type ValidateItemsResponse = { sum: number };

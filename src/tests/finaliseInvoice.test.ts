@@ -91,9 +91,4 @@ describe('POST /invoice/{invoice_id}/final — finaliseInvoice', () => {
       });
     });
   });
-<<<<<<< HEAD
 });
-=======
-});
- 
->>>>>>> origin/s2-ananya-testfiles

@@ -1,5 +1,6 @@
 import { ServerError } from './errors';
-import { InvoiceListFilters, Invoice } from './invoiceInterface';
+import { InvoiceListFilters, Invoice, ValidationError, ValidateInvoiceResponse } from './invoiceInterface';
+import { validateName, validateABN, validateDates, validateItems, validateTotalPayable, validatePaymentDetails } from './validateInvoice';
 
 const invoices: Invoice[] = [];
 
@@ -51,8 +52,69 @@ export function getInvoice(invoice_id: string): Invoice {
   const invoice = invoices.find(inv => inv.invoice_id === invoice_id);
 
   if (!invoice) {
-    throw new ServerError('NOT_FOUND', 'Invoice not found');
+    throw new ServerError('NOT_FOUND', 'The provided invoice ID does not refer to an existing invoice.');
   }
 
   return invoice;
+}
+
+export function validateInvoice(invoice_id: string): ValidateInvoiceResponse {
+  const invoice = invoices.find(inv => inv.invoice_id === invoice_id);
+  if (!invoice) {
+    throw new ServerError('NOT_FOUND', 'The provided invoice ID does not refer to an existing invoice.');
+  }
+  if (invoice.status === 'draft') {
+    throw new ServerError('CONFLICT', 'The invoice corresponding to the provided invoice ID has not yet been converted.');
+  }
+
+  const errors: ValidationError[] = [];
+  try {
+    validateName(invoice.buyer_name, 'BUYER');
+    validateABN(invoice.buyer_abn, 'BUYER');
+  } catch (err) {
+    if (err instanceof ServerError) {
+      errors.push({ field: 'buyer', message: err.message });
+    }
+  }
+  try {
+    validateName(invoice.buyer_name, 'SUPPLIER');
+    validateABN(invoice.buyer_abn, 'SUPPLIER');
+  } catch (err) {
+    if (err instanceof ServerError) {
+      errors.push({ field: 'supplier', message: err.message });
+    }
+  }
+  try {
+    validateDates(invoice.issue_date, invoice.payment_due_date);
+  } catch (err) {
+    if (err instanceof ServerError) {
+      errors.push({ field: 'dates', message: err.message });
+    }
+  }
+  try {
+    const { sum } = validateItems(invoice.items_list);
+    validateTotalPayable(sum, invoice.tax_rate, invoice.tax_amount, invoice.total_payable);
+  } catch (err) {
+    if (err instanceof ServerError) {
+      errors.push({ field: 'items_totals', message: err.message });
+    }
+  }
+  try {
+    validatePaymentDetails(invoice.payment_details);
+  } catch (err) {
+    if (err instanceof ServerError) {
+      errors.push({ field: 'payment_details', message: err.message });
+    }
+  }
+
+  if (errors.length === 0 && invoice.status !== 'finalised') {
+    invoice.status = 'validated';
+  }
+
+  return {
+    invoice_id,
+    valid: errors.length === 0,
+    errors,
+    status: invoice.status
+  };
 }
