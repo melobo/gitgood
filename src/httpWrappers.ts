@@ -2,16 +2,19 @@ import request from 'sync-request-curl';
 import { InvoiceItem, PaymentDetails } from './invoiceInterface';
 
 const SERVER_URL = 'https://gitgood.onrender.com';
+const TIMEOUT_MS = 5 * 1000;
 const API_KEY = process.env.API_KEY ?? '';
 
 export const requestClear = () => {
-  const res = request('DELETE', `${SERVER_URL}/debug/clear`);
-  return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
+  const res = request('DELETE', `${SERVER_URL}/debug/clear`, { timeout: TIMEOUT_MS });
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
 };
 
 export const requestHealth = () => {
-  const res = request('GET', `${SERVER_URL}/v1/health`);
-  return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
+  const res = request('GET', `${SERVER_URL}/v1/health`, { timeout: TIMEOUT_MS });
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
 };
 
 export const requestCreateInvoice = (
@@ -19,12 +22,12 @@ export const requestCreateInvoice = (
   buyer_abn: string,
   supplier_name: string,
   supplier_abn: string,
-  issue_date: string,
-  payment_due_date: string,
+  issue_date: Date,
+  payment_due_date: Date,
   items_list: InvoiceItem[],
   tax_rate: number,
   payment_details: PaymentDetails[],
-  additional_notes?: string,
+  additional_notes?: string
 ) => {
   const res = request('POST', `${SERVER_URL}/v1/invoice`, {
     headers: { 'x-api-key': API_KEY },
@@ -40,15 +43,17 @@ export const requestCreateInvoice = (
       payment_details,
       ...(additional_notes !== undefined && { additional_notes }),
     },
+    timeout: TIMEOUT_MS,
   });
-  return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
 };
 
 export const requestListInvoices = (
   from_date?: string,
   to_date?: string,
   page?: number,
-  limit_per_page?: number,
+  limit_per_page?: number
 ) => {
   const params = new URLSearchParams();
   if (from_date) params.append('from_date', from_date);
@@ -59,37 +64,45 @@ export const requestListInvoices = (
 
   const res = request('GET', `${SERVER_URL}/v1/invoice${qs}`, {
     headers: { 'x-api-key': API_KEY },
+    timeout: TIMEOUT_MS,
   });
-  return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
 };
 
 export const requestGetInvoice = (invoice_id: string) => {
   const res = request('GET', `${SERVER_URL}/v1/invoice/${invoice_id}`, {
     headers: { 'x-api-key': API_KEY },
+    timeout: TIMEOUT_MS,
   });
-  return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
 };
 
 export const requestUpdateInvoice = (invoice_id: string, updates: object) => {
   const res = request('PUT', `${SERVER_URL}/v1/invoice/${invoice_id}`, {
     headers: { 'x-api-key': API_KEY },
     json: updates,
+    timeout: TIMEOUT_MS,
   });
-  return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
 };
 
 export const requestValidateInvoice = (invoice_id: string) => {
   const res = request('POST', `${SERVER_URL}/v1/invoice/${invoice_id}/validate`, {
     headers: { 'x-api-key': API_KEY },
+    timeout: TIMEOUT_MS,
   });
-  return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
 };
 
 export const requestListInvoice = (
   from_date?: string,
   to_date?: string,
   page?: number,
-  limit_per_page?: number,
+  limit_per_page?: number
 ) => {
   const params = new URLSearchParams();
   if (from_date) params.append('from_date', from_date);
@@ -100,34 +113,44 @@ export const requestListInvoice = (
 
   const res = request('GET', `${SERVER_URL}/v1/invoice${qs}`, {
     headers: { 'x-api-key': API_KEY },
+    timeout: TIMEOUT_MS,
   });
-  return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
 };
 
 export const requestDeleteInvoice = (invoice_id: string) => {
   const res = request('DELETE', `${SERVER_URL}/v1/invoice/${invoice_id}`, {
     headers: { 'x-api-key': API_KEY },
+    timeout: TIMEOUT_MS,
   });
-  return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
 };
 
 export const requestConvertInvoice = (invoice_id: string) => {
   const res = request('POST', `${SERVER_URL}/v1/invoice/${invoice_id}/convert`, {
     headers: { 'x-api-key': API_KEY },
+    timeout: TIMEOUT_MS,
   });
-  return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
 };
 
 export const requestFinaliseInvoice = (invoice_id: string) => {
   const res = request('POST', `${SERVER_URL}/v1/invoice/${invoice_id}/final`, {
     headers: { 'x-api-key': API_KEY },
+    timeout: TIMEOUT_MS,
   });
-  return { statusCode: res.statusCode, body: JSON.parse(res.body.toString()) };
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
 };
 
 export const requestDownloadInvoice = (invoice_id: string, format: string) => {
   const res = request('GET', `${SERVER_URL}/v1/invoice/${invoice_id}/download?format=${format}`, {
     headers: { 'x-api-key': API_KEY },
+    timeout: TIMEOUT_MS,
   });
-  return { statusCode: res.statusCode, body: res.body.toString() };
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
 };
