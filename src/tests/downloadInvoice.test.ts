@@ -49,8 +49,8 @@ function createInvoice(): string {
     '12345678901',
     'Test Supplier',
     '98765432101',
-    new Date('2025-01-01'),
-    new Date('2025-02-01'),
+    '2025-01-01',
+    '2025-02-01',
     [
       {
         item_name: 'item',
