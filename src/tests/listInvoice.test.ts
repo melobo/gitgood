@@ -34,7 +34,7 @@ function createInvoice(): any {
 }
 
 describe('GET /invoice — listInvoices', () => {
-  // successful case
+  //successful case
   describe('Successful cases', () => {
     test('returns 200 with valid parameters (no filters)', () => {
       const res = requestListInvoices();
@@ -64,7 +64,7 @@ describe('GET /invoice — listInvoices', () => {
     });
   });
 
-  // date range errors
+  //date range errors
   describe('Date Range Errors', () => {
     test('returns 400 when from_date is after to_date', () => {
       const res = requestListInvoices('2026-01-01', '2024-01-01');
@@ -87,7 +87,7 @@ describe('GET /invoice — listInvoices', () => {
     });
   });
 
-  // type mismatch errors
+  //type mismatch errors
   describe('Type Mismatch Errors', () => {
     test('returns 400 when page is a string instead of integer', () => {
       const res = requestListInvoices(undefined, undefined, 'abc' as any);
