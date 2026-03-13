@@ -1,11 +1,8 @@
 import {
-  requestClear,
   requestCreateInvoice,
   requestListInvoices,
 } from '../httpWrappers';
- 
-const error = { error: expect.any(String) };
- 
+
 // creating a valid draft invoice
 function createInvoice(): any {
   return requestCreateInvoice(
@@ -35,66 +32,71 @@ function createInvoice(): any {
     ]
   );
 }
- 
+
 describe('GET /invoice — listInvoices', () => {
-  beforeEach(() => {
-    requestClear();
-  });
- 
-  //successful case
+  // successful case
   describe('Successful cases', () => {
     test('returns 200 with valid parameters (no filters)', () => {
       const res = requestListInvoices();
- 
+
       expect(res.statusCode).toBe(200);
       expect(res.body).toHaveProperty('invoices');
       expect(Array.isArray(res.body.invoices)).toBe(true);
       expect(res.body).toHaveProperty('total');
       expect(res.body).toHaveProperty('page');
     });
- 
+
     test('returns 200 with valid from_date and to_date', () => {
       createInvoice();
- 
+
       const res = requestListInvoices('2024-01-01', '2026-12-31');
- 
+
       expect(res.statusCode).toBe(200);
       expect(res.body).toHaveProperty('invoices');
       expect(Array.isArray(res.body.invoices)).toBe(true);
     });
- 
+
     test('returns 200 with valid page and limit_per_page', () => {
       const res = requestListInvoices(undefined, undefined, 1, 5);
- 
+
       expect(res.statusCode).toBe(200);
       expect(res.body).toHaveProperty('page');
     });
   });
- 
-  //date range errors
+
+  // date range errors
   describe('Date Range Errors', () => {
     test('returns 400 when from_date is after to_date', () => {
       const res = requestListInvoices('2026-01-01', '2024-01-01');
- 
+
       expect(res.statusCode).toBe(400);
-      expect(res.body).toStrictEqual(error);
+      expect(res.body).toStrictEqual({
+        error: 'INVALID_REQUEST',
+        message: expect.any(String),
+      });
     });
- 
+
     test('returns 400 when to_date is before from_date', () => {
       const res = requestListInvoices('2025-06-01', '2025-01-01');
- 
+
       expect(res.statusCode).toBe(400);
-      expect(res.body).toStrictEqual(error);
+      expect(res.body).toStrictEqual({
+        error: 'INVALID_REQUEST',
+        message: expect.any(String),
+      });
     });
   });
- 
-  //type mismatch errors
+
+  // type mismatch errors
   describe('Type Mismatch Errors', () => {
     test('returns 400 when page is a string instead of integer', () => {
       const res = requestListInvoices(undefined, undefined, 'abc' as any);
- 
+
       expect(res.statusCode).toBe(400);
-      expect(res.body).toStrictEqual(error);
+      expect(res.body).toStrictEqual({
+        error: 'INVALID_REQUEST',
+        message: expect.any(String),
+      });
     });
   });
 });

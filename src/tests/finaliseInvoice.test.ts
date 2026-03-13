@@ -1,13 +1,10 @@
 import {
-  requestClear,
   requestCreateInvoice,
   requestConvertInvoice,
   requestValidateInvoice,
   requestFinaliseInvoice,
 } from '../httpWrappers';
- 
-const error = { error: expect.any(String) };
- 
+
 // creating a valid draft invoice
 function createInvoice(): string {
   const res = requestCreateInvoice(
@@ -38,30 +35,16 @@ function createInvoice(): string {
   );
   return res.body.invoice_id;
 }
- 
-//convert invoice using id
-function convertInvoice(invoiceId: string): void {
-  requestConvertInvoice(invoiceId);
-}
- 
-// validate invoice using id
-function validateInvoice(invoiceId: string): void {
-  requestValidateInvoice(invoiceId);
-}
- 
+
 describe('POST /invoice/{invoice_id}/final — finaliseInvoice', () => {
-  beforeEach(() => {
-    requestClear();
-  });
- 
   describe('Successful cases', () => {
     test('returns 200 and status "finalised" for a validated invoice', () => {
       const invoiceId = createInvoice();
-      convertInvoice(invoiceId);
-      validateInvoice(invoiceId);
- 
+      requestConvertInvoice(invoiceId);
+      requestValidateInvoice(invoiceId);
+
       const res = requestFinaliseInvoice(invoiceId);
- 
+
       expect(res.statusCode).toBe(200);
       expect(res.body).toHaveProperty('invoice_id', invoiceId);
       expect(res.body).toHaveProperty('status', 'finalised');
@@ -69,35 +52,43 @@ describe('POST /invoice/{invoice_id}/final — finaliseInvoice', () => {
       expect(res.body).toHaveProperty('finalised_at');
     });
   });
- 
+
   describe('Sequence Errors', () => {
     test('returns 409 when finalising a draft invoice (not yet validated)', () => {
       const invoiceId = createInvoice();
- 
+
       const res = requestFinaliseInvoice(invoiceId);
- 
+
       expect(res.statusCode).toBe(409);
-      expect(res.body).toStrictEqual(error);
+      expect(res.body).toStrictEqual({
+        error: 'INVOICE_NOT_VALIDATED',
+        message: expect.any(String),
+      });
     });
- 
+
     test('returns 409 when finalising a converted but not validated invoice', () => {
       const invoiceId = createInvoice();
-      convertInvoice(invoiceId);
- 
+      requestConvertInvoice(invoiceId);
+
       const res = requestFinaliseInvoice(invoiceId);
- 
+
       expect(res.statusCode).toBe(409);
-      expect(res.body).toStrictEqual(error);
+      expect(res.body).toStrictEqual({
+        error: 'INVOICE_NOT_VALIDATED',
+        message: expect.any(String),
+      });
     });
   });
- 
+
   describe('Not Found', () => {
     test('returns 404 for a well-formed but non-existent invoice ID', () => {
       const res = requestFinaliseInvoice('00000000-0000-0000-0000-000000000000');
- 
+
       expect(res.statusCode).toBe(404);
-      expect(res.body).toStrictEqual(error);
+      expect(res.body).toStrictEqual({
+        error: 'NOT_FOUND',
+        message: expect.any(String),
+      });
     });
   });
 });
- 
