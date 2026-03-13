@@ -6,7 +6,7 @@ import {
   requestDownloadInvoice,
 } from '../httpWrappers';
 
-//creating a valid draft invoice
+// creating a valid draft invoice
 function createInvoice(): string {
   const res = requestCreateInvoice(
     'Test Buyer',
@@ -37,7 +37,7 @@ function createInvoice(): string {
   return res.body.invoice_id;
 }
 
-//convert validate and finalise invoice requests
+// convert validate and finalise invoice requests
 function createFinalisedInvoice(): string {
   const invoiceId = createInvoice();
 

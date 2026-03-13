@@ -6,55 +6,15 @@ import { /* requestClear, */ requestCreateInvoice, requestGetInvoice, requestUpd
   requestClear();
 }); */
 
-// const SERVER_URL = 'https://gitgood-invoice-api.onrender.com/v1';
-// const TIMEOUT_MS = 5 * 1000;
-// const API_KEY = process.env.API_KEY;
-// const error = { error: expect.any(String) };
-// const headers = { 'x-api-key': API_KEY };
-
 // creating a valid draft invoice
-/*  function createInvoice(): string {
-  const res = request('POST', SERVER_URL + '/invoice', {
-    json: {
-      buyer_name: 'Test Buyer',
-      buyer_abn: '12345678901',
-      supplier_name: 'Test Supplier',
-      supplier_abn: '98765432101',
-      issue_date: '2025-01-01',
-      payment_due_date: '2025-02-01',
-      items_list: [
-        {
-          item_name: 'item',
-          quantity: 2,
-          unit_price: 50.0,
-          unit_code: 'ea',
-          total_price: 100.0,
-        },
-      ],
-      tax_rate: 0.1,
-      payment_details: [
-        {
-          bank_name: 'ANZ',
-          account_number: '123456789',
-          bsb_abn_number: '012-345',
-          payment_method: 'bank_transfer',
-        },
-      ],
-    },
-    headers,
-    timeout: TIMEOUT_MS,
-  });
-  return JSON.parse(res.body.toString()).invoice_id;
-} */
-
 function createInvoice(): string {
   const res = requestCreateInvoice(
     'Test Buyer',
     '12345678901',
     'Test Supplier',
     '98765432101',
-    new Date('2025-01-01'),
-    new Date('2025-02-01'),
+    '2025-01-01',
+    '2025-02-01',
     [
       {
         item_name: 'item',
@@ -434,7 +394,7 @@ describe('PUT /v1/invoice/:invoice_id', () => {
       expect(updatedInfo.body.tax_rate).toStrictEqual(0.15);
       expect(updatedInfo.body.tax_amount).toStrictEqual(33.75);
       expect(updatedInfo.body.total_payable).toStrictEqual(258.75);
-      expect(updatedInfo.body.payment_details).toStrictEqual([{ bank_name: 'COMMBANK', account_number: '123456788', bsb_abn_number: '012-346', payment_method: 'direct_debit' }]);
+      expect(updatedInfo.body.payment_details).toStrictEqual([{ bank_name: 'COMMBANK', account_number: '123456788', bsb_abn_number: '012-346', payment_method: 'directDebit' }]);
       // expect(updatedInfo.body.created_at).toStrictEqual(invoice.body.created_at);
       // expect(updatedInfo.body.updated_at).toStrictEqual(res.body.updated_at);
     });

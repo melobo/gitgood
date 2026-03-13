@@ -1,5 +1,6 @@
 import request from 'sync-request-curl';
 import { InvoiceItem, PaymentDetails } from './invoiceInterface';
+import { validateDates } from './validateInvoice';
 
 const SERVER_URL = 'https://gitgood.onrender.com';
 const TIMEOUT_MS = 5 * 1000;
@@ -22,13 +23,14 @@ export const requestCreateInvoice = (
   buyer_abn: string,
   supplier_name: string,
   supplier_abn: string,
-  issue_date: Date,
-  payment_due_date: Date,
+  issue_date_string: string,
+  payment_due_date_string: string,
   items_list: InvoiceItem[],
   tax_rate: number,
   payment_details: PaymentDetails[],
   additional_notes?: string
 ) => {
+  const { issueDate, paymentDueDate } = validateDates(issue_date_string, payment_due_date_string);
   const res = request('POST', `${SERVER_URL}/v1/invoice`, {
     headers: { 'x-api-key': API_KEY },
     json: {
@@ -36,8 +38,8 @@ export const requestCreateInvoice = (
       buyer_abn,
       supplier_name,
       supplier_abn,
-      issue_date,
-      payment_due_date,
+      issueDate,
+      paymentDueDate,
       items_list,
       tax_rate,
       payment_details,
