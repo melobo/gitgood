@@ -1,12 +1,9 @@
-// import request from 'sync-request-curl';
-import { requestCreateInvoice, requestConvertInvoice, requestValidateInvoice, requestFinaliseInvoice } from '../httpWrappers';
-
-// const SERVER_URL = 'https://gitgood-invoice-api.onrender.com/v1';
-// const TIMEOUT_MS = 5 * 1000;
-// const API_KEY = process.env.API_KEY;
-
-const error = { error: expect.any(String) };
-// const headers = { 'x-api-key': API_KEY };
+import {
+  requestCreateInvoice,
+  requestConvertInvoice,
+  requestValidateInvoice,
+  requestFinaliseInvoice,
+} from '../httpWrappers';
 
 // creating a valid draft invoice
 function createInvoice(): string {
@@ -39,30 +36,6 @@ function createInvoice(): string {
   return res.body.invoice_id;
 }
 
-/*  // convert invoice usign id
-function convertInvoice(invoiceId: string): void {
- request('POST', SERVER_URL + `/invoice/${invoiceId}/convert`, {
-   headers,
-   timeout: TIMEOUT_MS,
- });
-} */
-
-/*  // validate invoice using id
-function validateInvoice(invoiceId: string): void {
- request('POST', SERVER_URL + `/invoice/${invoiceId}/validate`, {
-   headers,
-   timeout: TIMEOUT_MS,
- });
-} */
-
-/*  // finalise invoice using id
-function finaliseInvoice(invoiceId: string): any {
- return request('POST', SERVER_URL + `/invoice/${invoiceId}/final`, {
-   headers,
-   timeout: TIMEOUT_MS,
- });
-} */
-
 describe('POST /invoice/{invoice_id}/final — finaliseInvoice', () => {
   describe('Successful cases', () => {
     test('returns 200 and status "finalised" for a validated invoice', () => {
@@ -73,11 +46,10 @@ describe('POST /invoice/{invoice_id}/final — finaliseInvoice', () => {
       const res = requestFinaliseInvoice(invoiceId);
 
       expect(res.statusCode).toBe(200);
-      const body = JSON.parse(res.body.toString());
-      expect(body).toHaveProperty('invoice_id', invoiceId);
-      expect(body).toHaveProperty('status', 'finalised');
-      expect(body).toHaveProperty('ubl_xml');
-      expect(body).toHaveProperty('finalised_at');
+      expect(res.body).toHaveProperty('invoice_id', invoiceId);
+      expect(res.body).toHaveProperty('status', 'finalised');
+      expect(res.body).toHaveProperty('ubl_xml');
+      expect(res.body).toHaveProperty('finalised_at');
     });
   });
 
@@ -88,7 +60,10 @@ describe('POST /invoice/{invoice_id}/final — finaliseInvoice', () => {
       const res = requestFinaliseInvoice(invoiceId);
 
       expect(res.statusCode).toBe(409);
-      expect(JSON.parse(res.body.toString())).toStrictEqual(error);
+      expect(res.body).toStrictEqual({
+        error: 'INVOICE_NOT_VALIDATED',
+        message: expect.any(String),
+      });
     });
 
     test('returns 409 when finalising a converted but not validated invoice', () => {
@@ -98,7 +73,10 @@ describe('POST /invoice/{invoice_id}/final — finaliseInvoice', () => {
       const res = requestFinaliseInvoice(invoiceId);
 
       expect(res.statusCode).toBe(409);
-      expect(JSON.parse(res.body.toString())).toStrictEqual(error);
+      expect(res.body).toStrictEqual({
+        error: 'INVOICE_NOT_VALIDATED',
+        message: expect.any(String),
+      });
     });
   });
 
@@ -107,7 +85,15 @@ describe('POST /invoice/{invoice_id}/final — finaliseInvoice', () => {
       const res = requestFinaliseInvoice('00000000-0000-0000-0000-000000000000');
 
       expect(res.statusCode).toBe(404);
-      expect(JSON.parse(res.body.toString())).toStrictEqual(error);
+      expect(res.body).toStrictEqual({
+        error: 'NOT_FOUND',
+        message: expect.any(String),
+      });
     });
   });
+<<<<<<< HEAD
 });
+=======
+});
+ 
+>>>>>>> origin/s2-ananya-testfiles
