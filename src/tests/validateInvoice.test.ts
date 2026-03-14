@@ -37,66 +37,66 @@ function createConvertInvoice(): string {
 }
 
 describe('validateInvoice POST /v1/invoices/:invoice_id/validate', () => {
-    describe('successful case', () => {
+  describe('successful case', () => {
     test('returns 200 and valid for a converted invoice', () => {
-        const invoiceId = createConvertInvoice();
-        const res = requestValidateInvoice(invoiceId);
+      const invoiceId = createConvertInvoice();
+      const res = requestValidateInvoice(invoiceId);
 
-        expect(res.statusCode).toBe(200);
-        expect(res.body).toStrictEqual({
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toStrictEqual({
         invoice_id: invoiceId,
         valid: true,
         errors: [],
         status: 'validated'
-        });
+      });
     });
-    });
+  });
 
-    describe('invalid invoiceID test', () => {
+  describe('invalid invoiceID test', () => {
     test('returns 404 for non-existent invoiceID', () => {
-        const res = requestValidateInvoice('nonexistent-invoice-id-233');
-        expect(res.statusCode).toBe(404);
-        expect(res.body).toStrictEqual({
+      const res = requestValidateInvoice('nonexistent-invoice-id-233');
+      expect(res.statusCode).toBe(404);
+      expect(res.body).toStrictEqual({
         error: 'NOT_FOUND',
         message: expect.any(String),
-        });
+      });
     });
-    });
+  });
 
-    describe('not converted yet test', () => {
+  describe('not converted yet test', () => {
     test('returns 409 when validating a draft invoice', () => {
-        const invoiceId = createInvoice();
-        const res = requestValidateInvoice(invoiceId);
+      const invoiceId = createInvoice();
+      const res = requestValidateInvoice(invoiceId);
 
-        expect(res.statusCode).toBe(409);
-        expect(res.body).toStrictEqual({
+      expect(res.statusCode).toBe(409);
+      expect(res.body).toStrictEqual({
         error: 'INVALID_REQUEST',
         message: expect.any(String),
-        });
+      });
     });
-    });
+  });
 
-    describe('already validated test', () => {
+  describe('already validated test', () => {
     test('status remains validated when validating an already validated invoice', () => {
-        const invoiceId = createConvertInvoice();
-        requestValidateInvoice(invoiceId);
-        
-        // validate again
-        const res = requestValidateInvoice(invoiceId);
-        expect(res.statusCode).toBe(200);
-        expect(res.body.status).toBe('validated');
-    });
-    });
+      const invoiceId = createConvertInvoice();
+      requestValidateInvoice(invoiceId);
 
-    describe('finalised invoice test', () => {
+      // validate again
+      const res = requestValidateInvoice(invoiceId);
+      expect(res.statusCode).toBe(200);
+      expect(res.body.status).toBe('validated');
+    });
+  });
+
+  describe('finalised invoice test', () => {
     test('status remains finalised instead of validated when validating a finalised invoice', () => {
-        const invoiceId = createConvertInvoice();
-        requestValidateInvoice(invoiceId);
-        requestFinaliseInvoice(invoiceId);
-        
-        const res = requestValidateInvoice(invoiceId);
-        expect(res.statusCode).toBe(200);
-        expect(res.body.status).toBe('finalised');
+      const invoiceId = createConvertInvoice();
+      requestValidateInvoice(invoiceId);
+      requestFinaliseInvoice(invoiceId);
+
+      const res = requestValidateInvoice(invoiceId);
+      expect(res.statusCode).toBe(200);
+      expect(res.body.status).toBe('finalised');
     });
-    });
+  });
 });
