@@ -17,6 +17,7 @@ export function validateABN(abn: string, type: 'BUYER' | 'SUPPLIER') {
 export function validateDates(issueDateString: string, paymentDueDateString: string): { issueDate: Date; paymentDueDate: Date } {
   const issueDate = new Date(issueDateString);
   const paymentDueDate = new Date(paymentDueDateString);
+  var current = new Date();
 
   if (isNaN(issueDate.getTime())) {
     throw new ServerError('INVALID_REQUEST', 'The provided issue date is invalid. It must be in YYYY-MM-DD format.');
@@ -25,8 +26,12 @@ export function validateDates(issueDateString: string, paymentDueDateString: str
     throw new ServerError('INVALID_REQUEST', 'The provided payment due date is invalid. It must be in YYYY-MM-DD format.');
   }
 
-  if (paymentDueDate <= issueDate) {
-    throw new ServerError('INVALID_REQUEST', 'Payment due date must be after issue date.');
+  if (issueDate.setHours(0, 0, 0, 0) > current.setHours(0, 0, 0, 0)) {
+    throw new ServerError('INVALID_REQUEST', 'The provided issue date cannot be in the future.');
+  }
+
+  if (paymentDueDate < issueDate) {
+    throw new ServerError('INVALID_REQUEST', 'Payment due date must be on or after issue date.');
   }
 
   return { issueDate, paymentDueDate };
