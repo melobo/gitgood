@@ -28,7 +28,7 @@ app.use(cors());
 app.use(morgan('dev'));
 
 if (config.showDocs) {
-  app.use('/docs', docs());
+  app.use(docs());
 } else {
   app.get('/', (req, res) => {
     res.send('<h1>GitGood Invoice API</h1>');
