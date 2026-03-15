@@ -1,12 +1,12 @@
 // import request from 'sync-request-curl';
-import { 
+import {
   Invoice,
-  HttpReturnObject 
+  HttpReturnObject
 } from '../invoiceInterface';
-import { 
-  requestCreateInvoice, 
-  requestGetInvoice, 
-  requestUpdateInvoice 
+import {
+  requestCreateInvoice,
+  requestGetInvoice,
+  requestUpdateInvoice
 } from '../httpWrappers';
 
 // creating a valid draft invoice

@@ -9,7 +9,7 @@ import { handleError } from './errors';
 import { errorHandler } from './errorHandler';
 import docs from './docsMiddleware';
 import healthRouter from './healthRoute';
-import { 
+import {
   // createInvoice,
   // convertInvoice,
   listInvoice,
@@ -58,7 +58,6 @@ app.use('/v1', healthRouter);
 
 // ===== INVOICE ENDPOINTS ===== //
 
-// POST /v1/invoice — create a new invoice
 app.get('/v1/invoice', authenticate, (req: Request, res: Response) => {
   const { fromDate, toDate, page, limitPerPage } = req.query;
   try {
@@ -101,6 +100,16 @@ app.post('/v1/invoice/:invoiceId/final', authenticate, (req: Request, res: Respo
     handleError(res, err);
   }
 });
+
+// app.delete('/v1/invoice/:invoice_id', authenticate, (req: Request, res: Response) => {
+//   const { invoice_id } = req.params;
+//   try {
+//     const result = deleteInvoice(invoice_id);
+//     res.status(200).json(result);
+//   } catch (err) {
+//     handleError(res, err);
+//   }
+// });
 
 // ========================================= //
 

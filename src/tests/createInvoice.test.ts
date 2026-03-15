@@ -2,9 +2,9 @@ import {
   requestClear,
   requestCreateInvoice,
 } from '../httpWrappers';
-import { 
-  InvoiceItem, 
-  PaymentDetails 
+import {
+  InvoiceItem,
+  PaymentDetails
 } from '../invoiceInterface';
 
 const SUCCESS_CODE = 201;

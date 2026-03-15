@@ -1,8 +1,8 @@
-import { 
-  requestCreateInvoice, 
-  requestConvertInvoice, 
-  requestValidateInvoice, 
-  requestFinaliseInvoice 
+import {
+  requestCreateInvoice,
+  requestConvertInvoice,
+  requestValidateInvoice,
+  requestFinaliseInvoice
 } from '../httpWrappers';
 
 function createInvoice(): string {
