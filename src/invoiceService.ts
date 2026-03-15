@@ -324,7 +324,7 @@ export function updateInvoice(invoice_id: string, updates: {
     invoice.issueDate = newIssueDate;
     invoice.paymentDueDate = newPaymentDueDate;
   }
-  
+
   // update payment details if provided
   if (updates.paymentDetails !== undefined) {
     validatePaymentDetails(updates.paymentDetails);
