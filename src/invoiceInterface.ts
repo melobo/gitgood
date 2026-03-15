@@ -1,81 +1,74 @@
 export type InvoiceStatus = 'draft' | 'converted' | 'validated' | 'finalised';
 export const validBanks = ['ANZ', 'CommBank', 'Westpac', 'StGeorge', 'ApplePay', 'NAB', 'PayPal'];
-export const validPaymentMethods = ['bankTransfer', 'directDebit', 'creditCard'];
+export const validPaymentMethods = ['bank_transfer', 'direct_debit', 'credit_card'];
 
 export interface InvoiceItem {
-  item_name: string;
+  itemName: string;
   quantity: number;
-  unit_price: number;
-  unit_code: string;
-  total_price: number;
+  unitPrice: number;
+  unitCode: string;
+  totalPrice: number;
 }
 
 export interface PaymentDetails {
-  bank_name: string;
-  account_number: string;
-  bsb_abn_number: string;
-  payment_method: string;
+  bankName: string;
+  accountNumber: string;
+  bsbAbnNumber: string;
+  paymentMethod: string;
 }
 
 export interface Invoice {
-  invoice_id: string;
+  invoiceId: string;
   status: InvoiceStatus;
-  buyer_name: string;
-  buyer_abn: string;
-  supplier_name: string;
-  supplier_abn: string;
-  issue_date: string;
-  payment_due_date: string;
-  items_list: InvoiceItem[];
-  tax_rate: number;
-  tax_amount: number;
-  total_payable: number;
-  payment_details: PaymentDetails[];
-  additional_notes?: string;
-  ubl_xml?: string;
-  created_at: string;
-  updated_at: string;
-  finalised_at?: string;
+  buyerName: string;
+  buyerAbn: string;
+  supplierName: string;
+  supplierAbn: string;
+  issueDate: string;
+  paymentDueDate: string;
+  itemsList: InvoiceItem[];
+  taxRate: number;
+  taxAmount: number;
+  totalPayable: number;
+  paymentDetails: PaymentDetails[];
+  additionalNotes?: string;
+  ublXml?: string;
+  createdAt: string;
+  updatedAt: string;
+  finalisedAt?: string;
 }
 
 export interface CreateInvoiceInput {
-  buyer_name: string;
-  buyer_abn: string;
-  supplier_name: string;
-  supplier_abn: string;
-  issue_date: string;
-  payment_due_date: string;
-  items_list: InvoiceItem[];
-  tax_rate: number;
-  payment_details: PaymentDetails[];
-  additional_notes?: string;
+  buyerName: string;
+  buyerAbn: string;
+  supplierName: string;
+  supplierAbn: string;
+  issueDate: string;
+  paymentDueDate: string;
+  itemsList: InvoiceItem[];
+  taxRate: number;
+  paymentDetails: PaymentDetails[];
+  additionalNotes?: string;
 }
 
 export interface UpdateInvoiceInput {
-  buyer_name?: string;
-  buyer_abn?: string;
-  supplier_name?: string;
-  supplier_abn?: string;
-  issue_date?: string;
-  payment_due_date?: string;
-  items_list?: InvoiceItem[];
-  tax_rate?: number;
-  payment_details?: PaymentDetails[];
-  additional_notes?: string;
+  buyerName?: string;
+  buyerAbn?: string;
+  supplierName?: string;
+  supplierAbn?: string;
+  issueDate?: string;
+  paymentDueDate?: string;
+  itemsList?: InvoiceItem[];
+  taxRate?: number;
+  paymentDetails?: PaymentDetails[];
+  additionalNotes?: string;
 }
 
 export interface InvoiceListFilters {
-  from_date?: string;
-  to_date?: string;
+  fromDate?: string;
+  toDate?: string;
   page?: number;
-  limit_per_page?: number;
-}
-
-export interface ValidateInvoice {
-  from_date?: string;
-  to_date?: string;
-  page?: number;
-  limit_per_page?: number;
+  limitPerPage?: number;
 }
 
 export interface ValidationError {
@@ -84,7 +77,7 @@ export interface ValidationError {
 }
 
 export interface ValidateInvoiceResponse {
-  invoice_id: string;
+  invoiceId: string;
   valid: boolean;
   errors: ValidationError[];
   status: InvoiceStatus;

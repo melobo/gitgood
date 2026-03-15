@@ -10,20 +10,20 @@ function createInvoice(): string {
     '2026-03-02',
     [
       {
-        item_name: 'Book',
+        itemName: 'Book',
         quantity: 2,
-        unit_price: 50.0,
-        unit_code: 'ea',
-        total_price: 100.0,
+        unitPrice: 50.0,
+        unitCode: 'ea',
+        totalPrice: 100.0,
       },
     ],
     0.1,
     [
       {
-        bank_name: 'ANZ',
-        account_number: '123456789',
-        bsb_abn_number: '012-345',
-        payment_method: 'bankTransfer',
+        bankName: 'ANZ',
+        accountNumber: '123456789',
+        bsbAbnNumber: '012-345',
+        paymentMethod: 'bankTransfer',
       },
     ]
   );

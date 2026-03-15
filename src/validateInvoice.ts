@@ -14,7 +14,7 @@ export function validateABN(abn: string, type: 'BUYER' | 'SUPPLIER') {
   }
 };
 
-export function validateDates(issueDateString: string, paymentDueDateString: string): { issueDate: Date; paymentDueDate: Date } {
+export function validateDates(issueDateString: string, paymentDueDateString: string): void {
   const issueDate = new Date(issueDateString);
   const paymentDueDate = new Date(paymentDueDateString);
   const current = new Date();
@@ -25,73 +25,69 @@ export function validateDates(issueDateString: string, paymentDueDateString: str
   if (isNaN(paymentDueDate.getTime())) {
     throw new ServerError('INVALID_REQUEST', 'The provided payment due date is invalid. It must be in YYYY-MM-DD format.');
   }
-
   if (issueDate.setHours(0, 0, 0, 0) > current.setHours(0, 0, 0, 0)) {
     throw new ServerError('INVALID_REQUEST', 'The provided issue date cannot be in the future.');
   }
-
   if (paymentDueDate < issueDate) {
     throw new ServerError('INVALID_REQUEST', 'Payment due date must be on or after issue date.');
   }
-
-  return { issueDate, paymentDueDate };
 };
 
 export function validateItem(item: InvoiceItem) {
   if (item.quantity <= 0) {
-    throw new ServerError('INSUFFICIENT_DATA', `Item quantity must be > 0; ${item.item_name}.`);
+    throw new ServerError('INSUFFICIENT_DATA', `Item quantity must be > 0; ${item.itemName}.`);
   }
-  if (item.unit_price < 0 || item.total_price < 0) {
-    throw new ServerError('INSUFFICIENT_DATA', `Item prices cannot be negative; ${item.item_name}.`);
+  if (item.unitPrice < 0 || item.totalPrice < 0) {
+    throw new ServerError('INSUFFICIENT_DATA', `Item prices cannot be negative; ${item.itemName}.`);
   }
-  if (item.quantity * item.unit_price !== item.total_price) {
-    throw new ServerError('INSUFFICIENT_DATA', `Invoice totals are inconsistent. Item totals must equal quantity * unit_price; ${item.item_name}.`);
+  if (item.quantity * item.unitPrice !== item.totalPrice) {
+    throw new ServerError('INSUFFICIENT_DATA', `Invoice totals are inconsistent. Item totals must equal quantity * unitPrice; ${item.itemName}.`);
   }
-}
+};
 
 export function validateItems(items: InvoiceItem[]): ValidateItemsResponse {
   if (items.length === 0) {
     throw new ServerError('INSUFFICIENT_DATA', 'Invoice must contain at least one item.');
   }
 
-  let sum: number = 0;
+  let sum = 0;
   for (const item of items) {
     validateItem(item);
-    sum += item.total_price;
+    sum += item.totalPrice;
   }
 
   return { sum };
-}
+};
 
-export function validateTotalPayable(sum: number, tax_rate: number, tax_amount: number, total_payable: number) {
-  if (tax_rate < 0 || tax_rate > 1) {
+export function validateTotalPayable(sum: number, taxRate: number, taxAmount: number, totalPayable: number) {
+  if (taxRate < 0 || taxRate > 1) {
     throw new ServerError('INSUFFICIENT_DATA', 'Tax rate must be a positive decimal value.');
   }
-  if (sum * tax_rate !== tax_amount) {
+  if (sum * taxRate !== taxAmount) {
     throw new ServerError('INSUFFICIENT_DATA', 'Tax amount on the invoice is inconsistent per the item totals.');
   }
-  if (sum + tax_amount !== total_payable) {
-    throw new ServerError('INSUFFICIENT_DATA', 'Invoice totals are inconsistent. Total payable must equal item totals * (1 + tax_rate).');
+  if (sum + taxAmount !== totalPayable) {
+    throw new ServerError('INSUFFICIENT_DATA', 'Invoice totals are inconsistent. Total payable must equal item totals * (1 + taxRate).');
   }
-}
+};
 
 export function validatePaymentDetails(paymentDetails: PaymentDetails[]) {
   if (paymentDetails.length === 0) {
-    throw new ServerError('INSUFFICIENT_DATA', 'Invoice must contain at least one item.');
+    throw new ServerError('INSUFFICIENT_DATA', 'Invoice must contain at least one payment detail.');
   }
 
   for (const detail of paymentDetails) {
-    if (!validBanks.includes(detail.bank_name)) {
-      throw new ServerError('INSUFFICIENT_DATA', `Payment details on invoice include an invalid bank name; ${detail.bank_name}.`);
+    if (!validBanks.includes(detail.bankName)) {
+      throw new ServerError('INSUFFICIENT_DATA', `Payment details on invoice include an invalid bank name; ${detail.bankName}.`);
     }
-    if (!validPaymentMethods.includes(detail.payment_method)) {
-      throw new ServerError('INSUFFICIENT_DATA', `Payment details on invoice include an invalid payment method; ${detail.payment_method}.`);
+    if (!validPaymentMethods.includes(detail.paymentMethod)) {
+      throw new ServerError('INSUFFICIENT_DATA', `Payment details on invoice include an invalid payment method; ${detail.paymentMethod}.`);
     }
-    if (detail.bsb_abn_number.charAt(3) !== '-' || detail.bsb_abn_number.replace(/-/g, '').length < 6 || Number(detail.bsb_abn_number.replace(/-/g, '')) < 100000 || Number(detail.bsb_abn_number.replace(/-/g, '')) > 999999) {
-      throw new ServerError('INSUFFICIENT_DATA', `The BSB provided (${detail.bsb_abn_number}) is invalid. It must have 6 digits, and be in NNN-NNN format.`);
+    if (detail.bsbAbnNumber.charAt(3) !== '-' || detail.bsbAbnNumber.replace(/-/g, '').length < 6 || Number(detail.bsbAbnNumber.replace(/-/g, '')) < 100000 || Number(detail.bsbAbnNumber.replace(/-/g, '')) > 999999) {
+      throw new ServerError('INSUFFICIENT_DATA', `The BSB provided (${detail.bsbAbnNumber}) is invalid. It must have 6 digits, and be in NNN-NNN format.`);
     }
-    if (!Number(detail.account_number)) {
-      throw new ServerError('INSUFFICIENT_DATA', `The account number provided (${detail.account_number}) is invalid. Only numbers are allowed.`);
+    if (!Number(detail.accountNumber)) {
+      throw new ServerError('INSUFFICIENT_DATA', `The account number provided (${detail.accountNumber}) is invalid. Only numbers are allowed.`);
     }
   }
-}
+};
