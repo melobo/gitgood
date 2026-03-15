@@ -4,7 +4,8 @@ import {
   Invoice,
   ValidationError,
   ValidateInvoiceResponse,
-  FinaliseInvoiceResponse } from './invoiceInterface';
+  FinaliseInvoiceResponse
+} from './invoiceInterface';
 import {
   validateName,
   validateABN,
