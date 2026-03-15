@@ -11,6 +11,6 @@ export default {
   ip: process.env.IP ?? '0.0.0.0', // must be 0.0.0.0 on Render, not 127.0.0.1
   port: parseInt(process.env.PORT ?? '3000'),
   debug: process.env.NODE_ENV !== 'production',
-  showDocs: true,
+  showDocs: false,
   apiKey: apiKey ?? '',
 };

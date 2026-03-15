@@ -2,7 +2,7 @@ services:
   - type: web
     name: gitgood-invoice-api
     runtime: node
-    buildCommand: npm ci
+    buildCommand: npm install
     startCommand: npm start
     envVars:
       - key: PORT
