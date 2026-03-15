@@ -14,7 +14,7 @@ import {
   convertInvoice,
   listInvoice,
   getInvoice,
-  // updateInvoice,
+  updateInvoice,
   // downloadInvoice,
   // deleteInvoice,
   validateInvoice,
@@ -115,6 +115,16 @@ app.post('/v1/invoice/:invoice_id/convert', authenticate, (req: Request, res: Re
   const { invoice_id } = req.params;
   try {
     const result = convertInvoice(invoice_id);
+    res.status(200).json(result);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+app.put('/v1/invoice/:invoiceId', authenticate, (req: Request, res: Response) => {
+  const { invoiceId } = req.params;
+  try {
+    const result = updateInvoice(invoiceId, req.body);
     res.status(200).json(result);
   } catch (err) {
     handleError(res, err);
