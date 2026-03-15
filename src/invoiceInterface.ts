@@ -90,6 +90,13 @@ export interface ValidateInvoiceResponse {
   status: InvoiceStatus;
 }
 
+export interface FinaliseInvoiceResponse {
+  invoice_id: string;
+  status: InvoiceStatus;
+  ubl_xml: string;
+  finalised_at: string;
+}
+
 export interface ErrorObject {
   error: string;
   message: string;

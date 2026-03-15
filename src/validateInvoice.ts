@@ -17,7 +17,7 @@ export function validateABN(abn: string, type: 'BUYER' | 'SUPPLIER') {
 export function validateDates(issueDateString: string, paymentDueDateString: string): { issueDate: Date; paymentDueDate: Date } {
   const issueDate = new Date(issueDateString);
   const paymentDueDate = new Date(paymentDueDateString);
-  var current = new Date();
+  const current = new Date();
 
   if (isNaN(issueDate.getTime())) {
     throw new ServerError('INVALID_REQUEST', 'The provided issue date is invalid. It must be in YYYY-MM-DD format.');
