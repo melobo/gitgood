@@ -2,7 +2,10 @@ import {
   requestClear,
   requestCreateInvoice,
 } from '../httpWrappers';
-import { InvoiceItem, PaymentDetails } from '../invoiceInterface';
+import { 
+  InvoiceItem, 
+  PaymentDetails 
+} from '../invoiceInterface';
 
 const SUCCESS_CODE = 201;
 const BAD_REQUEST_CODE = 400;

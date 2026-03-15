@@ -9,7 +9,17 @@ import { handleError } from './errors';
 import { errorHandler } from './errorHandler';
 import docs from './docsMiddleware';
 import healthRouter from './healthRoute';
-import { listInvoice, getInvoice, validateInvoice, finaliseInvoice } from './invoiceService';
+import { 
+  // createInvoice,
+  // convertInvoice,
+  listInvoice,
+  getInvoice,
+  // updateInvoice,
+  // downloadInvoice,
+  // deleteInvoice,
+  validateInvoice,
+  finaliseInvoice,
+} from './invoiceService';
 import { authenticate } from './auth';
 
 const app = express();
@@ -46,8 +56,9 @@ if (config.debug) {
 
 app.use('/v1', healthRouter);
 
-// ===== ADD YOUR ENDPOINTS BELOW HERE ===== //
+// ===== INVOICE ENDPOINTS ===== //
 
+// POST /v1/invoice — create a new invoice
 app.get('/v1/invoice', authenticate, (req: Request, res: Response) => {
   const { fromDate, toDate, page, limitPerPage } = req.query;
   try {
@@ -81,10 +92,10 @@ app.post('/v1/invoice/:invoiceId/validate', authenticate, (req: Request, res: Re
   }
 });
 
-app.post('/v1/invoice/:invoice_id/final', authenticate, (req: Request, res: Response) => {
-  const { invoice_id } = req.params;
+app.post('/v1/invoice/:invoiceId/final', authenticate, (req: Request, res: Response) => {
+  const { invoiceId } = req.params;
   try {
-    const result = finaliseInvoice(invoice_id);
+    const result = finaliseInvoice(invoiceId);
     res.status(200).json(result);
   } catch (err) {
     handleError(res, err);
