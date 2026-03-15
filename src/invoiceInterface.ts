@@ -97,6 +97,11 @@ export interface FinaliseInvoiceResponse {
   finalised_at: string;
 }
 
+export interface DeleteInvoiceResponse {
+  invoice_id: string;
+  message: string;
+}
+
 export interface ErrorObject {
   error: string;
   message: string;

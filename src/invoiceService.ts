@@ -1,5 +1,5 @@
 import { ServerError } from './errors';
-import { InvoiceListFilters, Invoice, ValidationError, ValidateInvoiceResponse, FinaliseInvoiceResponse } from './invoiceInterface';
+import { InvoiceListFilters, Invoice, ValidationError, ValidateInvoiceResponse, FinaliseInvoiceResponse, DeleteInvoiceResponse } from './invoiceInterface';
 import { validateName, validateABN, validateDates, validateItems, validateTotalPayable, validatePaymentDetails } from './validateInvoice';
 
 const invoices: Invoice[] = [];
@@ -136,5 +136,19 @@ export function finaliseInvoice(invoice_id: string): FinaliseInvoiceResponse {
     status: invoice.status,
     ubl_xml: invoice.ubl_xml as string,
     finalised_at: invoice.finalised_at
+  };
+}
+
+export function deleteInvoice(invoice_id: string): DeleteInvoiceResponse {
+  const invoice = invoices.find(inv => inv.invoice_id === invoice_id);
+  if (!invoice) {
+    throw new ServerError('NOT_FOUND', 'The provided invoice ID does not refer to an existing invoice.');
+  }
+
+  const invoiceIndex = invoices.findIndex(i => i.invoice_id === invoice_id);
+  invoices.splice(invoiceIndex, 1);
+  return {
+    invoice_id,
+    message: 'Invoice successfully deleted'
   };
 }
