@@ -6,7 +6,7 @@ import {
   ValidateInvoiceResponse,
   FinaliseInvoiceResponse,
   PaymentDetails,
-  InvoiceItem
+  InvoiceItem,
   DeleteInvoiceResponse
 } from './invoiceInterface';
 
