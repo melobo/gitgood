@@ -62,10 +62,10 @@ app.get('/v1/invoice', authenticate, (req: Request, res: Response) => {
   const { from_date, to_date, page, limit_per_page } = req.query;
   try {
     const result = listInvoice({
-      from_date: from_date as string | undefined,
-      to_date: to_date as string | undefined,
+      fromDate: from_date as string | undefined,
+      toDate: to_date as string | undefined,
       page: page !== undefined ? Number(page) : undefined,
-      limit_per_page: limit_per_page !== undefined ? Number(limit_per_page) : undefined,
+      limitPerPage: limit_per_page !== undefined ? Number(limit_per_page) : undefined,
     });
     res.status(200).json(result);
   } catch (err) {
