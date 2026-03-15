@@ -1,5 +1,5 @@
 import { ServerError } from './errors';
-import { InvoiceListFilters, Invoice, ValidationError, ValidateInvoiceResponse } from './invoiceInterface';
+import { InvoiceListFilters, Invoice, ValidationError, ValidateInvoiceResponse, FinaliseInvoiceResponse } from './invoiceInterface';
 import { validateName, validateABN, validateDates, validateItems, validateTotalPayable, validatePaymentDetails } from './validateInvoice';
 
 const invoices: Invoice[] = [];
@@ -116,5 +116,25 @@ export function validateInvoice(invoice_id: string): ValidateInvoiceResponse {
     valid: errors.length === 0,
     errors,
     status: invoice.status
+  };
+}
+
+export function finaliseInvoice(invoice_id: string): FinaliseInvoiceResponse {
+  const invoice = invoices.find(inv => inv.invoice_id === invoice_id);
+  if (!invoice) {
+    throw new ServerError('NOT_FOUND', 'The provided invoice ID does not refer to an existing invoice.');
+  }
+  if (invoice.status === 'draft' || invoice.status === 'converted') {
+    throw new ServerError('CONFLICT', 'The invoice corresponding to the provided invoice ID has not yet been validated.');
+  }
+
+  invoice.status = 'finalised';
+  invoice.finalised_at = new Date().toLocaleString();
+
+  return {
+    invoice_id,
+    status: invoice.status,
+    ubl_xml: invoice.ubl_xml as string,
+    finalised_at: invoice.finalised_at
   };
 }
