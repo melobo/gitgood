@@ -9,7 +9,7 @@ import { handleError } from './errors';
 import { errorHandler } from './errorHandler';
 import docs from './docsMiddleware';
 import healthRouter from './healthRoute';
-import { listInvoice, getInvoice, validateInvoice, finaliseInvoice, deleteInvoice, convertInvoice } from './invoiceService';
+import { listInvoice, getInvoice, validateInvoice, finaliseInvoice, convertInvoice } from './invoiceService';
 import { authenticate } from './auth';
 
 const app = express();
