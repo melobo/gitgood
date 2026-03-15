@@ -29,7 +29,6 @@ app.use(morgan('dev'));
 
 if (config.showDocs) {
   app.use('/docs', docs());
-  app.get('/', (req, res) => res.redirect('/docs'));
 } else {
   app.get('/', (req, res) => {
     res.send('<h1>GitGood Invoice API</h1>');
