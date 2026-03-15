@@ -1,6 +1,13 @@
 // import request from 'sync-request-curl';
-import { Invoice, /* InvoiceStatus, */ HttpReturnObject } from '../invoiceInterface';
-import { /* requestClear, */ requestCreateInvoice, requestGetInvoice, requestUpdateInvoice } from '../httpWrappers';
+import {
+  Invoice,
+  HttpReturnObject
+} from '../invoiceInterface';
+import {
+  requestCreateInvoice,
+  requestGetInvoice,
+  requestUpdateInvoice
+} from '../httpWrappers';
 
 // creating a valid draft invoice
 function createInvoice(): string {
