@@ -7,6 +7,7 @@ import {
   FinaliseInvoiceResponse,
   PaymentDetails,
   InvoiceItem
+  DeleteInvoiceResponse
 } from './invoiceInterface';
 
 import {
@@ -133,8 +134,8 @@ export function validateInvoice(invoiceId: string): ValidateInvoiceResponse {
   };
 }
 
-export function finaliseInvoice(invoice_id: string): FinaliseInvoiceResponse {
-  const invoice = invoices.find(inv => inv.invoiceId === invoice_id);
+export function finaliseInvoice(invoiceId: string): FinaliseInvoiceResponse {
+  const invoice = invoices.find(inv => inv.invoiceId === invoiceId);
   if (!invoice) {
     throw new ServerError('NOT_FOUND', 'The provided in voice ID does not refer to an existing invoice.');
   }
@@ -146,10 +147,10 @@ export function finaliseInvoice(invoice_id: string): FinaliseInvoiceResponse {
   invoice.finalisedAt = new Date().toLocaleString();
 
   return {
-    invoice_id,
+    invoiceId,
     status: invoice.status,
-    ubl_xml: invoice.ublXml as string,
-    finalised_at: invoice.finalisedAt
+    ublXml: invoice.ublXml as string,
+    finalisedAt: invoice.finalisedAt
   };
 }
 
@@ -355,5 +356,21 @@ export function updateInvoice(invoice_id: string, updates: {
     invoiceId: invoice.invoiceId,
     status: invoice.status,
     updatedAt: invoice.updatedAt,
+  };
+}
+  
+export function deleteInvoice(invoiceId: string): DeleteInvoiceResponse {
+  const invoice = invoices.find(inv => inv.invoiceId === invoiceId);
+
+  if (!invoice) {
+    throw new ServerError('NOT_FOUND', 'The provided invoice ID does not refer to an existing invoice.');
+  }
+
+  const invoiceIndex = invoices.findIndex(i => i.invoiceId === invoiceId);
+  invoices.splice(invoiceIndex, 1);
+
+  return {
+    invoiceId,
+    message: 'Invoice successfully deleted'
   };
 }

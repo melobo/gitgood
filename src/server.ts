@@ -16,9 +16,9 @@ import {
   getInvoice,
   updateInvoice,
   // downloadInvoice,
-  // deleteInvoice,
   validateInvoice,
   finaliseInvoice,
+  deleteInvoice,
 } from './invoiceService';
 import { authenticate } from './auth';
 
@@ -101,15 +101,15 @@ app.post('/v1/invoice/:invoiceId/final', authenticate, (req: Request, res: Respo
   }
 });
 
-// app.delete('/v1/invoice/:invoice_id', authenticate, (req: Request, res: Response) => {
-//   const { invoice_id } = req.params;
-//   try {
-//     const result = deleteInvoice(invoice_id);
-//     res.status(200).json(result);
-//   } catch (err) {
-//     handleError(res, err);
-//   }
-// });
+app.delete('/v1/invoice/:invoice_id', authenticate, (req: Request, res: Response) => {
+  const { invoiceId } = req.params;
+  try {
+    const result = deleteInvoice(invoiceId);
+    res.status(200).json(result);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
 
 app.post('/v1/invoice/:invoiceId/convert', authenticate, (req: Request, res: Response) => {
   const { invoiceId } = req.params;
