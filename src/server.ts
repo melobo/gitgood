@@ -9,7 +9,7 @@ import { handleError } from './errors';
 import { errorHandler } from './errorHandler';
 import docs from './docsMiddleware';
 import healthRouter from './healthRoute';
-import { listInvoice, getInvoice, validateInvoice, finaliseInvoice } from './invoiceService';
+import { listInvoice, getInvoice, validateInvoice, finaliseInvoice, deleteInvoice } from './invoiceService';
 import { authenticate } from './auth';
 
 const app = express();
@@ -85,6 +85,16 @@ app.post('/v1/invoice/:invoice_id/final', authenticate, (req: Request, res: Resp
   const { invoice_id } = req.params;
   try {
     const result = finaliseInvoice(invoice_id);
+    res.status(200).json(result);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+app.delete('/v1/invoice/:invoice_id', authenticate, (req: Request, res: Response) => {
+  const { invoice_id } = req.params;
+  try {
+    const result = deleteInvoice(invoice_id);
     res.status(200).json(result);
   } catch (err) {
     handleError(res, err);
