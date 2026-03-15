@@ -11,7 +11,7 @@ import docs from './docsMiddleware';
 import healthRouter from './healthRoute';
 import {
   // createInvoice,
-  // convertInvoice,
+  convertInvoice,
   listInvoice,
   getInvoice,
   // updateInvoice,
@@ -110,6 +110,16 @@ app.post('/v1/invoice/:invoiceId/final', authenticate, (req: Request, res: Respo
 //     handleError(res, err);
 //   }
 // });
+
+app.post('/v1/invoice/:invoice_id/convert', authenticate, (req: Request, res: Response) => {
+  const { invoice_id } = req.params;
+  try {
+    const result = convertInvoice(invoice_id);
+    res.status(200).json(result);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
 
 // ========================================= //
 
