@@ -1,55 +1,66 @@
 import { ServerError } from './errors';
-import { InvoiceListFilters, Invoice, ValidationError, ValidateInvoiceResponse, FinaliseInvoiceResponse } from './invoiceInterface';
-import { validateName, validateABN, validateDates, validateItems, validateTotalPayable, validatePaymentDetails } from './validateInvoice';
+import {
+  InvoiceListFilters,
+  Invoice,
+  ValidationError,
+  ValidateInvoiceResponse } from './invoiceInterface';
+import {
+  validateName,
+  validateABN,
+  validateDates,
+  validateItems,
+  validateTotalPayable,
+  validatePaymentDetails
+} from './validateInvoice';
 
 const invoices: Invoice[] = [];
 
 export function listInvoice(filters: InvoiceListFilters): {
-  invoices: Pick<Invoice, 'invoice_id' | 'buyer_name' | 'status' | 'created_at'>[];
+  invoices: Pick<Invoice, 'invoiceId' | 'buyerName' | 'status' | 'createdAt'>[];
   total: number;
   page: number;
 } {
-  const { from_date, to_date, page = 1, limit_per_page = 20 } = filters;
+  const { fromDate, toDate, page = 1, limitPerPage = 20 } = filters;
 
-  if (!Number.isInteger(page) || !Number.isInteger(limit_per_page)) {
+  if (!Number.isInteger(page) || !Number.isInteger(limitPerPage)) {
     throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
   }
-  if (from_date && isNaN(Date.parse(from_date))) {
+  if (fromDate && isNaN(Date.parse(fromDate))) {
     throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
   }
-  if (to_date && isNaN(Date.parse(to_date))) {
+  if (toDate && isNaN(Date.parse(toDate))) {
     throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
   }
-  if (from_date && to_date && new Date(from_date) > new Date(to_date)) {
+  if (fromDate && toDate && new Date(fromDate) > new Date(toDate)) {
     throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
   }
 
   let result = [...invoices];
 
-  if (from_date) {
-    result = result.filter(inv => new Date(inv.created_at) >= new Date(from_date));
+  if (fromDate) {
+    result = result.filter(inv => new Date(inv.createdAt) >= new Date(fromDate));
   }
-  if (to_date) {
-    const end = new Date(to_date);
+  if (toDate) {
+    const end = new Date(toDate);
     end.setHours(23, 59, 59, 999);
-    result = result.filter(inv => new Date(inv.created_at) <= end);
+    result = result.filter(inv => new Date(inv.createdAt) <= end);
   }
 
   const total = result.length;
-  const offset = (page - 1) * limit_per_page;
-  const paginated = result.slice(offset, offset + limit_per_page);
+  const offset = (page - 1) * limitPerPage;
+  const paginated = result.slice(offset, offset + limitPerPage);
 
   return {
-    invoices: paginated.map(({ invoice_id, buyer_name, status, created_at }) => ({
-      invoice_id, buyer_name, status, created_at,
+    invoices: paginated.map(({ invoiceId, buyerName, status, createdAt }) => ({
+      invoiceId, buyerName, status, createdAt,
     })),
     total,
     page,
   };
 }
 
-export function getInvoice(invoice_id: string): Invoice {
-  const invoice = invoices.find(inv => inv.invoice_id === invoice_id);
+export function getInvoice(invoiceId: string): Invoice {
+  const invoice = invoices.find(inv => inv.invoiceId === invoiceId);
 
   if (!invoice) {
     throw new ServerError('NOT_FOUND', 'The provided invoice ID does not refer to an existing invoice.');
@@ -58,53 +69,49 @@ export function getInvoice(invoice_id: string): Invoice {
   return invoice;
 }
 
-export function validateInvoice(invoice_id: string): ValidateInvoiceResponse {
-  const invoice = invoices.find(inv => inv.invoice_id === invoice_id);
+export function validateInvoice(invoiceId: string): ValidateInvoiceResponse {
+  const invoice = invoices.find(inv => inv.invoiceId === invoiceId);
+
   if (!invoice) {
     throw new ServerError('NOT_FOUND', 'The provided invoice ID does not refer to an existing invoice.');
   }
   if (invoice.status === 'draft') {
-    throw new ServerError('CONFLICT', 'The invoice corresponding to the provided invoice ID has not yet been converted.');
+    throw new ServerError('INVOICE_NOT_CONVERTED', 'The invoice corresponding to the provided invoice ID has not yet been converted.');
   }
 
   const errors: ValidationError[] = [];
+
   try {
-    validateName(invoice.buyer_name, 'BUYER');
-    validateABN(invoice.buyer_abn, 'BUYER');
+    validateName(invoice.buyerName, 'BUYER');
+    validateABN(invoice.buyerAbn, 'BUYER');
   } catch (err) {
-    if (err instanceof ServerError) {
-      errors.push({ field: 'buyer', message: err.message });
-    }
+    if (err instanceof ServerError) errors.push({ field: 'buyer', message: err.message });
   }
+
   try {
-    validateName(invoice.buyer_name, 'SUPPLIER');
-    validateABN(invoice.buyer_abn, 'SUPPLIER');
+    validateName(invoice.supplierName, 'SUPPLIER');
+    validateABN(invoice.supplierAbn, 'SUPPLIER');
   } catch (err) {
-    if (err instanceof ServerError) {
-      errors.push({ field: 'supplier', message: err.message });
-    }
+    if (err instanceof ServerError) errors.push({ field: 'supplier', message: err.message });
   }
+
   try {
-    validateDates(invoice.issue_date, invoice.payment_due_date);
+    validateDates(invoice.issueDate, invoice.paymentDueDate);
   } catch (err) {
-    if (err instanceof ServerError) {
-      errors.push({ field: 'dates', message: err.message });
-    }
+    if (err instanceof ServerError) errors.push({ field: 'dates', message: err.message });
   }
+
   try {
-    const { sum } = validateItems(invoice.items_list);
-    validateTotalPayable(sum, invoice.tax_rate, invoice.tax_amount, invoice.total_payable);
+    const { sum } = validateItems(invoice.itemsList);
+    validateTotalPayable(sum, invoice.taxRate, invoice.taxAmount, invoice.totalPayable);
   } catch (err) {
-    if (err instanceof ServerError) {
-      errors.push({ field: 'items_totals', message: err.message });
-    }
+    if (err instanceof ServerError) errors.push({ field: 'itemsTotals', message: err.message });
   }
+
   try {
-    validatePaymentDetails(invoice.payment_details);
+    validatePaymentDetails(invoice.paymentDetails);
   } catch (err) {
-    if (err instanceof ServerError) {
-      errors.push({ field: 'payment_details', message: err.message });
-    }
+    if (err instanceof ServerError) errors.push({ field: 'paymentDetails', message: err.message });
   }
 
   if (errors.length === 0 && invoice.status !== 'finalised') {
@@ -112,10 +119,10 @@ export function validateInvoice(invoice_id: string): ValidateInvoiceResponse {
   }
 
   return {
-    invoice_id,
+    invoiceId,
     valid: errors.length === 0,
     errors,
-    status: invoice.status
+    status: invoice.status,
   };
 }
 

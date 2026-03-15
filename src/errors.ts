@@ -41,6 +41,11 @@ export function errorToStatus(e: string): number {
     case 'INSUFFICIENT_DATA':
       return 422;
     case 'CONFLICT':
+    case 'ALREADY_FINALISED':
+    case 'ALREADY_CONVERTED':
+    case 'INVOICE_NOT_CONVERTED':
+    case 'INVOICE_NOT_VALIDATED':
+    case 'INVOICE_NOT_READY':
       return 409;
     case 'INTERNAL_SERVER_ERROR':
       return 500;

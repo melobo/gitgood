@@ -13,20 +13,20 @@ const BAD_REQUEST_CODE = 400;
 
 const validItems: InvoiceItem[] = [
   {
-    item_name: 'Consulting Services',
+    itemName: 'Consulting Services',
     quantity: 2,
-    unit_price: 500.00,
-    unit_code: 'HUR',
-    total_price: 1000.00,
+    unitPrice: 500.00,
+    unitCode: 'HUR',
+    totalPrice: 1000.00,
   },
 ];
 
 const validPayment: PaymentDetails[] = [
   {
-    bank_name: 'ANZ',
-    account_number: '123456789',
-    bsb_abn_number: '012-345',
-    payment_method: 'bank transfer',
+    bankName: 'ANZ',
+    accountNumber: '123456789',
+    bsbAbnNumber: '012-345',
+    paymentMethod: 'bank transfer',
   },
 ];
 
@@ -108,18 +108,18 @@ describe('HTTP tests: POST /v1/invoice', () => {
     test('4) Invoice with multiple line items', () => {
       const multiItems: InvoiceItem[] = [
         {
-          item_name: 'Widget A',
+          itemName: 'Widget A',
           quantity: 10,
-          unit_price: 25.00,
-          unit_code: 'EA',
-          total_price: 250.00,
+          unitPrice: 25.00,
+          unitCode: 'EA',
+          totalPrice: 250.00,
         },
         {
-          item_name: 'Widget B',
+          itemName: 'Widget B',
           quantity: 5,
-          unit_price: 100.00,
-          unit_code: 'EA',
-          total_price: 500.00,
+          unitPrice: 100.00,
+          unitCode: 'EA',
+          totalPrice: 500.00,
         },
       ];
       const res = requestCreateInvoice(
@@ -385,7 +385,7 @@ describe('HTTP tests: POST /v1/invoice', () => {
 
     test('13) Item with negative unit_price — BAD REQUEST', () => {
       const badItems: InvoiceItem[] = [
-        { ...validItems[0], unit_price: -50, total_price: -100 },
+        { ...validItems[0], unitPrice: -50, totalPrice: -100 },
       ];
       const res = requestCreateInvoice(
         'Acme Corp',
@@ -407,7 +407,7 @@ describe('HTTP tests: POST /v1/invoice', () => {
 
     test('14) Item with zero quantity — BAD REQUEST', () => {
       const badItems: InvoiceItem[] = [
-        { ...validItems[0], quantity: 0, total_price: 0 },
+        { ...validItems[0], quantity: 0, totalPrice: 0 },
       ];
       const res = requestCreateInvoice(
         'Acme Corp',

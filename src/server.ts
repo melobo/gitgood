@@ -4,10 +4,10 @@ import express, { json, Request, Response } from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
 import config from './config';
-import { echo, clear } from '../src/debug';
-import { handleError } from '../src/errors';
+import { echo, clear } from './debug';
+import { handleError } from './errors';
 import { errorHandler } from './errorHandler';
-import docs from '../src/docsMiddleware';
+import docs from './docsMiddleware';
 import healthRouter from './healthRoute';
 import { listInvoice, getInvoice, validateInvoice, finaliseInvoice } from './invoiceService';
 import { authenticate } from './auth';
@@ -18,7 +18,7 @@ app.use(cors());
 app.use(morgan('dev'));
 
 if (config.showDocs) {
-  app.use(docs());
+  app.use('/docs', docs());
 } else {
   app.get('/', (req, res) => {
     res.send('<h1>GitGood Invoice API</h1>');
@@ -49,13 +49,13 @@ app.use('/v1', healthRouter);
 // ===== ADD YOUR ENDPOINTS BELOW HERE ===== //
 
 app.get('/v1/invoice', authenticate, (req: Request, res: Response) => {
-  const { from_date, to_date, page, limit_per_page } = req.query;
+  const { fromDate, toDate, page, limitPerPage } = req.query;
   try {
     const result = listInvoice({
-      from_date: from_date as string | undefined,
-      to_date: to_date as string | undefined,
+      fromDate: fromDate as string | undefined,
+      toDate: toDate as string | undefined,
       page: page !== undefined ? Number(page) : undefined,
-      limit_per_page: limit_per_page !== undefined ? Number(limit_per_page) : undefined,
+      limitPerPage: limitPerPage !== undefined ? Number(limitPerPage) : undefined,
     });
     res.status(200).json(result);
   } catch (err) {
@@ -63,20 +63,18 @@ app.get('/v1/invoice', authenticate, (req: Request, res: Response) => {
   }
 });
 
-app.get('/v1/invoice/:invoice_id', authenticate, (req: Request, res: Response) => {
-  const { invoice_id } = req.params;
+app.get('/v1/invoice/:invoiceId', authenticate, (req: Request, res: Response) => {
   try {
-    const result = getInvoice(invoice_id);
+    const result = getInvoice(req.params.invoiceId);
     res.status(200).json(result);
   } catch (err) {
     handleError(res, err);
   }
 });
 
-app.post('/v1/invoice/:invoice_id/validate', (req: Request, res: Response) => {
-  const { invoice_id } = req.params;
+app.post('/v1/invoice/:invoiceId/validate', authenticate, (req: Request, res: Response) => {
   try {
-    const result = validateInvoice(invoice_id);
+    const result = validateInvoice(req.params.invoiceId);
     res.status(200).json(result);
   } catch (err) {
     handleError(res, err);

@@ -23,33 +23,33 @@ components:
   schemas:
     Item:
       type: object
-      required: [item_name, quantity, unit_price, unit_code, total_price]
+      required: [itemName, quantity, unitPrice, unitCode, totalPrice]
       properties:
-        item_name:
+        itemName:
           type: string
         quantity:
           type: integer
-        unit_price:
+        unitPrice:
           type: number
-        unit_code:
+        unitCode:
           type: string
           description: "(example: kg)"
-        total_price:
+        totalPrice:
           type: number
 
     PaymentDetails:
       type: object
-      required: [bank_name, account_number, bsb_abn_number, payment_method]
+      required: [bankName, accountNumber, bsbAbnNumber, paymentMethod]
       properties:
-        bank_name:
+        bankName:
           type: string
-        account_number:
+        accountNumber:
           type: string
-        bsb_abn_number:
+        bsbAbnNumber:
           type: string
-        payment_method:
+        paymentMethod:
           type: string
-          descripton: "(example: bank_transfer)"
+          description: "(example: bankTransfer)"
 
     Error:
       type: object
@@ -62,7 +62,7 @@ components:
           example: "Unable to complete"
 
 paths:
-  /health:
+  /v1/health:
     get:
       summary: Health check
       description: Returns the current status of the service. No authentication required.
@@ -95,26 +95,8 @@ paths:
                   reason:
                     type: string
                     example: "Database connection failed"
-        '404':
-          description: Invalid url
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              example:
-                  error: "INVALID_REQUEST"
-                  message: Missing or Invalid Fields
-        '405':
-          description: Invalid Method
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              example:
-                  error: "METHOD_NOT_ALLOWED"
-                  message: Not allowed to call this method
 
-  /invoice:
+  /v1/invoice:
     post:
       summary: Create a new invoice
       description: Creates a new invoice from manually entered data in draft status.
@@ -126,42 +108,42 @@ paths:
             schema:
               type: object
               required:
-                - buyer_name
-                - buyer_abn
-                - supplier_name
-                - supplier_abn
-                - issue_date
-                - payment_due_date
-                - items_list
-                - tax_rate
-                - payment_details
+                - buyerName
+                - buyerAbn
+                - supplierName
+                - supplierAbn
+                - issueDate
+                - paymentDueDate
+                - itemsList
+                - taxRate
+                - paymentDetails
               properties:
-                buyer_name:
+                buyerName:
                   type: string
-                buyer_abn:
+                buyerAbn:
                   type: string
-                supplier_name:
+                supplierName:
                   type: string
-                supplier_abn:
+                supplierAbn:
                   type: string
-                issue_date:
-                  type: string
-                  format: date
-                payment_due_date:
+                issueDate:
                   type: string
                   format: date
-                items_list:
+                paymentDueDate:
+                  type: string
+                  format: date
+                itemsList:
                   type: array
                   items:
                     $ref: '#/components/schemas/Item'
-                tax_rate:
+                taxRate:
                   type: number
                   description: "(example: 0.1)"
-                payment_details:
+                paymentDetails:
                   type: array
                   items:
                     $ref: '#/components/schemas/PaymentDetails'
-                additional_notes:
+                additionalNotes:
                   type: string
       responses:
         '201':
@@ -171,12 +153,12 @@ paths:
               schema:
                 type: object
                 properties:
-                  invoice_id:
+                  invoiceId:
                     type: string
                   status:
                     type: string
                     example: draft
-                  created_at:
+                  createdAt:
                     type: string
                     format: date-time
         '400':
@@ -204,12 +186,12 @@ paths:
       tags: [Invoice Management]
       parameters:
         - in: query
-          name: from_date
+          name: fromDate
           schema:
             type: string
             format: date
         - in: query
-          name: to_date
+          name: toDate
           schema:
             type: string
             format: date
@@ -219,7 +201,7 @@ paths:
             type: integer
             default: 1
         - in: query
-          name: limit_per_page
+          name: limitPerPage
           schema:
             type: integer
             default: 20
@@ -249,13 +231,13 @@ paths:
                   error: "INVALID_REQUEST"
                   message: Missing or Invalid Fields
 
-  /invoice/{invoice_id}:
+  /v1/invoice/{invoiceId}:
     get:
       summary: Get a specific invoice
       tags: [Invoice Management]
       parameters:
         - in: path
-          name: invoice_id
+          name: invoiceId
           required: true
           schema:
             type: string
@@ -267,37 +249,37 @@ paths:
               schema:
                 type: object
                 properties:
-                  invoice_id:
+                  invoiceId:
                     type: string
                   status:
                     type: string
                     example: draft
-                  buyer_name:
+                  buyerName:
                     type: string
-                  supplier_name:
-                    typw: string
-                  issue_date:
+                  supplierName:
                     type: string
-                    format: date
-                  payment_due_date:
+                  issueDate:
                     type: string
                     format: date
-                  items_list:
+                  paymentDueDate:
+                    type: string
+                    format: date
+                  itemsList:
                     type: array
                     items:
-                     type: object
-                  tax_rate: 
+                      type: object
+                  taxRate: 
                     type: number
-                  tax_amount: 
+                  taxAmount: 
                     type: number
-                  tax_payable:
+                  totalPayable:
                     type: number
-                  ubl_xml: 
+                  ublXml: 
                     type: string
-                  created_at:
+                  createdAt:
                     type: string
                     format: date-time
-                  updated_at: 
+                  updatedAt: 
                     type: string
                     format: date-time
 
@@ -327,7 +309,7 @@ paths:
       tags: [Invoice Management]
       parameters:
         - in: path
-          name: invoice_id
+          name: invoiceId
           required: true
           schema:
             type: string
@@ -337,31 +319,31 @@ paths:
             schema:
               type: object
               properties:
-                buyer_name:
+                buyerName:
                   type: string
-                buyer_abn:
+                buyerAbn:
                   type: string
-                supplier_name:
+                supplierName:
                   type: string
-                supplier_abn:
+                supplierAbn:
                   type: string
-                issue_date:
-                  type: string
-                  format: date
-                payment_due_date:
+                issueDate:
                   type: string
                   format: date
-                items_list:
+                paymentDueDate:
+                  type: string
+                  format: date
+                itemsList:
                   type: array
                   items:
                     $ref: '#/components/schemas/Item'
-                tax_rate:
+                taxRate:
                   type: number
-                payment_details:
+                paymentDetails:
                   type: array
                   items:
                     $ref: '#/components/schemas/PaymentDetails'
-                additional_notes:
+                additionalNotes:
                   type: string
       responses:
         '200':
@@ -371,12 +353,12 @@ paths:
               schema:
                 type: object
                 properties:
-                  invoice_id:
+                  invoiceId:
                     type: string
                   status:
                     type: string
                     example: draft
-                  updated_at:
+                  updatedAt:
                     type: string
                     format: date
         '400':
@@ -416,7 +398,7 @@ paths:
       tags: [Invoice Management]
       parameters:
         - in: path
-          name: invoice_id
+          name: invoiceId
           required: true
           schema:
             type: string
@@ -428,20 +410,11 @@ paths:
               schema:
                 type: object
                 properties:
-                  invoice_id:
+                  invoiceId:
                     type: string
                   message:
                     type: string 
                     example: Invoice successfully deleted
-        '400':
-          description: Invalid parameter value
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              example:
-                  error: "INVALID_REQUEST"
-                  message: Missing or Invalid Fields
         '404':
           description: Invoice not found
           content:
@@ -452,13 +425,13 @@ paths:
                   error: "NOT_FOUND"
                   message: Invoice not found
 
-  /invoice/{invoice_id}/convert:
+  /v1/invoice/{invoiceId}/convert:
     post:
       summary: Convert invoice to UBL XML
       tags: [Invoice Conversion]
       parameters:
         - in: path
-          name: invoice_id
+          name: invoiceId
           required: true
           schema:
             type: string
@@ -470,9 +443,9 @@ paths:
               schema:
                 type: object
                 properties:
-                  invoice_id:
+                  invoiceId:
                     type: string
-                  ubl_xml:
+                  ublXml:
                     type: string 
                   status:
                     type: string 
@@ -505,14 +478,14 @@ paths:
                   error: "INSUFFICIENT_DATA"
                   message: Data is Insufficient for conversion
 
-  /invoice/{invoice_id}/validate:
+  /v1/invoice/{invoiceId}/validate:
     post:
       summary: Validate an invoice
       description: Validate an invoice converted to UBL XML format
       tags: [Invoice Validation]
       parameters:
         - in: path
-          name: invoice_id
+          name: invoiceId
           required: true
           schema:
             type: string
@@ -524,14 +497,14 @@ paths:
               schema:
                 type: object
                 properties:
-                  invoice_id:
+                  invoiceId:
                     type: string
                   valid:
                     type: boolean 
                   errors:
                     type: array
                     items:
-                     type: object
+                      type: object
                     description: "empty if valid"
                   status:
                     type: string
@@ -556,14 +529,14 @@ paths:
                   error: "INVOICE_NOT_CONVERTED"
                   message: Invoice not yet converted
 
-  /invoice/{invoice_id}/final:
+  /v1/invoice/{invoiceId}/final:
     post:
       summary: Finalise a validated invoice
       description: Finalise invoice to be ready to download/email/etc
       tags: [Invoice Finalisation]
       parameters:
         - in: path
-          name: invoice_id
+          name: invoiceId
           required: true
           schema:
             type: string
@@ -575,14 +548,14 @@ paths:
               schema:
                 type: object
                 properties:
-                  invoice_id:
+                  invoiceId:
                     type: string
-                  ubl_xml:
+                  ublXml:
                     type: string 
                   status:
                     type: string 
                     example: "finalised"
-                  finalised_at:
+                  finalisedAt:
                     type: string
                     format: date
         '404':
@@ -604,14 +577,14 @@ paths:
                   error: "INVOICE_NOT_VALIDATED"
                   message: Invoice not yet validated
 
-  /invoice/{invoice_id}/download:
+  /v1/invoice/{invoiceId}/download:
     get:
       summary: Download invoice
       description: Download a finalised invoice
       tags: [Invoice Download]
       parameters:
         - in: path
-          name: invoice_id
+          name: invoiceId
           required: true
           schema:
             type: string
