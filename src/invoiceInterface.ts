@@ -84,14 +84,14 @@ export interface ValidateInvoiceResponse {
 }
 
 export interface FinaliseInvoiceResponse {
-  invoice_id: string;
+  invoiceId: string;
   status: InvoiceStatus;
-  ubl_xml: string;
-  finalised_at: string;
+  ublXml: string;
+  finalisedAt: string;
 }
 
 export interface DeleteInvoiceResponse {
-  invoice_id: string;
+  invoiceId: string;
   message: string;
 }
 
