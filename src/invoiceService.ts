@@ -5,8 +5,11 @@ import {
   ValidationError,
   ValidateInvoiceResponse,
   FinaliseInvoiceResponse,
+  PaymentDetails,
+  InvoiceItem
   DeleteInvoiceResponse
 } from './invoiceInterface';
+
 import {
   validateName,
   validateABN,
@@ -271,14 +274,101 @@ export function convertInvoice(invoice_id: string) {
   };
 }
 
+export function updateInvoice(invoice_id: string, updates: {
+  buyerName?: string;
+  buyerAbn?: string;
+  supplierName?: string;
+  supplierAbn?: string;
+  issueDate?: string;
+  paymentDueDate?: string;
+  itemsList?: InvoiceItem[];
+  taxRate?: number;
+  paymentDetails?: PaymentDetails[];
+  additionalNotes?: string;
+}): { invoiceId: string; status: string; updatedAt: string } {
+  // find the invoice, throw error if it doesn't exist
+  const invoice = invoices.find(inv => inv.invoiceId === invoice_id);
+
+  if (!invoice) {
+    throw new ServerError('NOT_FOUND', 'The provided invoice ID does not refer to an existing invoice.');
+  }
+
+  // update buyer name if provided
+  if (updates.buyerName !== undefined) {
+    validateName(updates.buyerName, 'BUYER');
+    invoice.buyerName = updates.buyerName;
+  }
+
+  // update buyer abn if provided
+  if (updates.buyerAbn !== undefined) {
+    validateABN(updates.buyerAbn, 'BUYER');
+    invoice.buyerAbn = updates.buyerAbn;
+  }
+
+  // update supplier name if provided
+  if (updates.supplierName !== undefined) {
+    validateName(updates.supplierName, 'SUPPLIER');
+    invoice.supplierName = updates.supplierName;
+  }
+
+  // update supplier abn if provided
+  if (updates.supplierAbn !== undefined) {
+    validateABN(updates.supplierAbn, 'SUPPLIER');
+    invoice.supplierAbn = updates.supplierAbn;
+  }
+
+  // need to validate dates together in case both are being updated at the same time
+  if (updates.issueDate !== undefined || updates.paymentDueDate !== undefined) {
+    const newIssueDate = updates.issueDate ?? invoice.issueDate;
+    const newPaymentDueDate = updates.paymentDueDate ?? invoice.paymentDueDate;
+    validateDates(newIssueDate, newPaymentDueDate);
+    invoice.issueDate = newIssueDate;
+    invoice.paymentDueDate = newPaymentDueDate;
+  }
+
+  // update payment details if provided
+  if (updates.paymentDetails !== undefined) {
+    validatePaymentDetails(updates.paymentDetails);
+    invoice.paymentDetails = updates.paymentDetails;
+  }
+
+  // update additional notes if provided
+  if (updates.additionalNotes !== undefined) {
+    invoice.additionalNotes = updates.additionalNotes;
+  }
+
+  // recalculate tax and total if items or tax rate changed
+  if (updates.itemsList !== undefined || updates.taxRate !== undefined) {
+    const newItems = updates.itemsList ?? invoice.itemsList;
+    const newTaxRate = updates.taxRate ?? invoice.taxRate;
+    const { sum } = validateItems(newItems);
+    const newTaxAmount = sum * newTaxRate;
+    const newTotalPayable = sum + newTaxAmount;
+    invoice.itemsList = newItems;
+    invoice.taxRate = newTaxRate;
+    invoice.taxAmount = newTaxAmount;
+    invoice.totalPayable = newTotalPayable;
+  }
+
+  invoice.updatedAt = new Date().toISOString();
+
+  return {
+    invoiceId: invoice.invoiceId,
+    status: invoice.status,
+    updatedAt: invoice.updatedAt,
+  };
+}
+  
 export function deleteInvoice(invoiceId: string): DeleteInvoiceResponse {
   const invoice = invoices.find(inv => inv.invoiceId === invoiceId);
+
   if (!invoice) {
     throw new ServerError('NOT_FOUND', 'The provided invoice ID does not refer to an existing invoice.');
   }
 
   const invoiceIndex = invoices.findIndex(i => i.invoiceId === invoiceId);
   invoices.splice(invoiceIndex, 1);
+
   return {
     invoiceId,
     message: 'Invoice successfully deleted'
