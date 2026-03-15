@@ -12,9 +12,10 @@ import { ServerError, handleError } from './errors';
 
 export function authenticate(req: Request, res: Response, next: NextFunction): void {
   try {
-    const apiKey = process.env.API_KEY
+    const clientKey = req.headers['x-api-key'];
+    const serverKey = config.apiKey;
 
-    if (!apiKey || apiKey !== config.apiKey) {
+    if (!clientKey || clientKey !== serverKey) {
       throw new ServerError('UNAUTHORIZED', 'Invalid or missing API key.');
     }
 

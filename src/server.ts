@@ -1,77 +1,94 @@
-/**
- * server.ts
- *
- * The entrypoint to the express app.
- * Responsible for middleware setup, route registration, and starting the server.
- */
-
 import process from 'process';
 import 'dotenv/config';
-import express, { json, Response } from 'express';
+import express, { json, Request, Response } from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
 import config from './config';
-import { echo, clear } from '../src/debug';
-import { handleError } from '../src/errors';
+import { echo, clear } from './debug';
+import { handleError } from './errors';
 import { errorHandler } from './errorHandler';
-import docs from '../src/docsMiddleware';
+import docs from './docsMiddleware';
 import healthRouter from './healthRoute';
+import { listInvoice, getInvoice, validateInvoice } from './invoiceService';
+import { authenticate } from './auth';
 
 const app = express();
 app.use(json());
 app.use(cors());
 app.use(morgan('dev'));
 
-// Swagger docs at root
 if (config.showDocs) {
-  app.use(docs());
+  app.use('/docs', docs());
 } else {
   app.get('/', (req, res) => {
     res.send('<h1>GitGood Invoice API</h1>');
   });
 }
 
-/**
- * Wraps a route handler with error handling.
- * Passes any thrown errors to handleError for structured error responses.
- */
-function withErrorHandler<T>(res: Response, callback: () => T): T | undefined {
+if (config.debug) {
+  app.get('/debug/echo', (req: Request, res: Response) => {
+    try {
+      res.json(echo(req.query.value as string));
+    } catch (err) {
+      handleError(res, err);
+    }
+  });
+
+  app.delete('/debug/clear', (req: Request, res: Response) => {
+    try {
+      clear();
+      res.json({});
+    } catch (err) {
+      handleError(res, err);
+    }
+  });
+}
+
+app.use('/v1', healthRouter);
+
+// ===== ADD YOUR ENDPOINTS BELOW HERE ===== //
+
+app.get('/v1/invoice', authenticate, (req: Request, res: Response) => {
+  const { fromDate, toDate, page, limitPerPage } = req.query;
   try {
-    return callback();
+    const result = listInvoice({
+      fromDate: fromDate as string | undefined,
+      toDate: toDate as string | undefined,
+      page: page !== undefined ? Number(page) : undefined,
+      limitPerPage: limitPerPage !== undefined ? Number(limitPerPage) : undefined,
+    });
+    res.status(200).json(result);
   } catch (err) {
     handleError(res, err);
   }
-}
+});
 
-// Debug routes — disabled in production
-if (config.debug) {
-  app.get('/debug/echo', (req, res) => {
-    withErrorHandler(res, () => {
-      res.json(echo(req.query.value as string));
-    });
-  });
+app.get('/v1/invoice/:invoiceId', authenticate, (req: Request, res: Response) => {
+  try {
+    const result = getInvoice(req.params.invoiceId);
+    res.status(200).json(result);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
 
-  app.delete('/debug/clear', (req, res) => {
-    withErrorHandler(res, () => {
-      clear();
-      res.json({});
-    });
-  });
-}
+app.post('/v1/invoice/:invoiceId/validate', authenticate, (req: Request, res: Response) => {
+  try {
+    const result = validateInvoice(req.params.invoiceId);
+    res.status(200).json(result);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
 
-// API routes
-app.use('/v1', healthRouter);
-//app.use('/v1/invoice', invoiceRouter);
+// ========================================= //
 
-// Global error handler — must be registered last
 app.use(errorHandler);
 
-// Start server
 const server = app.listen(config.port, config.ip, () => {
   console.log(`🐝 Server running at http://${config.ip}:${config.port}/`);
 });
 
-// Graceful shutdown for coverage tools
 process.on('SIGINT', () => {
   console.log('\n🌱 Shutting down gracefully...');
   server.close(() => {
