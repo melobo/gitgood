@@ -42,11 +42,11 @@ function createConvertInvoice(): string {
   return invoiceId;
 }
 
-describe('validateInvoice POST /v1/invoices/:invoice_id/validate', () => {
-  beforeEach(() => {
-    requestClear();
-  });
+beforeEach(() => {
+  requestClear();
+});
 
+describe('validateInvoice POST /v1/invoices/:invoice_id/validate', () => {
   describe('successful case', () => {
     test('returns 200 and valid for a converted invoice', () => {
       const invoiceId = createConvertInvoice();

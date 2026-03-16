@@ -5,7 +5,8 @@ import {
 import {
   requestCreateInvoice,
   requestGetInvoice,
-  requestUpdateInvoice
+  requestUpdateInvoice,
+  requestClear
 } from '../httpWrappers';
 
 // creating a valid draft invoice
@@ -38,6 +39,10 @@ function createInvoice(): string {
   );
   return res.body.invoiceId;
 }
+
+beforeEach(() => {
+  requestClear();
+});
 
 describe('PUT /v1/invoice/:invoice_id', () => {
   describe('error cases', () => {

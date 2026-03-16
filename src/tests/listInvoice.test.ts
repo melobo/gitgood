@@ -1,6 +1,10 @@
-import { requestListInvoice } from '../httpWrappers';
+import { requestListInvoice, requestClear } from '../httpWrappers';
 
 const error = { error: expect.any(String), message: expect.any(String) };
+
+beforeEach(() => {
+  requestClear();
+});
 
 describe('GET /invoice — listInvoices', () => {
   // successful case

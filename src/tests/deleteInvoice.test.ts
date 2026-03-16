@@ -2,6 +2,7 @@ import {
   requestCreateInvoice,
   requestGetInvoice,
   requestDeleteInvoice,
+  requestClear
 } from '../httpWrappers';
 
 // creating a valid draft invoice
@@ -34,6 +35,10 @@ function createInvoice(): string {
   );
   return res.body.invoiceId;
 }
+
+beforeEach(() => {
+  requestClear();
+});
 
 describe('DELETE /invoice/{invoice_id} — deleteInvoice', () => {
   describe('Successful cases', () => {

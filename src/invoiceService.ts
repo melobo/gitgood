@@ -25,7 +25,8 @@ import { ServerError } from './errors';
 import { v4 as uuidv4 } from 'uuid';
 import { XMLBuilder } from 'fast-xml-parser';
 
-const invoices: Invoice[] = [];
+import * as store from './fileStore';
+const invoices: Invoice[] = store.getAllInvoices();
 
 export function listInvoice(filters: InvoiceListFilters): {
   invoices: Pick<Invoice, 'invoiceId' | 'buyerName' | 'status' | 'createdAt'>[];
@@ -169,6 +170,7 @@ export function createInvoice(input: CreateInvoiceInput): Invoice {
   };
 
   invoices.push(invoice);
+  store.saveInvoice(invoice);
   return invoice;
 }
 
@@ -231,6 +233,8 @@ export function validateInvoice(invoiceId: string): ValidateInvoiceResponse {
     invoice.status = 'validated';
   }
 
+  store.saveInvoice(invoice);
+
   return {
     invoiceId,
     valid: errors.length === 0,
@@ -250,6 +254,8 @@ export function finaliseInvoice(invoiceId: string): FinaliseInvoiceResponse {
 
   invoice.status = 'finalised';
   invoice.finalisedAt = new Date().toLocaleString();
+
+  store.saveInvoice(invoice);
 
   return {
     invoiceId,
@@ -372,6 +378,8 @@ export function convertInvoice(invoice_id: string) {
   invoice.ublXml = ublXMLInvoice;
   invoice.updatedAt = new Date().toISOString();
 
+  store.saveInvoice(invoice);
+
   return {
     invoiceId: invoice.invoiceId,
     status: invoice.status,
@@ -483,6 +491,8 @@ export function updateInvoice(invoice_id: string, updates: {
 
   invoice.updatedAt = new Date().toISOString();
 
+  store.saveInvoice(invoice);
+
   return {
     invoiceId: invoice.invoiceId,
     status: invoice.status,
@@ -503,6 +513,8 @@ export function deleteInvoice(invoiceId: string): DeleteInvoiceResponse {
 
   const invoiceIndex = invoices.findIndex(i => i.invoiceId === invoiceId);
   invoices.splice(invoiceIndex, 1);
+
+  store.deleteInvoice(invoiceId);
 
   return {
     invoiceId,
@@ -556,4 +568,5 @@ export function downloadInvoice(invoiceId: string, format: string = 'xml'): {
 
 export function clearInvoices(): void {
   invoices.splice(0, invoices.length);
+  store.writeAll({ invoices: {} });
 }
