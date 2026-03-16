@@ -37,11 +37,11 @@ function createInvoice(): string {
   return res.body.invoiceId;
 }
 
-describe('POST /invoice/{invoice_id}/final — finaliseInvoice', () => {
-  beforeEach(() => {
-    requestClear();
-  });
+beforeEach(() => {
+  requestClear();
+});
 
+describe('POST /invoice/{invoice_id}/final — finaliseInvoice', () => {
   describe('Successful cases', () => {
     test('returns 200 and status "finalised" for a validated invoice', () => {
       const invoiceId = createInvoice();

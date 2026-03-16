@@ -4,6 +4,7 @@ import {
   requestValidateInvoice,
   requestFinaliseInvoice,
   requestDownloadInvoice,
+  requestClear
 } from '../httpWrappers';
 
 // creating a valid draft invoice
@@ -47,6 +48,10 @@ function createFinalisedInvoice(): string {
 
   return invoiceId;
 }
+
+beforeEach(() => {
+  requestClear();
+});
 
 describe('GET /invoice/{invoice_id}/download — downloadInvoice', () => {
   describe('Successful cases', () => {

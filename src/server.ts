@@ -23,6 +23,9 @@ import {
 } from './invoiceService';
 import { authenticate } from './auth';
 
+import * as store from './fileStore';
+store.init();
+
 const app = express();
 app.use(json());
 app.use(cors());

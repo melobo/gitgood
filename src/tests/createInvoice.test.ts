@@ -33,11 +33,11 @@ const validPayment: PaymentDetails[] = [
   },
 ];
 
-describe('HTTP tests: POST /v1/invoice', () => {
-  beforeEach(() => {
-    requestClear();
-  });
+beforeEach(() => {
+  requestClear();
+});
 
+describe('HTTP tests: POST /v1/invoice', () => {
   describe('Success Cases', () => {
     test('1) Successful invoice creation with all fields', () => {
       const res = requestCreateInvoice(

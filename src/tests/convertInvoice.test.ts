@@ -1,6 +1,7 @@
 import {
   requestCreateInvoice,
   requestConvertInvoice,
+  requestClear
 } from '../httpWrappers';
 
 // creating a valid draft invoice
@@ -33,6 +34,10 @@ function createInvoice(): string {
   );
   return res.body.invoiceId;
 }
+
+beforeEach(() => {
+  requestClear();
+});
 
 describe('POST /invoice/{invoice_id}/convert — convertInvoice', () => {
   describe('Successful cases', () => {
