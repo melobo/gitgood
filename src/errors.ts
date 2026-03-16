@@ -62,7 +62,7 @@ export function errorToStatus(e: string): number {
  */
 export function handleError(res: Response, err: unknown) {
   if (err instanceof ServerError) {
-    return res.status(errorToStatus(err.error)).json({ error: err.message });
+    return res.status(errorToStatus(err.error)).json({ error: err.error, message: err.message });
   }
   // Unrecognised error -- we throw it again so that the error can be handled by Express
   throw err;

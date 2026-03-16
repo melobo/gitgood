@@ -3,6 +3,7 @@ import {
   requestConvertInvoice,
   requestValidateInvoice,
   requestFinaliseInvoice,
+  requestClear
 } from '../httpWrappers';
 
 // creating a valid draft invoice
@@ -33,23 +34,26 @@ function createInvoice(): string {
       },
     ]
   );
-  return res.body.invoice_id;
+  return res.body.invoiceId;
 }
 
 describe('POST /invoice/{invoice_id}/final — finaliseInvoice', () => {
+  beforeEach(() => {
+    requestClear();
+  });
+
   describe('Successful cases', () => {
     test('returns 200 and status "finalised" for a validated invoice', () => {
       const invoiceId = createInvoice();
       requestConvertInvoice(invoiceId);
       requestValidateInvoice(invoiceId);
-
       const res = requestFinaliseInvoice(invoiceId);
 
       expect(res.statusCode).toBe(200);
-      expect(res.body).toHaveProperty('invoice_id', invoiceId);
+      expect(res.body).toHaveProperty('invoiceId', invoiceId);
       expect(res.body).toHaveProperty('status', 'finalised');
-      expect(res.body).toHaveProperty('ubl_xml');
-      expect(res.body).toHaveProperty('finalised_at');
+      expect(res.body).toHaveProperty('ublXml');
+      expect(res.body).toHaveProperty('finalisedAt');
     });
   });
 

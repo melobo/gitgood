@@ -34,7 +34,7 @@ function createInvoice(): string {
       },
     ]
   );
-  return res.body.invoice_id;
+  return res.body.invoiceId;
 }
 
 // convert validate and finalise invoice requests

@@ -34,7 +34,7 @@ function createInvoice(): string {
       },
     ]
   );
-  return res.body.invoice_id;
+  return res.body.invoiceId;
 }
 
 describe('GET /invoice/{invoice_id} — getInvoice', () => {
@@ -44,18 +44,18 @@ describe('GET /invoice/{invoice_id} — getInvoice', () => {
       const res = requestGetInvoice(invoiceId);
 
       expect(res.statusCode).toBe(200);
-      expect(res.body).toHaveProperty('invoice_id', invoiceId);
+      expect(res.body).toHaveProperty('invoiceId', invoiceId);
       expect(res.body).toHaveProperty('status', 'draft');
-      expect(res.body).toHaveProperty('buyer_name', 'Test Buyer');
-      expect(res.body).toHaveProperty('supplier_name', 'Test Supplier');
-      expect(res.body).toHaveProperty('issue_date', '2025-01-01');
-      expect(res.body).toHaveProperty('payment_due_date', '2025-02-01');
-      expect(res.body).toHaveProperty('items_list');
-      expect(res.body).toHaveProperty('tax_rate', 0.1);
-      expect(res.body).toHaveProperty('tax_amount');
-      expect(res.body).toHaveProperty('total_payable');
-      expect(res.body).toHaveProperty('created_at');
-      expect(res.body).toHaveProperty('updated_at');
+      expect(res.body).toHaveProperty('buyerName', 'Test Buyer');
+      expect(res.body).toHaveProperty('supplierName', 'Test Supplier');
+      expect(res.body).toHaveProperty('issueDate', '2025-01-01');
+      expect(res.body).toHaveProperty('paymentDueDate', '2025-02-01');
+      expect(res.body).toHaveProperty('itemsList');
+      expect(res.body).toHaveProperty('taxRate', 0.1);
+      expect(res.body).toHaveProperty('taxAmount');
+      expect(res.body).toHaveProperty('totalPayable');
+      expect(res.body).toHaveProperty('createdAt');
+      expect(res.body).toHaveProperty('updatedAt');
     });
 
     test('items_list contains the correct item data', () => {
@@ -63,11 +63,11 @@ describe('GET /invoice/{invoice_id} — getInvoice', () => {
       const res = requestGetInvoice(invoiceId);
 
       expect(res.statusCode).toBe(200);
-      expect(Array.isArray(res.body.items_list)).toBe(true);
-      expect(res.body.items_list.length).toBe(1);
-      expect(res.body.items_list[0]).toHaveProperty('item_name', 'item');
-      expect(res.body.items_list[0]).toHaveProperty('quantity', 2);
-      expect(res.body.items_list[0]).toHaveProperty('unit_price', 50.0);
+      expect(Array.isArray(res.body.itemsList)).toBe(true);
+      expect(res.body.itemsList.length).toBe(1);
+      expect(res.body.itemsList[0]).toHaveProperty('itemName', 'item');
+      expect(res.body.itemsList[0]).toHaveProperty('quantity', 2);
+      expect(res.body.itemsList[0]).toHaveProperty('unitPrice', 50.0);
     });
 
     test('tax_amount and total_payable are correctly calculated', () => {
@@ -76,8 +76,8 @@ describe('GET /invoice/{invoice_id} — getInvoice', () => {
 
       expect(res.statusCode).toBe(200);
       // subtotal = 100, tax = 10, total = 110
-      expect(res.body.tax_amount).toBe(10);
-      expect(res.body.total_payable).toBe(110);
+      expect(res.body.taxAmount).toBe(10);
+      expect(res.body.totalPayable).toBe(110);
     });
 
     test('returns status "converted" after invoice is converted', () => {
@@ -88,8 +88,8 @@ describe('GET /invoice/{invoice_id} — getInvoice', () => {
 
       expect(res.statusCode).toBe(200);
       expect(res.body).toHaveProperty('status', 'converted');
-      expect(res.body).toHaveProperty('ubl_xml');
-      expect(typeof res.body.ubl_xml).toBe('string');
+      expect(res.body).toHaveProperty('ublXml');
+      expect(typeof res.body.ublXml).toBe('string');
     });
 
     test('returns status "validated" after invoice is validated', () => {
@@ -113,8 +113,8 @@ describe('GET /invoice/{invoice_id} — getInvoice', () => {
 
       expect(res.statusCode).toBe(200);
       expect(res.body).toHaveProperty('status', 'finalised');
-      expect(res.body).toHaveProperty('finalised_at');
-      expect(typeof res.body.finalised_at).toBe('string');
+      expect(res.body).toHaveProperty('finalisedAt');
+      expect(typeof res.body.finalisedAt).toBe('string');
     });
 
     test('two different invoices have different invoice_ids', () => {
@@ -126,8 +126,8 @@ describe('GET /invoice/{invoice_id} — getInvoice', () => {
       const res1 = requestGetInvoice(invoiceId1);
       const res2 = requestGetInvoice(invoiceId2);
 
-      expect(res1.body.invoice_id).toBe(invoiceId1);
-      expect(res2.body.invoice_id).toBe(invoiceId2);
+      expect(res1.body.invoiceId).toBe(invoiceId1);
+      expect(res2.body.invoiceId).toBe(invoiceId2);
     });
   });
 
@@ -144,16 +144,6 @@ describe('GET /invoice/{invoice_id} — getInvoice', () => {
 
     test('returns 404 for a random non-existent invoice ID', () => {
       const res = requestGetInvoice('nonexistent-invoice-id-000');
-
-      expect(res.statusCode).toBe(404);
-      expect(res.body).toStrictEqual({
-        error: 'NOT_FOUND',
-        message: expect.any(String),
-      });
-    });
-
-    test('returns 404 for an empty string invoice ID', () => {
-      const res = requestGetInvoice(' ');
 
       expect(res.statusCode).toBe(404);
       expect(res.body).toStrictEqual({

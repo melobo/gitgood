@@ -1,7 +1,7 @@
 import request from 'sync-request-curl';
 import { InvoiceItem, PaymentDetails } from './invoiceInterface';
 
-const SERVER_URL = 'https://gitgood.onrender.com';
+const SERVER_URL = process.env.SERVER_URL ?? 'http://localhost:3000';
 const TIMEOUT_MS = 5 * 1000;
 const API_KEY = process.env.API_KEY ?? '';
 

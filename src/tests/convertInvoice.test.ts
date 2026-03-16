@@ -31,7 +31,7 @@ function createInvoice(): string {
       },
     ]
   );
-  return res.body.invoice_id;
+  return res.body.invoiceId;
 }
 
 describe('POST /invoice/{invoice_id}/convert — convertInvoice', () => {
@@ -41,10 +41,10 @@ describe('POST /invoice/{invoice_id}/convert — convertInvoice', () => {
       const res = requestConvertInvoice(invoiceId);
 
       expect(res.statusCode).toBe(200);
-      expect(res.body).toHaveProperty('invoice_id', invoiceId);
+      expect(res.body).toHaveProperty('invoiceId', invoiceId);
       expect(res.body).toHaveProperty('status', 'converted');
-      expect(res.body).toHaveProperty('ubl_xml');
-      expect(typeof res.body.ubl_xml).toBe('string');
+      expect(res.body).toHaveProperty('ublXml');
+      expect(typeof res.body.ublXml).toBe('string');
     });
   });
 
@@ -78,7 +78,7 @@ describe('POST /invoice/{invoice_id}/convert — convertInvoice', () => {
 
       // attempt conversion if server allows with insufficient data
       if (createRes.statusCode === 201) {
-        const invoiceId = createRes.body.invoice_id;
+        const invoiceId = createRes.body.invoiceId;
         const res = requestConvertInvoice(invoiceId);
         expect(res.statusCode).toBe(422);
         expect(res.body).toStrictEqual({
