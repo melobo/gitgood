@@ -29,7 +29,7 @@ const validPayment: PaymentDetails[] = [
     bankName: 'ANZ',
     accountNumber: '123456789',
     bsbAbnNumber: '012-345',
-    paymentMethod: 'bank transfer',
+    paymentMethod: 'bank_transfer',
   },
 ];
 
@@ -54,9 +54,9 @@ describe('HTTP tests: POST /v1/invoice', () => {
       );
       expect(res.statusCode).toBe(SUCCESS_CODE);
       expect(res.body).toStrictEqual({
-        invoice_id: expect.any(String),
+        invoiceId: expect.any(String),
         status: 'draft',
-        created_at: expect.any(String),
+        createdAt: expect.any(String),
       });
     });
 
@@ -74,9 +74,9 @@ describe('HTTP tests: POST /v1/invoice', () => {
       );
       expect(res.statusCode).toBe(SUCCESS_CODE);
       expect(res.body).toStrictEqual({
-        invoice_id: expect.any(String),
+        invoiceId: expect.any(String),
         status: 'draft',
-        created_at: expect.any(String),
+        createdAt: expect.any(String),
       });
     });
 
@@ -105,7 +105,7 @@ describe('HTTP tests: POST /v1/invoice', () => {
       );
       expect(res1.statusCode).toBe(SUCCESS_CODE);
       expect(res2.statusCode).toBe(SUCCESS_CODE);
-      expect(res1.body.invoice_id).not.toBe(res2.body.invoice_id);
+      expect(res1.body.invoiceId).not.toBe(res2.body.invoiceId);
     });
 
     test('4) Invoice with multiple line items', () => {

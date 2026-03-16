@@ -2,7 +2,8 @@ import {
   requestCreateInvoice,
   requestConvertInvoice,
   requestValidateInvoice,
-  requestFinaliseInvoice
+  requestFinaliseInvoice,
+  requestClear
 } from '../httpWrappers';
 
 function createInvoice(): string {
@@ -28,11 +29,11 @@ function createInvoice(): string {
         bankName: 'ANZ',
         accountNumber: '123456789',
         bsbAbnNumber: '012-345',
-        paymentMethod: 'bankTransfer',
+        paymentMethod: 'bank_transfer',
       },
     ]
   );
-  return res.body.invoice_id;
+  return res.body.invoiceId;
 }
 
 function createConvertInvoice(): string {
@@ -42,6 +43,10 @@ function createConvertInvoice(): string {
 }
 
 describe('validateInvoice POST /v1/invoices/:invoice_id/validate', () => {
+  beforeEach(() => {
+    requestClear();
+  });
+
   describe('successful case', () => {
     test('returns 200 and valid for a converted invoice', () => {
       const invoiceId = createConvertInvoice();
@@ -49,7 +54,7 @@ describe('validateInvoice POST /v1/invoices/:invoice_id/validate', () => {
 
       expect(res.statusCode).toBe(200);
       expect(res.body).toStrictEqual({
-        invoice_id: invoiceId,
+        invoiceId: invoiceId,
         valid: true,
         errors: [],
         status: 'validated'
@@ -69,11 +74,11 @@ describe('validateInvoice POST /v1/invoices/:invoice_id/validate', () => {
   });
 
   describe('not converted yet test', () => {
-    test('returns 409 when validating a draft invoice', () => {
+    test('returns 400 when validating a draft invoice', () => {
       const invoiceId = createInvoice();
       const res = requestValidateInvoice(invoiceId);
 
-      expect(res.statusCode).toBe(409);
+      expect(res.statusCode).toBe(400);
       expect(res.body).toStrictEqual({
         error: 'INVALID_REQUEST',
         message: expect.any(String),

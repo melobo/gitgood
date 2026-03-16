@@ -82,11 +82,8 @@ export function validateItem(item: InvoiceItem) {
     );
   }
 
-  if (item.quantity * item.unitPrice !== item.totalPrice) {
-    throw new ServerError(
-      'INSUFFICIENT_DATA',
-      `Invoice totals are inconsistent. Item totals must equal quantity * unitPrice; ${item.itemName}.`
-    );
+  if (parseFloat((item.quantity * item.unitPrice).toFixed(2)) !== item.totalPrice) {
+    throw new ServerError('INSUFFICIENT_DATA', `Invoice totals are inconsistent. Item totals must equal quantity * unitPrice; ${item.itemName}.`);
   }
 };
 
@@ -114,17 +111,12 @@ export function validateTotalPayable(sum: number, taxRate: number, taxAmount: nu
       'Tax rate must be a positive decimal value.');
   }
 
-  if (sum * taxRate !== taxAmount) {
-    throw new ServerError(
-      'INSUFFICIENT_DATA',
-      'Tax amount on the invoice is inconsistent per the item totals.');
+  if (parseFloat((sum * taxRate).toFixed(2)) !== taxAmount) {
+    throw new ServerError('INSUFFICIENT_DATA', 'Tax amount on the invoice is inconsistent per the item totals.');
   }
 
-  if (sum + taxAmount !== totalPayable) {
-    throw new ServerError(
-      'INSUFFICIENT_DATA',
-      'Invoice totals are inconsistent. Total payable must equal item totals * (1 + taxRate).'
-    );
+  if (parseFloat((sum + taxAmount).toFixed(2)) !== totalPayable) {
+    throw new ServerError('INSUFFICIENT_DATA', 'Invoice totals are inconsistent. Total payable must equal item totals * (1 + taxRate).');
   }
 };
 
@@ -151,8 +143,8 @@ export function validatePaymentDetails(paymentDetails: PaymentDetails[]) {
       );
     }
 
-    if (detail.bsbAbnNumber.charAt(3) !== '-' || detail.bsbAbnNumber.replace(/-/g, '').length < 6
-      || Number(detail.bsbAbnNumber.replace(/-/g, '')) < 100000 || Number(detail.bsbAbnNumber.replace(/-/g, '')) > 999999) {
+    const digits = detail.bsbAbnNumber.replace(/-/g, '');
+    if (detail.bsbAbnNumber.charAt(3) !== '-' || digits.length !== 6 || !/^\d{6}$/.test(digits)) {
       throw new ServerError(
         'INSUFFICIENT_DATA',
         `The BSB provided (${detail.bsbAbnNumber}) is invalid. It must have 6 digits, and be in NNN-NNN format.`

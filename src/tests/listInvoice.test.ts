@@ -1,6 +1,6 @@
 import { requestListInvoice } from '../httpWrappers';
 
-const error = { error: expect.any(String) };
+const error = { error: expect.any(String), message: expect.any(String) };
 
 describe('GET /invoice — listInvoices', () => {
   // successful case

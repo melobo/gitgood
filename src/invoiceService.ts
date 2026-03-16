@@ -1,571 +1,514 @@
-import { ServerError } from './errors';
 import {
- InvoiceListFilters,
- Invoice,
- ValidationError,
- ValidateInvoiceResponse,
- FinaliseInvoiceResponse,
- PaymentDetails,
- InvoiceItem,
- DeleteInvoiceResponse, validBanks, validPaymentMethods, CreateInvoiceInput
+  InvoiceListFilters,
+  Invoice,
+  ValidationError,
+  ValidateInvoiceResponse,
+  FinaliseInvoiceResponse,
+  PaymentDetails,
+  InvoiceItem,
+  DeleteInvoiceResponse,
+  validBanks,
+  validPaymentMethods,
+  CreateInvoiceInput
 } from './invoiceInterface';
-import { v4 as uuidv4 } from 'uuid';
+
 import {
- validateName,
- validateABN,
- validateDates,
- validateItems,
- validateTotalPayable,
- validatePaymentDetails
+  validateName,
+  validateABN,
+  validateDates,
+  validateItems,
+  validateTotalPayable,
+  validatePaymentDetails
 } from './validateInvoice';
 
-
+import { ServerError } from './errors';
+import { v4 as uuidv4 } from 'uuid';
 import { XMLBuilder } from 'fast-xml-parser';
-
 
 const invoices: Invoice[] = [];
 
-
 export function listInvoice(filters: InvoiceListFilters): {
- invoices: Pick<Invoice, 'invoiceId' | 'buyerName' | 'status' | 'createdAt'>[];
- total: number;
- page: number;
+  invoices: Pick<Invoice, 'invoiceId' | 'buyerName' | 'status' | 'createdAt'>[];
+  total: number;
+  page: number;
 } {
- const { fromDate, toDate, page = 1, limitPerPage = 20 } = filters;
+  const { fromDate, toDate, page = 1, limitPerPage = 20 } = filters;
 
-
- if (!Number.isInteger(page) || !Number.isInteger(limitPerPage)) {
-   throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
- }
- if (fromDate && isNaN(Date.parse(fromDate))) {
-   throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
- }
- if (toDate && isNaN(Date.parse(toDate))) {
-   throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
- }
- if (fromDate && toDate && new Date(fromDate) > new Date(toDate)) {
-   throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
- }
-
-
- let result = [...invoices];
-
-
- if (fromDate) {
-   result = result.filter(inv => new Date(inv.createdAt) >= new Date(fromDate));
- }
- if (toDate) {
-   const end = new Date(toDate);
-   end.setHours(23, 59, 59, 999);
-   result = result.filter(inv => new Date(inv.createdAt) <= end);
- }
-
-
- const total = result.length;
- const offset = (page - 1) * limitPerPage;
- const paginated = result.slice(offset, offset + limitPerPage);
-
-
- return {
-   invoices: paginated.map(({ invoiceId, buyerName, status, createdAt }) => ({
-     invoiceId, buyerName, status, createdAt,
-   })),
-   total,
-   page,
- };
-}
-
-
-
-
-
-
-export function createInvoice(input: CreateInvoiceInput): Invoice {
-const {
-  buyerName, buyerAbn, supplierName, supplierAbn,
-  issueDate, paymentDueDate, itemsList,
-  taxRate, paymentDetails, additionalNotes,
-} = input;
-
-
-
-
-// Required string fields
-if (!buyerName || !buyerAbn || !supplierName || !supplierAbn || !issueDate || !paymentDueDate) {
-  throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
-}
-
-
-
-
-// Date format: YYYY-MM-DD
-const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-if (!dateRegex.test(issueDate) || !dateRegex.test(paymentDueDate)) {
-  throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
-}
-
-
-
-
-// Due date cannot be before or equal to issue date
-if (new Date(paymentDueDate) <= new Date(issueDate)) {
-  throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
-}
-
-
-
-
-// taxRate must be decimal between 0 and 1
-if (taxRate === undefined || taxRate === null || isNaN(taxRate) || taxRate < 0 || taxRate > 1) {
-  throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
-}
-
-
-
-
-// itemsList must be a non-empty array
-if (!Array.isArray(itemsList) || itemsList.length === 0) {
-  throw new ServerError('INSUFFICIENT_DATA', 'Invoice must contain at least one item.');
-}
-for (const item of itemsList) {
-  if (!item.itemName || !item.unitCode) {
+  if (!Number.isInteger(page) || !Number.isInteger(limitPerPage)) {
     throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
   }
-  if (!item.quantity || item.quantity <= 0) {
-    throw new ServerError('INSUFFICIENT_DATA', `Item quantity must be > 0; ${item.itemName}.`);
+  if (fromDate && isNaN(Date.parse(fromDate))) {
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
   }
-  if (item.unitPrice === undefined || item.unitPrice < 0) {
-    throw new ServerError('INSUFFICIENT_DATA', `Item prices cannot be negative; ${item.itemName}.`);
+  if (toDate && isNaN(Date.parse(toDate))) {
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
   }
-  if (item.quantity * item.unitPrice !== item.totalPrice) {
-    throw new ServerError('INSUFFICIENT_DATA', `Invoice totals are inconsistent. Item totals must equal quantity * unitPrice; ${item.itemName}.`);
+  if (fromDate && toDate && new Date(fromDate) > new Date(toDate)) {
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
   }
+
+  let result = [...invoices];
+
+  if (fromDate) {
+    result = result.filter(inv => new Date(inv.createdAt) >= new Date(fromDate));
+  }
+  if (toDate) {
+    const end = new Date(toDate);
+    end.setHours(23, 59, 59, 999);
+    result = result.filter(inv => new Date(inv.createdAt) <= end);
+  }
+
+  const total = result.length;
+  const offset = (page - 1) * limitPerPage;
+  const paginated = result.slice(offset, offset + limitPerPage);
+
+  return {
+    invoices: paginated.map(({ invoiceId, buyerName, status, createdAt }) => ({
+      invoiceId, buyerName, status, createdAt,
+    })),
+    total,
+    page,
+  };
 }
 
+export function createInvoice(input: CreateInvoiceInput): Invoice {
+  const {
+    buyerName, buyerAbn, supplierName, supplierAbn,
+    issueDate, paymentDueDate, itemsList,
+    taxRate, paymentDetails, additionalNotes,
+  } = input;
 
+  // Required string fields
+  if (!buyerName || !buyerAbn || !supplierName || !supplierAbn || !issueDate || !paymentDueDate) {
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+  }
 
+  // Date format: YYYY-MM-DD
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(issueDate) || !dateRegex.test(paymentDueDate)) {
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+  }
 
-// paymentDetails must be a non-empty array
-if (!Array.isArray(paymentDetails) || paymentDetails.length === 0) {
-  throw new ServerError('INSUFFICIENT_DATA', 'Invoice must contain at least one item.');
+  // Due date cannot be before or equal to issue date
+  if (new Date(paymentDueDate) <= new Date(issueDate)) {
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+  }
+
+  // taxRate must be decimal between 0 and 1
+  if (taxRate === undefined || taxRate === null || isNaN(taxRate) || taxRate < 0 || taxRate > 1) {
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+  }
+
+  // itemsList must be a non-empty array
+  if (!Array.isArray(itemsList) || itemsList.length === 0) {
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+  }
+  for (const item of itemsList) {
+    if (!item.itemName || !item.unitCode) {
+      throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+    }
+    if (!item.quantity || item.quantity <= 0) {
+      throw new ServerError('INVALID_REQUEST', `Item quantity must be > 0; ${item.itemName}.`); // was INSUFFICIENT_DATA
+    }
+    if (item.unitPrice === undefined || item.unitPrice < 0) {
+      throw new ServerError('INVALID_REQUEST', `Item prices cannot be negative; ${item.itemName}.`); // was INSUFFICIENT_DATA
+    }
+    if (item.quantity * item.unitPrice !== item.totalPrice) {
+      throw new ServerError('INSUFFICIENT_DATA', `Invoice totals are inconsistent. Item totals must equal quantity * unitPrice; ${item.itemName}.`);
+    }
+  }
+
+  // paymentDetails must be a non-empty array
+  if (!Array.isArray(paymentDetails) || paymentDetails.length === 0) {
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields'); // was INSUFFICIENT_DATA with wrong message
+  }
+
+  for (const pd of paymentDetails) {
+    if (!validBanks.includes(pd.bankName)) {
+      throw new ServerError('INSUFFICIENT_DATA', `Payment details on invoice include an invalid bank name; ${pd.bankName}.`);
+    }
+
+    if (!validPaymentMethods.includes(pd.paymentMethod)) {
+      throw new ServerError('INSUFFICIENT_DATA', `Payment details on invoice include an invalid payment method; ${pd.paymentMethod}.`);
+    }
+
+    if (pd.bsbAbnNumber.charAt(3) !== '-' || pd.bsbAbnNumber.replace(/-/g, '').length < 6) {
+      throw new ServerError('INSUFFICIENT_DATA', `The BSB provided (${pd.bsbAbnNumber}) is invalid. It must have 6 digits, and be in NNN-NNN format.`);
+    }
+    if (!Number(pd.accountNumber)) {
+      throw new ServerError('INSUFFICIENT_DATA', `The account number provided (${pd.accountNumber}) is invalid. Only numbers are allowed.`);
+    }
+  }
+
+  // Compute totals
+  const subtotal = itemsList.reduce(
+    (sum, item) => parseFloat((sum + item.totalPrice).toFixed(2)), 0
+  );
+  const taxAmount = parseFloat((subtotal * taxRate).toFixed(2));
+  const totalPayable = parseFloat((subtotal + taxAmount).toFixed(2));
+
+  const now = new Date().toISOString();
+
+  const invoice: Invoice = {
+    invoiceId: uuidv4(),
+    status: 'draft',
+    buyerName,
+    buyerAbn,
+    supplierName,
+    supplierAbn,
+    issueDate,
+    paymentDueDate,
+    itemsList,
+    taxRate,
+    taxAmount,
+    totalPayable,
+    paymentDetails,
+    additionalNotes: additionalNotes ?? '',
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  invoices.push(invoice);
+  return invoice;
 }
-for (const pd of paymentDetails) {
-  if (!validBanks.includes(pd.bankName)) {
-    throw new ServerError('INSUFFICIENT_DATA', `Payment details on invoice include an invalid bank name; ${pd.bankName}.`);
-  }
-  if (!validPaymentMethods.includes(pd.paymentMethod)) {
-    throw new ServerError('INSUFFICIENT_DATA', `Payment details on invoice include an invalid payment method; ${pd.paymentMethod}.`);
-  }
-  if (pd.bsbAbnNumber.charAt(3) !== '-' || pd.bsbAbnNumber.replace(/-/g, '').length < 6) {
-    throw new ServerError('INSUFFICIENT_DATA', `The BSB provided (${pd.bsbAbnNumber}) is invalid. It must have 6 digits, and be in NNN-NNN format.`);
-  }
-  if (!Number(pd.accountNumber)) {
-    throw new ServerError('INSUFFICIENT_DATA', `The account number provided (${pd.accountNumber}) is invalid. Only numbers are allowed.`);
-  }
-}
-
-
-
-
-// Compute totals
-const subtotal = itemsList.reduce(
-  (sum, item) => parseFloat((sum + item.totalPrice).toFixed(2)), 0
-);
-const taxAmount = parseFloat((subtotal * taxRate).toFixed(2));
-const totalPayable = parseFloat((subtotal + taxAmount).toFixed(2));
-
-
-
-
-const now = new Date().toISOString();
-
-
-
-
-const invoice: Invoice = {
-  invoiceId: uuidv4(),
-  status: 'draft',
-  buyerName,
-  buyerAbn,
-  supplierName,
-  supplierAbn,
-  issueDate,
-  paymentDueDate,
-  itemsList,
-  taxRate,
-  taxAmount,
-  totalPayable,
-  paymentDetails,
-  additionalNotes: additionalNotes ?? '',
-  createdAt: now,
-  updatedAt: now,
-};
-
-
-
-
-invoices.push(invoice);
-return invoice;
-}
-
 
 export function getInvoice(invoiceId: string): Invoice {
- const invoice = invoices.find(inv => inv.invoiceId === invoiceId);
+  const invoice = invoices.find(inv => inv.invoiceId === invoiceId);
 
+  if (!invoice) {
+    throw new ServerError('NOT_FOUND', 'The provided invoice ID does not refer to an existing invoice.');
+  }
 
- if (!invoice) {
-   throw new ServerError('NOT_FOUND', 'The provided invoice ID does not refer to an existing invoice.');
- }
-
-
- return invoice;
+  return invoice;
 }
-
-
-
-
-
 
 export function validateInvoice(invoiceId: string): ValidateInvoiceResponse {
- const invoice = invoices.find(inv => inv.invoiceId === invoiceId);
+  const invoice = invoices.find(inv => inv.invoiceId === invoiceId);
 
+  if (!invoice) {
+    throw new ServerError('NOT_FOUND', 'The provided invoice ID does not refer to an existing invoice.');
+  }
+  if (invoice.status === 'draft') {
+    throw new ServerError('INVALID_REQUEST', 'The invoice has not yet been converted.');
+  }
 
- if (!invoice) {
-   throw new ServerError('NOT_FOUND', 'The provided invoice ID does not refer to an existing invoice.');
- }
- if (invoice.status === 'draft') {
-   throw new ServerError('INVOICE_NOT_CONVERTED', 'The invoice corresponding to the provided invoice ID has not yet been converted.');
- }
+  const errors: ValidationError[] = [];
 
+  try {
+    validateName(invoice.buyerName, 'BUYER');
+    validateABN(invoice.buyerAbn, 'BUYER');
+  } catch (err) {
+    if (err instanceof ServerError) errors.push({ field: 'buyer', message: err.message });
+  }
 
- const errors: ValidationError[] = [];
+  try {
+    validateName(invoice.supplierName, 'SUPPLIER');
+    validateABN(invoice.supplierAbn, 'SUPPLIER');
+  } catch (err) {
+    if (err instanceof ServerError) errors.push({ field: 'supplier', message: err.message });
+  }
 
+  try {
+    validateDates(invoice.issueDate, invoice.paymentDueDate);
+  } catch (err) {
+    if (err instanceof ServerError) errors.push({ field: 'dates', message: err.message });
+  }
 
- try {
-   validateName(invoice.buyerName, 'BUYER');
-   validateABN(invoice.buyerAbn, 'BUYER');
- } catch (err) {
-   if (err instanceof ServerError) errors.push({ field: 'buyer', message: err.message });
- }
+  try {
+    const { sum } = validateItems(invoice.itemsList);
+    validateTotalPayable(sum, invoice.taxRate, invoice.taxAmount, invoice.totalPayable);
+  } catch (err) {
+    if (err instanceof ServerError) errors.push({ field: 'itemsTotals', message: err.message });
+  }
 
+  try {
+    validatePaymentDetails(invoice.paymentDetails);
+  } catch (err) {
+    if (err instanceof ServerError) errors.push({ field: 'paymentDetails', message: err.message });
+  }
 
- try {
-   validateName(invoice.supplierName, 'SUPPLIER');
-   validateABN(invoice.supplierAbn, 'SUPPLIER');
- } catch (err) {
-   if (err instanceof ServerError) errors.push({ field: 'supplier', message: err.message });
- }
+  if (errors.length === 0 && invoice.status !== 'finalised') {
+    invoice.status = 'validated';
+  }
 
-
- try {
-   validateDates(invoice.issueDate, invoice.paymentDueDate);
- } catch (err) {
-   if (err instanceof ServerError) errors.push({ field: 'dates', message: err.message });
- }
-
-
- try {
-   const { sum } = validateItems(invoice.itemsList);
-   validateTotalPayable(sum, invoice.taxRate, invoice.taxAmount, invoice.totalPayable);
- } catch (err) {
-   if (err instanceof ServerError) errors.push({ field: 'itemsTotals', message: err.message });
- }
-
-
- try {
-   validatePaymentDetails(invoice.paymentDetails);
- } catch (err) {
-   if (err instanceof ServerError) errors.push({ field: 'paymentDetails', message: err.message });
- }
-
-
- if (errors.length === 0 && invoice.status !== 'finalised') {
-   invoice.status = 'validated';
- }
-
-
- return {
-   invoiceId,
-   valid: errors.length === 0,
-   errors,
-   status: invoice.status,
- };
+  return {
+    invoiceId,
+    valid: errors.length === 0,
+    errors,
+    status: invoice.status,
+  };
 }
-
 
 export function finaliseInvoice(invoiceId: string): FinaliseInvoiceResponse {
- const invoice = invoices.find(inv => inv.invoiceId === invoiceId);
- if (!invoice) {
-   throw new ServerError('NOT_FOUND', 'The provided in voice ID does not refer to an existing invoice.');
- }
- if (invoice.status === 'draft' || invoice.status === 'converted') {
-   throw new ServerError('CONFLICT', 'The invoice corresponding to the provided invoice ID has not yet been validated.');
- }
+  const invoice = invoices.find(inv => inv.invoiceId === invoiceId);
+  if (!invoice) {
+    throw new ServerError('NOT_FOUND', 'The provided in voice ID does not refer to an existing invoice.');
+  }
+  if (invoice.status === 'draft' || invoice.status === 'converted') {
+    throw new ServerError('INVOICE_NOT_VALIDATED', 'The invoice has not yet been validated.');
+  }
 
+  invoice.status = 'finalised';
+  invoice.finalisedAt = new Date().toLocaleString();
 
- invoice.status = 'finalised';
- invoice.finalisedAt = new Date().toLocaleString();
-
-
- return {
-   invoiceId,
-   status: invoice.status,
-   ublXml: invoice.ublXml as string,
-   finalisedAt: invoice.finalisedAt
- };
+  return {
+    invoiceId,
+    status: invoice.status,
+    ublXml: invoice.ublXml as string,
+    finalisedAt: invoice.finalisedAt
+  };
 }
-
 
 export function convertInvoice(invoice_id: string) {
- // first, find and determine invoice exists
- const invoice = invoices.find(inv => inv.invoiceId === invoice_id);
+  // first, find and determine invoice exists
+  const invoice = invoices.find(inv => inv.invoiceId === invoice_id);
 
+  if (!invoice) {
+    throw new ServerError('NOT_FOUND', 'The provided invoice ID does not refer to an existing invoice.');
+  }
 
- if (!invoice) {
-   throw new ServerError('NOT_FOUND', 'The provided invoice ID does not refer to an existing invoice.');
- }
+  // ensures only draft invoices can be converted
+  if (invoice.status === 'converted' || invoice.status === 'validated' || invoice.status === 'finalised') {
+    throw new ServerError('ALREADY_CONVERTED', 'Invoice has already been converted.');
+  }
 
+  if (!invoice.buyerName || !invoice.buyerAbn || !invoice.supplierName
+    || !invoice.supplierAbn || !invoice.itemsList || invoice.itemsList.length === 0) {
+    throw new ServerError('INSUFFICIENT_DATA', 'Not enough data has been provided for one or more of the invoice fields.');
+  }
 
- // ensures only draft invoices can be converted
- if (invoice.status === 'converted' || invoice.status === 'validated' || invoice.status === 'finalised') {
-   throw new ServerError('CONFLICT', 'Invoice has already been converted.');
- }
+  // construct the UBL data
+  const invoiceObject = {
+    '?xml': {
+      '@_version': '1.0',
+      '@_encoding': 'UTF-8'
+    },
+    'Invoice': {
+      '@_xmlns': 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2',
+      'ID': invoice.invoiceId,
+      'IssueDate': invoice.issueDate,
+      'DueDate': invoice.paymentDueDate,
+      'InvoiceTypeCode': '380',
+      'DocumentCurrencyCode': 'AUD',
 
+      'AccountingSupplierParty': {
+        Party: {
+          PartyName: {
+            Name: invoice.supplierName
+          },
+          PartyTaxScheme: {
+            CompanyID: invoice.supplierAbn
+          }
+        }
+      },
 
- if (!invoice.buyerName || !invoice.buyerAbn || !invoice.supplierName
-   || !invoice.supplierAbn || !invoice.itemsList || invoice.itemsList.length === 0) {
-   throw new ServerError('INSUFFICIENT_DATA', 'Not enough data has been provided for one or more of the invoice fields.');
- }
+      'AccountingCustomerParty': {
+        Party: {
+          PartyName: {
+            Name: invoice.buyerName
+          },
+          PartyTaxScheme: {
+            CompanyID: invoice.buyerAbn
+          }
+        }
+      },
 
+      'InvoiceLine': invoice.itemsList.map((item, index) => ({
+        ID: index + 1,
+        InvoicedQuantity: item.quantity,
+        LineExtensionAmount: item.totalPrice,
+        Item: {
+          Description: item.itemName
+        },
+        Price: {
+          PriceAmount: item.unitPrice,
+          BaseQuantity: item.quantity,
+          UnitCode: item.unitCode
+        }
+      })),
 
- // construct the UBL data
- const invoiceObject = {
-   '?xml': {
-     '@_version': '1.0',
-     '@_encoding': 'UTF-8'
-   },
-   'Invoice': {
-     '@_xmlns': 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2',
-     'ID': invoice.invoiceId,
-     'IssueDate': invoice.issueDate,
-     'DueDate': invoice.paymentDueDate,
-     'InvoiceTypeCode': '380',
-     'DocumentCurrencyCode': 'AUD',
+      'TaxTotal': {
+        TaxAmount: invoice.taxAmount,
+        TaxSubtotal: {
+          TaxableAmount: invoice.totalPayable - invoice.taxAmount,
+          TaxAmount: invoice.taxAmount,
+          TaxCategory: {
+            Percent: invoice.taxRate * 100
+          }
+        }
+      },
 
+      'LegalMonetaryTotal': {
+        TaxInclusiveAmount: invoice.totalPayable,
+        PayableAmount: invoice.totalPayable
+      },
 
-     'AccountingSupplierParty': {
-       Party: {
-         PartyName: {
-           Name: invoice.supplierName
-         },
-         PartyTaxScheme: {
-           CompanyID: invoice.supplierAbn
-         }
-       }
-     },
+      'PaymentMeans': invoice.paymentDetails.map(payment => ({
+        PaymentMeansCode: payment.paymentMethod,
+        PayeeFinancialAccount: {
+          ID: payment.accountNumber,
+          FinancialInstitutionBranch: {
+            ID: payment.bsbAbnNumber,
+            Name: payment.bankName
+          }
+        }
+      })),
 
+      'Note': invoice.additionalNotes
+    }
+  };
 
-     'AccountingCustomerParty': {
-       Party: {
-         PartyName: {
-           Name: invoice.buyerName
-         },
-         PartyTaxScheme: {
-           CompanyID: invoice.buyerAbn
-         }
-       }
-     },
+  // convert to XML with fast-xml-parser
+  const builder = new XMLBuilder({
+    attributeNamePrefix: '@_',
+    ignoreAttributes: false,
+    format: true,
+    suppressEmptyNode: true
+  });
 
+  const ublXMLInvoice = builder.build(invoiceObject);
 
-     'InvoiceLine': invoice.itemsList.map((item, index) => ({
-       ID: index + 1,
-       InvoicedQuantity: item.quantity,
-       LineExtensionAmount: item.totalPrice,
-       Item: {
-         Description: item.itemName
-       },
-       Price: {
-         PriceAmount: item.unitPrice,
-         BaseQuantity: item.quantity,
-         UnitCode: item.unitCode
-       }
-     })),
+  invoice.status = 'converted';
+  invoice.ublXml = ublXMLInvoice;
+  invoice.updatedAt = new Date().toISOString();
 
-
-     'TaxTotal': {
-       TaxAmount: invoice.taxAmount,
-       TaxSubtotal: {
-         TaxableAmount: invoice.totalPayable - invoice.taxAmount,
-         TaxAmount: invoice.taxAmount,
-         TaxCategory: {
-           Percent: invoice.taxRate * 100
-         }
-       }
-     },
-
-
-     'LegalMonetaryTotal': {
-       TaxInclusiveAmount: invoice.totalPayable,
-       PayableAmount: invoice.totalPayable
-     },
-
-
-     'PaymentMeans': invoice.paymentDetails.map(payment => ({
-       PaymentMeansCode: payment.paymentMethod,
-       PayeeFinancialAccount: {
-         ID: payment.accountNumber,
-         FinancialInstitutionBranch: {
-           ID: payment.bsbAbnNumber,
-           Name: payment.bankName
-         }
-       }
-     })),
-
-
-     'Note': invoice.additionalNotes
-   }
- };
-
-
- // convert to XML with fast-xml-parser
- const builder = new XMLBuilder({
-   attributeNamePrefix: '@_',
-   ignoreAttributes: false,
-   format: true,
-   suppressEmptyNode: true
- });
-
-
- const ublXMLInvoice = builder.build(invoiceObject);
-
-
- invoice.status = 'converted';
- invoice.ublXml = ublXMLInvoice;
- invoice.updatedAt = new Date().toISOString();
-
-
- return {
-   invoice_id: invoice.invoiceId,
-   status: invoice.status,
-   ubl_xml: ublXMLInvoice
- };
+  return {
+    invoiceId: invoice.invoiceId,
+    status: invoice.status,
+    ublXml: ublXMLInvoice
+  };
 }
-
 
 export function updateInvoice(invoice_id: string, updates: {
- buyerName?: string;
- buyerAbn?: string;
- supplierName?: string;
- supplierAbn?: string;
- issueDate?: string;
- paymentDueDate?: string;
- itemsList?: InvoiceItem[];
- taxRate?: number;
- paymentDetails?: PaymentDetails[];
- additionalNotes?: string;
+  buyerName?: string;
+  buyerAbn?: string;
+  supplierName?: string;
+  supplierAbn?: string;
+  issueDate?: string;
+  paymentDueDate?: string;
+  itemsList?: InvoiceItem[];
+  taxRate?: number;
+  paymentDetails?: PaymentDetails[];
+  additionalNotes?: string;
 }): { invoiceId: string; status: string; updatedAt: string } {
- // find the invoice, throw error if it doesn't exist
- const invoice = invoices.find(inv => inv.invoiceId === invoice_id);
+  // find the invoice, throw error if it doesn't exist
+  const invoice = invoices.find(inv => inv.invoiceId === invoice_id);
 
+  if (!invoice) {
+    throw new ServerError('NOT_FOUND', 'The provided invoice ID does not refer to an existing invoice.');
+  }
 
- if (!invoice) {
-   throw new ServerError('NOT_FOUND', 'The provided invoice ID does not refer to an existing invoice.');
- }
+  // update buyer name if provided
+  if (updates.buyerName !== undefined) {
+    validateName(updates.buyerName, 'BUYER');
+    invoice.buyerName = updates.buyerName;
+  }
 
+  // update buyer abn if provided
+  if (updates.buyerAbn !== undefined) {
+    validateABN(updates.buyerAbn, 'BUYER');
+    invoice.buyerAbn = updates.buyerAbn;
+  }
 
- // update buyer name if provided
- if (updates.buyerName !== undefined) {
-   validateName(updates.buyerName, 'BUYER');
-   invoice.buyerName = updates.buyerName;
- }
+  // update supplier name if provided
+  if (updates.supplierName !== undefined) {
+    validateName(updates.supplierName, 'SUPPLIER');
+    invoice.supplierName = updates.supplierName;
+  }
 
+  // update supplier abn if provided
+  if (updates.supplierAbn !== undefined) {
+    validateABN(updates.supplierAbn, 'SUPPLIER');
+    invoice.supplierAbn = updates.supplierAbn;
+  }
 
- // update buyer abn if provided
- if (updates.buyerAbn !== undefined) {
-   validateABN(updates.buyerAbn, 'BUYER');
-   invoice.buyerAbn = updates.buyerAbn;
- }
+  // need to validate dates together in case both are being updated at the same time
+  if (updates.issueDate !== undefined || updates.paymentDueDate !== undefined) {
+    const newIssueDate = updates.issueDate ?? invoice.issueDate;
+    const newPaymentDueDate = updates.paymentDueDate ?? invoice.paymentDueDate;
+    validateDates(newIssueDate, newPaymentDueDate);
+    invoice.issueDate = newIssueDate;
+    invoice.paymentDueDate = newPaymentDueDate;
+  }
 
+  // update payment details if provided
+  if (updates.paymentDetails !== undefined) {
+    for (const pd of updates.paymentDetails) {
+      if (!validBanks.includes(pd.bankName)) {
+        throw new ServerError('INVALID_REQUEST', `Invalid bank name: ${pd.bankName}`);
+      }
+      if (!validPaymentMethods.includes(pd.paymentMethod)) {
+        throw new ServerError('INVALID_REQUEST', `Invalid payment method: ${pd.paymentMethod}`);
+      }
+    }
+    invoice.paymentDetails = updates.paymentDetails;
+  }
 
- // update supplier name if provided
- if (updates.supplierName !== undefined) {
-   validateName(updates.supplierName, 'SUPPLIER');
-   invoice.supplierName = updates.supplierName;
- }
+  // update additional notes if provided
+  if (updates.additionalNotes !== undefined) {
+    invoice.additionalNotes = updates.additionalNotes;
+  }
 
+  // recalculate tax and total if items or tax rate changed
+  if (updates.itemsList !== undefined || updates.taxRate !== undefined) {
+    const newItems = updates.itemsList ?? invoice.itemsList;
+    const newTaxRate = updates.taxRate ?? invoice.taxRate;
 
- // update supplier abn if provided
- if (updates.supplierAbn !== undefined) {
-   validateABN(updates.supplierAbn, 'SUPPLIER');
-   invoice.supplierAbn = updates.supplierAbn;
- }
+    if (typeof newTaxRate !== 'number' || isNaN(newTaxRate)) {
+      throw new ServerError('INVALID_REQUEST', 'Tax rate must be a number.');
+    }
 
+    for (const item of newItems) {
+      if (typeof item.quantity !== 'number' || item.quantity <= 0) {
+        throw new ServerError('INVALID_REQUEST', `Invalid quantity for item: ${item.itemName}`);
+      }
+      if (typeof item.unitPrice !== 'number' || item.unitPrice < 0) {
+        throw new ServerError('INVALID_REQUEST', `Invalid unit price for item: ${item.itemName}`);
+      }
+      if (typeof item.unitCode !== 'string' || !/^[a-zA-Z]+$/.test(item.unitCode)) {
+        throw new ServerError('INVALID_REQUEST', `Invalid unit code for item: ${item.itemName}`);
+      }
+      const expectedTotal = parseFloat((item.quantity * item.unitPrice).toFixed(2));
+      if (item.totalPrice !== undefined && item.totalPrice !== expectedTotal) {
+        throw new ServerError('INVALID_REQUEST', `Inconsistent total price for item: ${item.itemName}`);
+      }
+    }
 
- // need to validate dates together in case both are being updated at the same time
- if (updates.issueDate !== undefined || updates.paymentDueDate !== undefined) {
-   const newIssueDate = updates.issueDate ?? invoice.issueDate;
-   const newPaymentDueDate = updates.paymentDueDate ?? invoice.paymentDueDate;
-   validateDates(newIssueDate, newPaymentDueDate);
-   invoice.issueDate = newIssueDate;
-   invoice.paymentDueDate = newPaymentDueDate;
- }
+    const sum = newItems.reduce((acc, item) => acc + item.totalPrice, 0);
+    invoice.itemsList = newItems;
+    invoice.taxRate = newTaxRate;
+    invoice.taxAmount = parseFloat((sum * newTaxRate).toFixed(2));
+    invoice.totalPayable = parseFloat((sum + invoice.taxAmount).toFixed(2));
+  }
 
+  invoice.updatedAt = new Date().toISOString();
 
- // update payment details if provided
- if (updates.paymentDetails !== undefined) {
-   validatePaymentDetails(updates.paymentDetails);
-   invoice.paymentDetails = updates.paymentDetails;
- }
-
-
- // update additional notes if provided
- if (updates.additionalNotes !== undefined) {
-   invoice.additionalNotes = updates.additionalNotes;
- }
-
-
- // recalculate tax and total if items or tax rate changed
- if (updates.itemsList !== undefined || updates.taxRate !== undefined) {
-   const newItems = updates.itemsList ?? invoice.itemsList;
-   const newTaxRate = updates.taxRate ?? invoice.taxRate;
-   const { sum } = validateItems(newItems);
-   const newTaxAmount = sum * newTaxRate;
-   const newTotalPayable = sum + newTaxAmount;
-   invoice.itemsList = newItems;
-   invoice.taxRate = newTaxRate;
-   invoice.taxAmount = newTaxAmount;
-   invoice.totalPayable = newTotalPayable;
- }
-
-
- invoice.updatedAt = new Date().toISOString();
-
-
- return {
-   invoiceId: invoice.invoiceId,
-   status: invoice.status,
-   updatedAt: invoice.updatedAt,
- };
-}
- export function deleteInvoice(invoiceId: string): DeleteInvoiceResponse {
- const invoice = invoices.find(inv => inv.invoiceId === invoiceId);
-
-
- if (!invoice) {
-   throw new ServerError('NOT_FOUND', 'The provided invoice ID does not refer to an existing invoice.');
- }
-
-
- const invoiceIndex = invoices.findIndex(i => i.invoiceId === invoiceId);
- invoices.splice(invoiceIndex, 1);
-
-
- return {
-   invoiceId,
-   message: 'Invoice successfully deleted'
- };
+  return {
+    invoiceId: invoice.invoiceId,
+    status: invoice.status,
+    updatedAt: invoice.updatedAt,
+  };
 }
 
+export function deleteInvoice(invoiceId: string): DeleteInvoiceResponse {
+  if (!invoiceId || !invoiceId.trim() || !/^[a-zA-Z0-9-]+$/.test(invoiceId.trim())) {
+    throw new ServerError('INVALID_REQUEST', 'Invalid invoice ID format.');
+  }
+
+  const invoice = invoices.find(inv => inv.invoiceId === invoiceId);
+
+  if (!invoice) {
+    throw new ServerError('NOT_FOUND', 'The provided invoice ID does not refer to an existing invoice.');
+  }
+
+  const invoiceIndex = invoices.findIndex(i => i.invoiceId === invoiceId);
+  invoices.splice(invoiceIndex, 1);
+
+  return {
+    invoiceId,
+    message: 'Invoice successfully deleted'
+  };
+}
 
 export function downloadInvoice(invoiceId: string, format: string = 'xml'): {
   content: string;
@@ -574,22 +517,18 @@ export function downloadInvoice(invoiceId: string, format: string = 'xml'): {
 } {
   const invoice = invoices.find(inv => inv.invoiceId === invoiceId);
 
-
   if (!invoice) {
     throw new ServerError('NOT_FOUND', 'The provided invoice ID does not refer to an existing invoice.');
   }
 
-
   if (invoice.status !== 'finalised') {
-    throw new ServerError('CONFLICT', 'Invoice not yet converted/validated to UBL XML format');
+    throw new ServerError('INVOICE_NOT_READY', 'Invoice not yet converted/validated to UBL XML format');
   }
-
 
   const allowedFormats = ['xml', 'json'];
   if (!allowedFormats.includes(format.toLowerCase())) {
     throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
   }
-
 
   if (format.toLowerCase() === 'xml') {
     if (!invoice.ublXml) {
@@ -602,9 +541,12 @@ export function downloadInvoice(invoiceId: string, format: string = 'xml'): {
     };
   }
 
-
   // JSON format — omit ublXml from download
-  const { ublXml, ...invoiceJson } = invoice;
+  // const { ublXml, ...invoiceJson } = invoice;
+  const invoiceJson = Object.fromEntries(
+    Object.entries(invoice).filter(([key]) => key !== 'ublXml')
+  );
+
   return {
     content: JSON.stringify(invoiceJson, null, 2),
     contentType: 'application/json',
@@ -612,3 +554,6 @@ export function downloadInvoice(invoiceId: string, format: string = 'xml'): {
   };
 }
 
+export function clearInvoices(): void {
+  invoices.splice(0, invoices.length);
+}

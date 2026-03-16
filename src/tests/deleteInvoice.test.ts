@@ -32,7 +32,7 @@ function createInvoice(): string {
       },
     ]
   );
-  return res.body.invoice_id;
+  return res.body.invoiceId;
 }
 
 describe('DELETE /invoice/{invoice_id} — deleteInvoice', () => {
@@ -94,12 +94,12 @@ describe('DELETE /invoice/{invoice_id} — deleteInvoice', () => {
       });
     });
 
-    test('returns 400 for an empty string invoice ID', () => {
-      const res = requestDeleteInvoice('   ');
+    test('returns 404 for a non-existent invoice ID', () => {
+      const res = requestDeleteInvoice('invalid-id');
 
-      expect(res.statusCode).toBe(400);
+      expect(res.statusCode).toBe(404);
       expect(res.body).toStrictEqual({
-        error: 'INVALID_REQUEST',
+        error: 'NOT_FOUND', // was 'INVALID_REQUEST'
         message: expect.any(String),
       });
     });
