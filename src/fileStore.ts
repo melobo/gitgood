@@ -4,15 +4,12 @@ import { Invoice } from './invoiceInterface';
 
 const DATA_PATH = path.join(__dirname, 'invoices.json');
 
-function init(): void {
-  if (!fs.existsSync(DATA_PATH)) {
-    fs.writeFileSync(DATA_PATH, JSON.stringify({ invoices: {} }, null, 2));
-  }
-}
-
 function readAll(): { invoices: Record<string, Invoice> } {
-  const raw = fs.readFileSync(DATA_PATH, 'utf-8');
-  return JSON.parse(raw);
+  if (!fs.existsSync(DATA_PATH)) {
+    return { invoices: {} };
+  }
+  const data = fs.readFileSync(DATA_PATH, 'utf-8');
+  return JSON.parse(data);
 }
 
 function writeAll(data: { invoices: Record<string, Invoice> }): void {
@@ -43,4 +40,4 @@ function deleteInvoice(invoiceId: string): boolean {
   return true;
 }
 
-export { init, getInvoice, getAllInvoices, saveInvoice, deleteInvoice, writeAll };
+export { readAll, getInvoice, getAllInvoices, saveInvoice, deleteInvoice, writeAll };
