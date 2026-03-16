@@ -10,9 +10,12 @@ function init(): void {
   }
 }
 
-function readAll(): { invoices: Record<string, Invoice> } {
-  const raw = fs.readFileSync(DATA_PATH, 'utf-8');
-  return JSON.parse(raw);
+function readAll(): Invoice[] {
+  if (!fs.existsSync(FILE_PATH)) {
+    return [];
+  }
+  const data = fs.readFileSync(FILE_PATH, 'utf-8');
+  return JSON.parse(data);
 }
 
 function writeAll(data: { invoices: Record<string, Invoice> }): void {
