@@ -40,7 +40,7 @@ beforeEach(() => {
   requestClear();
 });
 
-describe('DELETE /invoice/{invoice_id} — deleteInvoice', () => {
+describe('DELETE /invoice/{invoiceId} — deleteInvoice', () => {
   describe('Successful cases', () => {
     test('returns 200 and confirmation message when deleting a draft invoice', () => {
       const invoiceId = createInvoice();
@@ -48,7 +48,7 @@ describe('DELETE /invoice/{invoice_id} — deleteInvoice', () => {
       const res = requestDeleteInvoice(invoiceId);
 
       expect(res.statusCode).toBe(200);
-      expect(res.body).toHaveProperty('invoice_id', invoiceId);
+      expect(res.body).toHaveProperty('invoiceId', invoiceId);
       expect(res.body).toHaveProperty('message');
       expect(typeof res.body.message).toBe('string');
     });

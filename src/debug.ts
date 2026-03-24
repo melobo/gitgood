@@ -10,6 +10,6 @@ export function echo(value: string): { value: string } {
   return { value };
 }
 
-export function clear(): void {
-  clearInvoices();
+export async function clear(): Promise<void> {
+  await clearInvoices();
 }

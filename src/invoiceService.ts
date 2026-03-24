@@ -21,38 +21,63 @@ import {
   validatePaymentDetails
 } from './validateInvoice';
 
+import {
+  saveInvoice,
+  getInvoiceById,
+  listAllInvoices,
+  deleteInvoiceById,
+  clearStore as clearDynamo
+} from './dynamoService';
+
+import {
+  saveXMLToS3,
+  getXMLFromS3,
+  deleteXMLFromS3,
+  clearStore as clearS3
+} from './s3Service';
+
 import { ServerError } from './errors';
 import { v4 as uuidv4 } from 'uuid';
 import { XMLBuilder } from 'fast-xml-parser';
 
-import * as store from './fileStore';
-const invoices: Invoice[] = store.getAllInvoices();
-
-export function listInvoice(filters: InvoiceListFilters): {
+export async function listInvoice(filters: InvoiceListFilters): Promise<{
   invoices: Pick<Invoice, 'invoiceId' | 'buyerName' | 'status' | 'createdAt'>[];
   total: number;
   page: number;
-} {
+}> {
   const { fromDate, toDate, page = 1, limitPerPage = 20 } = filters;
 
   if (!Number.isInteger(page) || !Number.isInteger(limitPerPage)) {
-    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+    throw new ServerError(
+      'INVALID_REQUEST',
+      'Missing or Invalid Fields'
+    );
   }
   if (fromDate && isNaN(Date.parse(fromDate))) {
-    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+    throw new ServerError(
+      'INVALID_REQUEST',
+      'Missing or Invalid Fields'
+    );
   }
   if (toDate && isNaN(Date.parse(toDate))) {
-    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+    throw new ServerError(
+      'INVALID_REQUEST',
+      'Missing or Invalid Fields'
+    );
   }
   if (fromDate && toDate && new Date(fromDate) > new Date(toDate)) {
-    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+    throw new ServerError(
+      'INVALID_REQUEST',
+      'Missing or Invalid Fields'
+    );
   }
 
-  let result = [...invoices];
+  let result = await listAllInvoices();
 
   if (fromDate) {
     result = result.filter(inv => new Date(inv.createdAt) >= new Date(fromDate));
   }
+
   if (toDate) {
     const end = new Date(toDate);
     end.setHours(23, 59, 59, 999);
@@ -72,76 +97,115 @@ export function listInvoice(filters: InvoiceListFilters): {
   };
 }
 
-export function createInvoice(input: CreateInvoiceInput): Invoice {
+export async function createInvoice(input: CreateInvoiceInput): Promise<Invoice> {
   const {
     buyerName, buyerAbn, supplierName, supplierAbn,
     issueDate, paymentDueDate, itemsList,
     taxRate, paymentDetails, additionalNotes,
   } = input;
 
-  // Required string fields
   if (!buyerName || !buyerAbn || !supplierName || !supplierAbn || !issueDate || !paymentDueDate) {
-    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+    throw new ServerError(
+      'INVALID_REQUEST',
+      'Missing or Invalid Fields'
+    );
   }
 
-  // Date format: YYYY-MM-DD
   const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
   if (!dateRegex.test(issueDate) || !dateRegex.test(paymentDueDate)) {
-    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+    throw new ServerError(
+      'INVALID_REQUEST',
+      'Missing or Invalid Fields'
+    );
   }
 
-  // Due date cannot be before or equal to issue date
   if (new Date(paymentDueDate) <= new Date(issueDate)) {
-    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+    throw new ServerError(
+      'INVALID_REQUEST',
+      'Missing or Invalid Fields'
+    );
   }
 
-  // taxRate must be decimal between 0 and 1
   if (taxRate === undefined || taxRate === null || isNaN(taxRate) || taxRate < 0 || taxRate > 1) {
-    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+    throw new ServerError(
+      'INVALID_REQUEST',
+      'Missing or Invalid Fields'
+    );
   }
 
-  // itemsList must be a non-empty array
   if (!Array.isArray(itemsList) || itemsList.length === 0) {
-    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+    throw new ServerError(
+      'INVALID_REQUEST',
+      'Missing or Invalid Fields'
+    );
   }
+
   for (const item of itemsList) {
     if (!item.itemName || !item.unitCode) {
-      throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+      throw new ServerError(
+        'INVALID_REQUEST',
+        'Missing or Invalid Fields'
+      );
     }
+
     if (!item.quantity || item.quantity <= 0) {
-      throw new ServerError('INVALID_REQUEST', `Item quantity must be > 0; ${item.itemName}.`); // was INSUFFICIENT_DATA
+      throw new ServerError(
+        'INVALID_REQUEST',
+        `Item quantity must be > 0; ${item.itemName}.`
+      );
     }
+
     if (item.unitPrice === undefined || item.unitPrice < 0) {
-      throw new ServerError('INVALID_REQUEST', `Item prices cannot be negative; ${item.itemName}.`); // was INSUFFICIENT_DATA
+      throw new ServerError(
+        'INVALID_REQUEST',
+        `Item prices cannot be negative; ${item.itemName}.`
+      );
     }
+
     if (item.quantity * item.unitPrice !== item.totalPrice) {
-      throw new ServerError('INSUFFICIENT_DATA', `Invoice totals are inconsistent. Item totals must equal quantity * unitPrice; ${item.itemName}.`);
+      throw new ServerError(
+        'INSUFFICIENT_DATA',
+        `Invoice totals are inconsistent. Item totals must equal quantity * unitPrice; ${item.itemName}.`
+      );
     }
   }
 
-  // paymentDetails must be a non-empty array
   if (!Array.isArray(paymentDetails) || paymentDetails.length === 0) {
-    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields'); // was INSUFFICIENT_DATA with wrong message
+    throw new ServerError(
+      'INVALID_REQUEST',
+      'Missing or Invalid Fields'
+    );
   }
 
   for (const pd of paymentDetails) {
     if (!validBanks.includes(pd.bankName)) {
-      throw new ServerError('INSUFFICIENT_DATA', `Payment details on invoice include an invalid bank name; ${pd.bankName}.`);
+      throw new ServerError(
+        'INSUFFICIENT_DATA',
+        `Payment details on invoice include an invalid bank name; ${pd.bankName}.`
+      );
     }
 
     if (!validPaymentMethods.includes(pd.paymentMethod)) {
-      throw new ServerError('INSUFFICIENT_DATA', `Payment details on invoice include an invalid payment method; ${pd.paymentMethod}.`);
+      throw new ServerError(
+        'INSUFFICIENT_DATA',
+        `Payment details on invoice include an invalid payment method; ${pd.paymentMethod}.`
+      );
     }
 
     if (pd.bsbAbnNumber.charAt(3) !== '-' || pd.bsbAbnNumber.replace(/-/g, '').length < 6) {
-      throw new ServerError('INSUFFICIENT_DATA', `The BSB provided (${pd.bsbAbnNumber}) is invalid. It must have 6 digits, and be in NNN-NNN format.`);
+      throw new ServerError(
+        'INSUFFICIENT_DATA',
+        `The BSB provided (${pd.bsbAbnNumber}) is invalid. It must have 6 digits, and be in NNN-NNN format.`
+      );
     }
     if (!Number(pd.accountNumber)) {
-      throw new ServerError('INSUFFICIENT_DATA', `The account number provided (${pd.accountNumber}) is invalid. Only numbers are allowed.`);
+      throw new ServerError(
+        'INSUFFICIENT_DATA',
+        `The account number provided (${pd.accountNumber}) is invalid. Only numbers are allowed.`
+      );
     }
   }
 
-  // Compute totals
   const subtotal = itemsList.reduce(
     (sum, item) => parseFloat((sum + item.totalPrice).toFixed(2)), 0
   );
@@ -169,29 +233,42 @@ export function createInvoice(input: CreateInvoiceInput): Invoice {
     updatedAt: now,
   };
 
-  invoices.push(invoice);
-  store.saveInvoice(invoice);
+  await saveInvoice(invoice);
   return invoice;
 }
 
-export function getInvoice(invoiceId: string): Invoice {
-  const invoice = invoices.find(inv => inv.invoiceId === invoiceId);
+export async function getInvoice(invoiceId: string): Promise<Invoice> {
+  const invoice = await getInvoiceById(invoiceId);
 
   if (!invoice) {
-    throw new ServerError('NOT_FOUND', 'The provided invoice ID does not refer to an existing invoice.');
+    throw new ServerError(
+      'NOT_FOUND',
+      'The provided invoice ID does not refer to an existing invoice.'
+    );
+  }
+
+  if (invoice.status !== 'draft' && invoice.invoiceId) {
+    invoice.ublXml = await getXMLFromS3(invoice.invoiceId);
   }
 
   return invoice;
 }
 
-export function validateInvoice(invoiceId: string): ValidateInvoiceResponse {
-  const invoice = invoices.find(inv => inv.invoiceId === invoiceId);
+export async function validateInvoice(invoiceId: string): Promise<ValidateInvoiceResponse> {
+  const invoice = await getInvoiceById(invoiceId);
 
   if (!invoice) {
-    throw new ServerError('NOT_FOUND', 'The provided invoice ID does not refer to an existing invoice.');
+    throw new ServerError(
+      'NOT_FOUND',
+      'The provided invoice ID does not refer to an existing invoice.'
+    );
   }
+
   if (invoice.status === 'draft') {
-    throw new ServerError('INVALID_REQUEST', 'The invoice has not yet been converted.');
+    throw new ServerError(
+      'INVALID_REQUEST',
+      'The invoice has not yet been converted.'
+    );
   }
 
   const errors: ValidationError[] = [];
@@ -233,7 +310,7 @@ export function validateInvoice(invoiceId: string): ValidateInvoiceResponse {
     invoice.status = 'validated';
   }
 
-  store.saveInvoice(invoice);
+  await saveInvoice(invoice);
 
   return {
     invoiceId,
@@ -243,19 +320,27 @@ export function validateInvoice(invoiceId: string): ValidateInvoiceResponse {
   };
 }
 
-export function finaliseInvoice(invoiceId: string): FinaliseInvoiceResponse {
-  const invoice = invoices.find(inv => inv.invoiceId === invoiceId);
+export async function finaliseInvoice(invoiceId: string): Promise<FinaliseInvoiceResponse> {
+  const invoice = await getInvoiceById(invoiceId);
+
   if (!invoice) {
-    throw new ServerError('NOT_FOUND', 'The provided in voice ID does not refer to an existing invoice.');
+    throw new ServerError(
+      'NOT_FOUND',
+      'The provided in voice ID does not refer to an existing invoice.'
+    );
   }
+
   if (invoice.status === 'draft' || invoice.status === 'converted') {
-    throw new ServerError('INVOICE_NOT_VALIDATED', 'The invoice has not yet been validated.');
+    throw new ServerError(
+      'INVOICE_NOT_VALIDATED',
+      'The invoice has not yet been validated.'
+    );
   }
 
   invoice.status = 'finalised';
   invoice.finalisedAt = new Date().toLocaleString();
 
-  store.saveInvoice(invoice);
+  await saveInvoice(invoice);
 
   return {
     invoiceId,
@@ -265,25 +350,35 @@ export function finaliseInvoice(invoiceId: string): FinaliseInvoiceResponse {
   };
 }
 
-export function convertInvoice(invoice_id: string) {
-  // first, find and determine invoice exists
-  const invoice = invoices.find(inv => inv.invoiceId === invoice_id);
+export async function convertInvoice(invoiceId: string): Promise<{
+  invoiceId: string;
+  status: string;
+  ublXml: string;
+}> {
+  const invoice = await getInvoiceById(invoiceId);
 
   if (!invoice) {
-    throw new ServerError('NOT_FOUND', 'The provided invoice ID does not refer to an existing invoice.');
+    throw new ServerError(
+      'NOT_FOUND',
+      'The provided invoice ID does not refer to an existing invoice.'
+    );
   }
 
-  // ensures only draft invoices can be converted
   if (invoice.status === 'converted' || invoice.status === 'validated' || invoice.status === 'finalised') {
-    throw new ServerError('ALREADY_CONVERTED', 'Invoice has already been converted.');
+    throw new ServerError(
+      'ALREADY_CONVERTED',
+      'Invoice has already been converted.'
+    );
   }
 
   if (!invoice.buyerName || !invoice.buyerAbn || !invoice.supplierName
     || !invoice.supplierAbn || !invoice.itemsList || invoice.itemsList.length === 0) {
-    throw new ServerError('INSUFFICIENT_DATA', 'Not enough data has been provided for one or more of the invoice fields.');
+    throw new ServerError(
+      'INSUFFICIENT_DATA',
+      'Not enough data has been provided for one or more of the invoice fields.'
+    );
   }
 
-  // construct the UBL data
   const invoiceObject = {
     '?xml': {
       '@_version': '1.0',
@@ -364,7 +459,6 @@ export function convertInvoice(invoice_id: string) {
     }
   };
 
-  // convert to XML with fast-xml-parser
   const builder = new XMLBuilder({
     attributeNamePrefix: '@_',
     ignoreAttributes: false,
@@ -374,11 +468,12 @@ export function convertInvoice(invoice_id: string) {
 
   const ublXMLInvoice = builder.build(invoiceObject);
 
+  await saveXMLToS3(invoiceId, ublXMLInvoice);
+
   invoice.status = 'converted';
   invoice.ublXml = ublXMLInvoice;
   invoice.updatedAt = new Date().toISOString();
-
-  store.saveInvoice(invoice);
+  await saveInvoice(invoice);
 
   return {
     invoiceId: invoice.invoiceId,
@@ -387,7 +482,7 @@ export function convertInvoice(invoice_id: string) {
   };
 }
 
-export function updateInvoice(invoice_id: string, updates: {
+export async function updateInvoice(invoiceId: string, updates: {
   buyerName?: string;
   buyerAbn?: string;
   supplierName?: string;
@@ -398,39 +493,36 @@ export function updateInvoice(invoice_id: string, updates: {
   taxRate?: number;
   paymentDetails?: PaymentDetails[];
   additionalNotes?: string;
-}): { invoiceId: string; status: string; updatedAt: string } {
-  // find the invoice, throw error if it doesn't exist
-  const invoice = invoices.find(inv => inv.invoiceId === invoice_id);
+}): Promise<{ invoiceId: string; status: string; updatedAt: string }> {
+  const invoice = await getInvoiceById(invoiceId);
 
   if (!invoice) {
-    throw new ServerError('NOT_FOUND', 'The provided invoice ID does not refer to an existing invoice.');
+    throw new ServerError(
+      'NOT_FOUND',
+      'The provided invoice ID does not refer to an existing invoice.'
+    );
   }
 
-  // update buyer name if provided
   if (updates.buyerName !== undefined) {
     validateName(updates.buyerName, 'BUYER');
     invoice.buyerName = updates.buyerName;
   }
 
-  // update buyer abn if provided
   if (updates.buyerAbn !== undefined) {
     validateABN(updates.buyerAbn, 'BUYER');
     invoice.buyerAbn = updates.buyerAbn;
   }
 
-  // update supplier name if provided
   if (updates.supplierName !== undefined) {
     validateName(updates.supplierName, 'SUPPLIER');
     invoice.supplierName = updates.supplierName;
   }
 
-  // update supplier abn if provided
   if (updates.supplierAbn !== undefined) {
     validateABN(updates.supplierAbn, 'SUPPLIER');
     invoice.supplierAbn = updates.supplierAbn;
   }
 
-  // need to validate dates together in case both are being updated at the same time
   if (updates.issueDate !== undefined || updates.paymentDueDate !== undefined) {
     const newIssueDate = updates.issueDate ?? invoice.issueDate;
     const newPaymentDueDate = updates.paymentDueDate ?? invoice.paymentDueDate;
@@ -439,46 +531,64 @@ export function updateInvoice(invoice_id: string, updates: {
     invoice.paymentDueDate = newPaymentDueDate;
   }
 
-  // update payment details if provided
   if (updates.paymentDetails !== undefined) {
     for (const pd of updates.paymentDetails) {
       if (!validBanks.includes(pd.bankName)) {
-        throw new ServerError('INVALID_REQUEST', `Invalid bank name: ${pd.bankName}`);
+        throw new ServerError(
+          'INVALID_REQUEST',
+          `Invalid bank name: ${pd.bankName}`
+        );
       }
       if (!validPaymentMethods.includes(pd.paymentMethod)) {
-        throw new ServerError('INVALID_REQUEST', `Invalid payment method: ${pd.paymentMethod}`);
+        throw new ServerError(
+          'INVALID_REQUEST',
+          `Invalid payment method: ${pd.paymentMethod}`
+        );
       }
     }
     invoice.paymentDetails = updates.paymentDetails;
   }
 
-  // update additional notes if provided
   if (updates.additionalNotes !== undefined) {
     invoice.additionalNotes = updates.additionalNotes;
   }
 
-  // recalculate tax and total if items or tax rate changed
   if (updates.itemsList !== undefined || updates.taxRate !== undefined) {
     const newItems = updates.itemsList ?? invoice.itemsList;
     const newTaxRate = updates.taxRate ?? invoice.taxRate;
 
     if (typeof newTaxRate !== 'number' || isNaN(newTaxRate)) {
-      throw new ServerError('INVALID_REQUEST', 'Tax rate must be a number.');
+      throw new ServerError(
+        'INVALID_REQUEST',
+        'Tax rate must be a number.'
+      );
     }
 
     for (const item of newItems) {
       if (typeof item.quantity !== 'number' || item.quantity <= 0) {
-        throw new ServerError('INVALID_REQUEST', `Invalid quantity for item: ${item.itemName}`);
+        throw new ServerError(
+          'INVALID_REQUEST',
+          `Invalid quantity for item: ${item.itemName}`
+        );
       }
       if (typeof item.unitPrice !== 'number' || item.unitPrice < 0) {
-        throw new ServerError('INVALID_REQUEST', `Invalid unit price for item: ${item.itemName}`);
+        throw new ServerError(
+          'INVALID_REQUEST',
+          `Invalid unit price for item: ${item.itemName}`
+        );
       }
       if (typeof item.unitCode !== 'string' || !/^[a-zA-Z]+$/.test(item.unitCode)) {
-        throw new ServerError('INVALID_REQUEST', `Invalid unit code for item: ${item.itemName}`);
+        throw new ServerError(
+          'INVALID_REQUEST',
+          `Invalid unit code for item: ${item.itemName}`
+        );
       }
       const expectedTotal = parseFloat((item.quantity * item.unitPrice).toFixed(2));
       if (item.totalPrice !== undefined && item.totalPrice !== expectedTotal) {
-        throw new ServerError('INVALID_REQUEST', `Inconsistent total price for item: ${item.itemName}`);
+        throw new ServerError(
+          'INVALID_REQUEST',
+          `Inconsistent total price for item: ${item.itemName}`
+        );
       }
     }
 
@@ -491,7 +601,7 @@ export function updateInvoice(invoice_id: string, updates: {
 
   invoice.updatedAt = new Date().toISOString();
 
-  store.saveInvoice(invoice);
+  await saveInvoice(invoice);
 
   return {
     invoiceId: invoice.invoiceId,
@@ -500,21 +610,28 @@ export function updateInvoice(invoice_id: string, updates: {
   };
 }
 
-export function deleteInvoice(invoiceId: string): DeleteInvoiceResponse {
+export async function deleteInvoice(invoiceId: string): Promise<DeleteInvoiceResponse> {
   if (!invoiceId || !invoiceId.trim() || !/^[a-zA-Z0-9-]+$/.test(invoiceId.trim())) {
-    throw new ServerError('INVALID_REQUEST', 'Invalid invoice ID format.');
+    throw new ServerError(
+      'INVALID_REQUEST',
+      'Invalid invoice ID format.'
+    );
   }
 
-  const invoice = invoices.find(inv => inv.invoiceId === invoiceId);
+  const invoice = await getInvoiceById(invoiceId);
 
   if (!invoice) {
-    throw new ServerError('NOT_FOUND', 'The provided invoice ID does not refer to an existing invoice.');
+    throw new ServerError(
+      'NOT_FOUND',
+      'The provided invoice ID does not refer to an existing invoice.'
+    );
   }
 
-  const invoiceIndex = invoices.findIndex(i => i.invoiceId === invoiceId);
-  invoices.splice(invoiceIndex, 1);
+  if (invoice.status !== 'draft') {
+    await deleteXMLFromS3(invoiceId);
+  }
 
-  store.deleteInvoice(invoiceId);
+  await deleteInvoiceById(invoiceId);
 
   return {
     invoiceId,
@@ -522,39 +639,44 @@ export function deleteInvoice(invoiceId: string): DeleteInvoiceResponse {
   };
 }
 
-export function downloadInvoice(invoiceId: string, format: string = 'xml'): {
+export async function downloadInvoice(invoiceId: string, format: string = 'xml'): Promise<{
   content: string;
   contentType: string;
   filename: string;
-} {
-  const invoice = invoices.find(inv => inv.invoiceId === invoiceId);
+}> {
+  const invoice = await getInvoiceById(invoiceId);
 
   if (!invoice) {
-    throw new ServerError('NOT_FOUND', 'The provided invoice ID does not refer to an existing invoice.');
+    throw new ServerError(
+      'NOT_FOUND',
+      'The provided invoice ID does not refer to an existing invoice.'
+    );
   }
 
   if (invoice.status !== 'finalised') {
-    throw new ServerError('INVOICE_NOT_READY', 'Invoice not yet converted/validated to UBL XML format');
+    throw new ServerError(
+      'INVOICE_NOT_READY',
+      'Invoice not yet converted/validated to UBL XML format'
+    );
   }
 
   const allowedFormats = ['xml', 'json'];
   if (!allowedFormats.includes(format.toLowerCase())) {
-    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+    throw new ServerError(
+      'INVALID_REQUEST',
+      'Missing or Invalid Fields'
+    );
   }
 
   if (format.toLowerCase() === 'xml') {
-    if (!invoice.ublXml) {
-      throw new ServerError('CONFLICT', 'Invoice not yet converted/validated to UBL XML format');
-    }
+    const ublXml = await getXMLFromS3(invoiceId);
     return {
-      content: invoice.ublXml,
+      content: ublXml,
       contentType: 'application/xml',
       filename: `invoice-${invoiceId}.xml`,
     };
   }
 
-  // JSON format — omit ublXml from download
-  // const { ublXml, ...invoiceJson } = invoice;
   const invoiceJson = Object.fromEntries(
     Object.entries(invoice).filter(([key]) => key !== 'ublXml')
   );
@@ -566,7 +688,20 @@ export function downloadInvoice(invoiceId: string, format: string = 'xml'): {
   };
 }
 
-export function clearInvoices(): void {
-  invoices.splice(0, invoices.length);
-  store.writeAll({ invoices: {} });
+export async function clearInvoices(): Promise<void> {
+  if (process.env.NODE_ENV === 'test') {
+    clearDynamo();
+    clearS3();
+    return;
+  }
+
+  const all = await listAllInvoices();
+  await Promise.all(
+    all.map(async (inv) => {
+      if (inv.status !== 'draft') {
+        await deleteXMLFromS3(inv.invoiceId);
+      }
+      await deleteInvoiceById(inv.invoiceId);
+    })
+  );
 }
