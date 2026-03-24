@@ -1,6 +1,4 @@
 import process from 'process';
-import dotenv from 'dotenv';
-dotenv.config({ override: false });
 import express, { json, Request, Response } from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
