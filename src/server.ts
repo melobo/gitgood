@@ -1,10 +1,9 @@
 import process from 'process';
-import 'dotenv/config';
 import express, { json, Request, Response } from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
 import config from './config';
-import { echo, clear } from './debug';
+import { echo } from './debug';
 import { handleError } from './errors';
 import { errorHandler } from './errorHandler';
 import docs from './docsMiddleware';
@@ -45,11 +44,10 @@ if (config.debug) {
     }
   });
 
-  app.delete('/debug/clear', (req: Request, res: Response) => {
+  app.delete('/debug/clear', async (_req, res) => {
     try {
-      clear();
-      clearInvoices();
-      res.json({});
+      await clearInvoices();
+      res.json({ message: 'All invoices cleared' });
     } catch (err) {
       handleError(res, err);
     }
@@ -60,9 +58,9 @@ app.use('/v1', healthRouter);
 
 // ===== INVOICE ENDPOINTS ===== //
 
-app.post('/v1/invoice', authenticate, (req: Request, res: Response) => {
+app.post('/v1/invoice', authenticate, async (req: Request, res: Response) => {
   try {
-    const invoice = createInvoice(req.body);
+    const invoice = await createInvoice(req.body);
     res.status(201).json({
       invoiceId: invoice.invoiceId,
       status: invoice.status,
@@ -73,10 +71,10 @@ app.post('/v1/invoice', authenticate, (req: Request, res: Response) => {
   }
 });
 
-app.get('/v1/invoice', authenticate, (req: Request, res: Response) => {
+app.get('/v1/invoice', authenticate, async (req: Request, res: Response) => {
   const { fromDate, toDate, page, limitPerPage } = req.query;
   try {
-    const result = listInvoice({
+    const result = await listInvoice({
       fromDate: fromDate as string | undefined,
       toDate: toDate as string | undefined,
       page: page !== undefined ? Number(page) : undefined,
@@ -88,9 +86,9 @@ app.get('/v1/invoice', authenticate, (req: Request, res: Response) => {
   }
 });
 
-app.get('/v1/invoice/:invoiceId', authenticate, (req: Request, res: Response) => {
+app.get('/v1/invoice/:invoiceId', authenticate, async (req: Request, res: Response) => {
   try {
-    const result = getInvoice(req.params.invoiceId);
+    const result = await getInvoice(req.params.invoiceId);
     res.status(200).json({
       invoiceId: result.invoiceId,
       status: result.status,
@@ -127,9 +125,9 @@ app.get('/v1/invoice/:invoiceId', authenticate, (req: Request, res: Response) =>
   }
 });
 
-app.post('/v1/invoice/:invoiceId/validate', authenticate, (req: Request, res: Response) => {
+app.post('/v1/invoice/:invoiceId/validate', authenticate, async (req: Request, res: Response) => {
   try {
-    const result = validateInvoice(req.params.invoiceId);
+    const result = await validateInvoice(req.params.invoiceId);
     res.status(200).json({
       invoiceId: result.invoiceId,
       valid: result.valid,
@@ -141,10 +139,10 @@ app.post('/v1/invoice/:invoiceId/validate', authenticate, (req: Request, res: Re
   }
 });
 
-app.post('/v1/invoice/:invoiceId/final', authenticate, (req: Request, res: Response) => {
+app.post('/v1/invoice/:invoiceId/final', authenticate, async (req: Request, res: Response) => {
   const { invoiceId } = req.params;
   try {
-    const result = finaliseInvoice(invoiceId);
+    const result = await finaliseInvoice(invoiceId);
     res.status(200).json({
       invoiceId: result.invoiceId,
       status: result.status,
@@ -156,12 +154,12 @@ app.post('/v1/invoice/:invoiceId/final', authenticate, (req: Request, res: Respo
   }
 });
 
-app.delete('/v1/invoice/:invoice_id', authenticate, (req: Request, res: Response) => {
-  const { invoice_id: invoiceId } = req.params;
+app.delete('/v1/invoice/:invoiceId', authenticate, async (req: Request, res: Response) => {
+  const { invoiceId: invoiceId } = req.params;
   try {
-    const result = deleteInvoice(invoiceId);
+    const result = await deleteInvoice(invoiceId);
     res.status(200).json({
-      invoice_id: result.invoiceId,
+      invoiceId: result.invoiceId,
       message: result.message,
     });
   } catch (err) {
@@ -169,20 +167,20 @@ app.delete('/v1/invoice/:invoice_id', authenticate, (req: Request, res: Response
   }
 });
 
-app.post('/v1/invoice/:invoiceId/convert', authenticate, (req: Request, res: Response) => {
+app.post('/v1/invoice/:invoiceId/convert', authenticate, async (req: Request, res: Response) => {
   const { invoiceId } = req.params;
   try {
-    const result = convertInvoice(invoiceId);
+    const result = await convertInvoice(invoiceId);
     res.status(200).json(result);
   } catch (err) {
     handleError(res, err);
   }
 });
 
-app.put('/v1/invoice/:invoiceId', authenticate, (req: Request, res: Response) => {
+app.put('/v1/invoice/:invoiceId', authenticate, async (req: Request, res: Response) => {
   const { invoiceId } = req.params;
   try {
-    const result = updateInvoice(invoiceId, {
+    const result = await updateInvoice(invoiceId, {
       ...req.body,
       paymentDueDate: req.body.paymentDate ?? req.body.paymentDueDate,
       itemsList: req.body.itemDetails ?? req.body.itemsList,
@@ -193,11 +191,11 @@ app.put('/v1/invoice/:invoiceId', authenticate, (req: Request, res: Response) =>
   }
 });
 
-app.get('/v1/invoice/:invoiceId/download', authenticate, (req: Request, res: Response) => {
+app.get('/v1/invoice/:invoiceId/download', authenticate, async (req: Request, res: Response) => {
   const { invoiceId } = req.params;
   const format = (req.query.format as string) ?? 'xml';
   try {
-    const { content, contentType, filename } = downloadInvoice(invoiceId, format);
+    const { content, contentType, filename } = await downloadInvoice(invoiceId, format);
     res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.status(200).send(content);
@@ -210,7 +208,7 @@ app.get('/v1/invoice/:invoiceId/download', authenticate, (req: Request, res: Res
 
 app.use(errorHandler);
 
-const server = app.listen(config.port, config.ip, () => {
+export const server = app.listen(config.port, config.ip, () => {
   console.log(`🐝 Server running at http://${config.ip}:${config.port}/`);
 });
 

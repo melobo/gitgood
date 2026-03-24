@@ -1,4 +1,5 @@
 # Environment
+.env.test
 .env
 
 # Dependencies
@@ -19,5 +20,3 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 
-# Persistence
-src/invoices.json
