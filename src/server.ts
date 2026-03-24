@@ -208,7 +208,7 @@ app.get('/v1/invoice/:invoiceId/download', authenticate, async (req: Request, re
 
 app.use(errorHandler);
 
-const server = app.listen(config.port, config.ip, () => {
+export const server = app.listen(config.port, config.ip, () => {
   console.log(`🐝 Server running at http://${config.ip}:${config.port}/`);
 });
 

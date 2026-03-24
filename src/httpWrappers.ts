@@ -67,7 +67,7 @@ export const requestListInvoice = (
   if (limitPerPage !== undefined) params.append('limitPerPage', String(limitPerPage));
   const qs = params.toString() ? `?${params.toString()}` : '';
 
-  const res = request('GET', `${SERVER_URL()}/v1/invoice${qs}`, { headers,timeout: TIMEOUT_MS });
+  const res = request('GET', `${SERVER_URL()}/v1/invoice${qs}`, { headers, timeout: TIMEOUT_MS });
   const bodyObj = JSON.parse(res.body.toString());
   return { statusCode: res.statusCode, body: bodyObj };
 };
@@ -89,7 +89,7 @@ export const requestUpdateInvoice = (invoiceId: string, updates: object) => {
 };
 
 export const requestDeleteInvoice = (invoiceId: string) => {
-  const res = request('DELETE', `${SERVER_URL()}/v1/invoice/${invoiceId}`, { headers, timeout: TIMEOUT_MS});
+  const res = request('DELETE', `${SERVER_URL()}/v1/invoice/${invoiceId}`, { headers, timeout: TIMEOUT_MS });
   const bodyObj = JSON.parse(res.body.toString());
   return { statusCode: res.statusCode, body: bodyObj };
 };
@@ -101,7 +101,7 @@ export const requestConvertInvoice = (invoiceId: string) => {
 };
 
 export const requestValidateInvoice = (invoiceId: string) => {
-  const res = request('POST', `${SERVER_URL()}/v1/invoice/${invoiceId}/validate`, { headers, timeout: TIMEOUT_MS});
+  const res = request('POST', `${SERVER_URL()}/v1/invoice/${invoiceId}/validate`, { headers, timeout: TIMEOUT_MS });
   const bodyObj = JSON.parse(res.body.toString());
   return { statusCode: res.statusCode, body: bodyObj };
 };
@@ -113,7 +113,7 @@ export const requestFinaliseInvoice = (invoiceId: string) => {
 };
 
 export const requestDownloadInvoice = (invoiceId: string, format: string) => {
-  const res = request('GET', `${SERVER_URL()}/v1/invoice/${invoiceId}/download?format=${format}`, { headers, timeout: TIMEOUT_MS, });
+  const res = request('GET', `${SERVER_URL()}/v1/invoice/${invoiceId}/download?format=${format}`, { headers, timeout: TIMEOUT_MS });
   const raw = res.body.toString();
   try {
     const bodyObj = JSON.parse(raw);
