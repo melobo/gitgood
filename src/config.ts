@@ -19,5 +19,3 @@ export default {
     return getApiKey();
   },
 };
-
-
