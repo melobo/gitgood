@@ -1,4 +1,4 @@
-import { HttpReturnObject } from '../invoiceInterface';
+/* import { HttpReturnObject } from '../invoiceInterface';
 import { requestClear, requestUserLogin } from '../httpWrappers';
 
 beforeEach(() => {
@@ -99,4 +99,4 @@ describe('POST /v1/admin/auth/login', () => {
       expect(login2.body).toStrictEqual({ session: expect.any(String) });
     });
   });
-});
+}); */

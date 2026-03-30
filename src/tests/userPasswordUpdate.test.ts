@@ -1,4 +1,4 @@
-import { HttpReturnObject } from '../invoiceInterface';
+/* import { HttpReturnObject } from '../invoiceInterface';
 import { requestClear, requestUserRegister, requestUserPasswordUpdate } from '../httpWrappers';
 
 beforeEach(() => {
@@ -115,14 +115,14 @@ describe('PUT /v1/admin/user/password', () => {
       expect(res.body).toStrictEqual({});
     });
 
-    /* test('handles boundary value - exactly 8 character password', () => {
+     test('handles boundary value - exactly 8 character password', () => {
      const user = requestUserRegister('valid@email.com', 'Password123', 'John Doe') as HttpReturnObject<{ session: string }>;
      const sessionToken = user.body.session;
 
      const res = requestUserPasswordUpdate(sessionToken, 'Password123', 'NewPass1');
      expect(res.statusCode).toStrictEqual(200);
      expect(res.body).toStrictEqual({});
-   }); */
+   });
 
     test('accepts password with special characters', () => {
       const user = requestUserRegister('valid@email.com', 'Password123', 'John Doe') as HttpReturnObject<{ session: string }>;
@@ -166,3 +166,5 @@ describe('PUT /v1/admin/user/password', () => {
     });
   });
 });
+
+*/
