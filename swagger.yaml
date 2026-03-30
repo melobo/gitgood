@@ -21,6 +21,100 @@ components:
       name: x-api-key
 
   schemas:
+    InvoiceStatus:
+      type: string
+      enum: ['draft', 'converted', 'validated', 'finalised']
+      example: "draft"
+      
+    Invoice:
+      type: object
+      required:
+        - invoiceId
+        - status
+        - buyerName
+        - buyerAbn
+        - supplierName
+        - supplierAbn
+        - issueDate
+        - paymentDueDate
+        - itemsList
+        - taxRate
+        - taxAmount
+        - totalPayable
+        - paymentDetails
+        - createdAt
+        - updatedAt
+      properties:
+        invoiceId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/InvoiceStatus'
+        buyerName:
+          type: string
+        buyerAbn:
+          type: string
+        supplierName:
+          type: string
+        supplierAbn:
+          type: string
+        issueDate:
+          type: string
+          format: date
+        paymentDueDate:
+          type: string
+          format: date
+        itemsList:
+          type: array
+          items:
+            $ref: '#/components/schemas/Item'
+        taxRate:
+          type: number
+          example: 0.1
+        taxAmount:
+          type: number
+          description: "Calculated as sum(items) * taxRate"
+        totalPayable:
+          type: number
+          description: "Calculated total including tax"
+        paymentDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentDetails'
+        additionalNotes:
+          type: string
+          nullable: true
+        ublXml:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        finalisedAt:
+          type: string
+          format: date
+          nullable: true
+          
+    User:
+      type: object
+      properties:
+        userId:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+    AuthResponse:
+      type: object
+      properties:
+        session:
+          type: string
+    
+    
     Item:
       type: object
       required: [itemName, quantity, unitPrice, unitCode, totalPrice]
@@ -95,7 +189,125 @@ paths:
                   reason:
                     type: string
                     example: "Database connection failed"
+  /v1/admin/auth/register:
+    post:
+      summary: Register a new admin user
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, name]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+                name: { type: string }
+      responses:
+        '200':
+          description: Registration successful
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '400':
+          description: Invalid email, password (too short/simple), or name (invalid chars)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '409':
+          description: Email already in use
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              
+  /v1/admin/auth/login:
+    post:
+      summary: Login to an existing account
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '401':
+          description: Unauthorized - Incorrect email or password
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /v1/admin/user/details:
+    get:
+      summary: Get current user details
+      tags: [User]
+      responses:
+        '200':
+          description: Successfully retrieved details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: '#/components/schemas/User' }
+        '401':
+          description: Invalid or empty session token
+    put:
+      summary: Update user details
+      tags: [User]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string, format: email }
+                name: { type: string }
+      responses:
+        '200':
+          description: Details updated successfully
+          content:
+            application/json:
+              schema: { type: object }
+        '400':
+          description: Invalid name or email format
+        '401':
+          description: Unauthorized
+        '409':
+          description: Email already taken by another user
 
+  /v1/admin/user/password:
+    put:
+      summary: Update user password
+      tags: [User]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [oldPassword, newPassword]
+              properties:
+                oldPassword: { type: string }
+                newPassword: { type: string, minLength: 8 }
+      responses:
+        '200':
+          description: Password updated
+        '400':
+          description: Incorrect old password, or new password is same as old/invalid
+        '401':
+          description: Unauthorized
   /v1/invoice:
     post:
       summary: Create a new invoice
