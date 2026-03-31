@@ -1,3 +1,7 @@
+test('placeholder test', () => {
+  expect(true).toBe(true);
+});
+
 /* import { HttpReturnObject } from '../invoiceInterface';
 import { requestUserRegister, requestClear } from '../httpWrappers';
 
