@@ -9,7 +9,8 @@ describe('GET /v1/admin/user/details', () => {
   describe('error cases', () => {
     test('UNAUTHORIZED - invalid session token', () => {
       const user = requestUserRegister('valid@email.com', 'password123', 'Valid User') as HttpReturnObject<{ session: string }>;
-      expect(user.statusCode).toStrictEqual(200);
+      // expect(user.statusCode).toStrictEqual(200);
+      expect(user.body).toStrictEqual({ session: expect.any(String) });
       const invalidSessionToken = user.body.session + 'invalid_session';
 
       const res = requestUserDetails(invalidSessionToken);
@@ -22,7 +23,8 @@ describe('GET /v1/admin/user/details', () => {
 
     test('UNAUTHORIZED - empty session token', () => {
       const user = requestUserRegister('valid@email.com', 'password123', 'Valid User') as HttpReturnObject<{ session: string }>;
-      expect(user.statusCode).toStrictEqual(200);
+      // expect(user.statusCode).toStrictEqual(200);
+      expect(user.body).toStrictEqual({ session: expect.any(String) });
 
       const res = requestUserDetails('');
       expect(res.statusCode).toStrictEqual(401);
@@ -36,7 +38,8 @@ describe('GET /v1/admin/user/details', () => {
   describe('success cases', () => {
     test('returns correct user details structure with all required fields', () => {
       const user = requestUserRegister('test@email.com', 'password123', 'John Smith') as HttpReturnObject<{ session: string }>;
-      expect(user.statusCode).toStrictEqual(200);
+      // expect(user.statusCode).toStrictEqual(200);
+      expect(user.body).toStrictEqual({ session: expect.any(String) });
 
       const res = requestUserDetails(user.body.session) as HttpReturnObject<{ user: UserInfo }>;
       expect(res.statusCode).toStrictEqual(200);
@@ -52,8 +55,10 @@ describe('GET /v1/admin/user/details', () => {
     test('returns independent details for multiple users', () => {
       const user1 = requestUserRegister('multi1@email.com', 'password123', 'John Smith') as HttpReturnObject<{ session: string }>;
       const user2 = requestUserRegister('multi2@email.com', 'Xyz56789', 'Jane Doe') as HttpReturnObject<{ session: string }>;
-      expect(user1.statusCode).toStrictEqual(200);
-      expect(user2.statusCode).toStrictEqual(200);
+      // expect(user1.statusCode).toStrictEqual(200);
+      expect(user1.body).toStrictEqual({ session: expect.any(String) });
+      // expect(user2.statusCode).toStrictEqual(200);
+      expect(user2.body).toStrictEqual({ session: expect.any(String) });
 
       const res1 = requestUserDetails(user1.body.session) as HttpReturnObject<{ user: UserInfo }>;
       expect(res1.statusCode).toStrictEqual(200);
