@@ -3,7 +3,7 @@ import express, { json, Request, Response } from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
 import config from './config';
-import { echo } from './debug';
+import { clear, echo } from './debug';
 import { handleError } from './errors';
 import { errorHandler } from './errorHandler';
 import docs from './docsMiddleware';
@@ -17,13 +17,11 @@ import {
   downloadInvoice,
   validateInvoice,
   finaliseInvoice,
-  deleteInvoice,
-  clearInvoices,
+  deleteInvoice
 } from './invoiceService';
 import { authenticate } from './auth';
-import { userRegister, userLogin, userDetails, userDetailsUpdate, userPasswordUpdate, userLogout, clearUsers, clearSessions } from './user';
+import { userRegister, userLogin, userDetails, userDetailsUpdate, userPasswordUpdate, userLogout } from './user';
 import { validateSessionToken } from './validation';
-import { clearStore } from './dynamoService';
 
 const app = express();
 app.use(json());
@@ -49,10 +47,7 @@ if (config.debug) {
 
   app.delete('/debug/clear', async (_req, res) => {
     try {
-      await clearInvoices();
-      await clearUsers();
-      await clearSessions();
-      clearStore();
+      await clear();
       res.json({ message: 'All data cleared' });
     } catch (err) {
       handleError(res, err);
