@@ -1,8 +1,4 @@
-test('placeholder test', () => {
-  expect(true).toBe(true);
-});
-
-/* import { HttpReturnObject } from '../invoiceInterface';
+import { HttpReturnObject } from '../invoiceInterface';
 import { requestClear, requestUserRegister, requestUserDetails, requestUserDetailsUpdate } from '../httpWrappers';
 
 beforeEach(() => {
@@ -162,4 +158,3 @@ describe('PUT /v1/admin/user/details', () => {
     });
   });
 });
-*/
