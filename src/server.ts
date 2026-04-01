@@ -3,7 +3,7 @@ import express, { json, Request, Response } from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
 import config from './config';
-import { echo } from './debug';
+import { clear, echo } from './debug';
 import { handleError } from './errors';
 import { errorHandler } from './errorHandler';
 import docs from './docsMiddleware';
@@ -17,10 +17,11 @@ import {
   downloadInvoice,
   validateInvoice,
   finaliseInvoice,
-  deleteInvoice,
-  clearInvoices,
+  deleteInvoice
 } from './invoiceService';
 import { authenticate } from './auth';
+import { userRegister, userLogin, userDetails, userDetailsUpdate, userPasswordUpdate, userLogout } from './user';
+import { validateSessionToken } from './validation';
 
 const app = express();
 app.use(json());
@@ -46,8 +47,8 @@ if (config.debug) {
 
   app.delete('/debug/clear', async (_req, res) => {
     try {
-      await clearInvoices();
-      res.json({ message: 'All invoices cleared' });
+      await clear();
+      res.json({ message: 'All data cleared' });
     } catch (err) {
       handleError(res, err);
     }
@@ -199,6 +200,71 @@ app.get('/v1/invoice/:invoiceId/download', authenticate, async (req: Request, re
     res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.status(200).send(content);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+app.post('/v1/admin/auth/register', authenticate, async (req: Request, res: Response) => {
+  const { email, password, name } = req.body;
+  try {
+    const result = await userRegister(email, password, name);
+    res.status(200).json(result);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+app.post('/v1/admin/auth/login', authenticate, async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+  try {
+    const result = await userLogin(email, password);
+    res.status(200).json(result);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+app.get('/v1/admin/user/details', authenticate, async (req: Request, res: Response) => {
+  try {
+    const sessionToken = req.header('session');
+    const validated = await validateSessionToken(sessionToken);
+    const result = await userDetails(validated.userId);
+    res.status(200).json(result);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+app.put('/v1/admin/user/details', authenticate, async (req: Request, res: Response) => {
+  const { email, name } = req.body;
+  try {
+    const sessionToken = req.header('session');
+    const validated = await validateSessionToken(sessionToken);
+    const result = await userDetailsUpdate(validated.userId, email, name);
+    res.status(200).json(result);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+app.put('/v1/admin/user/password', authenticate, async (req: Request, res: Response) => {
+  const { oldPassword, newPassword } = req.body;
+  try {
+    const sessionToken = req.header('session');
+    const validated = await validateSessionToken(sessionToken);
+    const result = await userPasswordUpdate(validated.userId, oldPassword, newPassword);
+    res.status(200).json(result);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+app.post('/v1/admin/auth/logout', authenticate, async (req: Request, res: Response) => {
+  try {
+    const sessionToken = req.header('session');
+    const result = await userLogout(sessionToken as string);
+    res.status(200).json(result);
   } catch (err) {
     handleError(res, err);
   }

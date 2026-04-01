@@ -1,9 +1,5 @@
-test('placeholder test', () => {
-  expect(true).toBe(true);
-});
-
-/* import { HttpReturnObject } from '../invoiceInterface';
-import { requestClear, requestUserLogin } from '../httpWrappers';
+import { HttpReturnObject } from '../invoiceInterface';
+import { requestClear, requestUserRegister, requestUserLogin } from '../httpWrappers';
 
 beforeEach(() => {
   requestClear();
@@ -103,4 +99,4 @@ describe('POST /v1/admin/auth/login', () => {
       expect(login2.body).toStrictEqual({ session: expect.any(String) });
     });
   });
-}); */
+});

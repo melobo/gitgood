@@ -6,7 +6,7 @@ import {
   validateItems,
   validateTotalPayable,
   validatePaymentDetails,
-} from '../validateInvoice';
+} from '../validation';
 import { ServerError, errorToStatus, handleError } from '../errors';
 import { Response } from 'express';
 

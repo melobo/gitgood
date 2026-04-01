@@ -1,6 +1,22 @@
 export type InvoiceStatus = 'draft' | 'converted' | 'validated' | 'finalised';
 export const validBanks = ['ANZ', 'CommBank', 'Westpac', 'StGeorge', 'ApplePay', 'NAB', 'PayPal'];
 export const validPaymentMethods = ['bank_transfer', 'direct_debit', 'credit_card'];
+export const MIN_PASSWORD_LENGTH = 8;
+
+export interface UserInfo {
+  userId: string;
+  name: string;
+  email: string;
+}
+
+export interface User extends UserInfo {
+  password: string;
+}
+
+export interface Session {
+  userId: string;
+  session: string;
+}
 
 export interface InvoiceItem {
   itemName: string;
@@ -105,4 +121,5 @@ export interface HttpReturnObject<T> {
   body: T;
 }
 
+export type EmptyObject = Record<never, never>;
 export type ValidateItemsResponse = { sum: number };

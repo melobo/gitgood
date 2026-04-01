@@ -122,3 +122,61 @@ export const requestDownloadInvoice = (invoiceId: string, format: string) => {
     return { statusCode: res.statusCode, body: raw };
   }
 };
+
+export const requestUserRegister = (email: string, password: string, name: string) => {
+  const res = request('POST', `${SERVER_URL()}/v1/admin/auth/register`, {
+    headers,
+    json: { email, password, name },
+    timeout: TIMEOUT_MS,
+  });
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
+};
+
+export const requestUserLogin = (email: string, password: string) => {
+  const res = request('POST', `${SERVER_URL()}/v1/admin/auth/login`, {
+    headers,
+    json: { email, password },
+    timeout: TIMEOUT_MS,
+  });
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
+};
+
+export const requestUserDetails = (token: string) => {
+  const res = request('GET', `${SERVER_URL()}/v1/admin/user/details`, {
+    headers: { ...headers, session: token },
+    timeout: TIMEOUT_MS,
+  });
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
+};
+
+export const requestUserDetailsUpdate = (token: string, email?: string, name?: string) => {
+  const res = request('PUT', `${SERVER_URL()}/v1/admin/user/details`, {
+    headers: { ...headers, session: token },
+    json: { email, name },
+    timeout: TIMEOUT_MS,
+  });
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
+};
+
+export const requestUserPasswordUpdate = (token: string, oldPassword: string, newPassword: string) => {
+  const res = request('PUT', `${SERVER_URL()}/v1/admin/user/password`, {
+    headers: { ...headers, session: token },
+    json: { oldPassword, newPassword },
+    timeout: TIMEOUT_MS,
+  });
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
+};
+
+export const requestUserLogout = (token: string) => {
+  const res = request('POST', `${SERVER_URL()}/v1/admin/auth/logout`, {
+    headers: { ...headers, session: token },
+    timeout: TIMEOUT_MS,
+  });
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
+};
