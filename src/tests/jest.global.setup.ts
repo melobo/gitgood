@@ -15,6 +15,8 @@ export default async function globalSetup() {
       AWS_SECRET_ACCESS_KEY: 'dummy',
       AWS_SESSION_TOKEN: 'dummy',
       DYNAMO_TABLE: 'invoices-test',
+      USER_TABLE: 'users-test',
+      SESSION_TABLE: 'sessions-test',
       S3_BUCKET: 'invoices-test',
     },
     stdio: ['ignore', 'pipe', 'pipe'],

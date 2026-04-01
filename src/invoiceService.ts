@@ -19,7 +19,7 @@ import {
   validateItems,
   validateTotalPayable,
   validatePaymentDetails
-} from './validateInvoice';
+} from './validation';
 
 import {
   saveInvoice,

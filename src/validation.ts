@@ -1,20 +1,24 @@
+import validator from 'validator';
 import { ServerError } from './errors';
 import {
+  MIN_PASSWORD_LENGTH,
+  User,
   validBanks,
   validPaymentMethods,
   ValidateItemsResponse,
   InvoiceItem,
   PaymentDetails
 } from './invoiceInterface';
+import { getSession } from './dynamoService';
 
 export function validateName(
   name: string, type: 'BUYER' | 'SUPPLIER'
 ) {
   const validChars = /^[a-zA-Z \-']+$/;
-  if (!validChars.test(name)) {
+  if (!validChars.test(name) || /\d/g.test(name)) {
     throw new ServerError(
       'INVALID_REQUEST',
-      `The ${type.toLowerCase()} name provided contains invalid characters. Only letters, numbers, spaces, hyphens, and apostrophes are allowed.`
+      `The ${type.toLowerCase()} name provided contains invalid characters. Only letters, spaces, hyphens, and apostrophes are allowed.`
     );
   }
 };
@@ -158,4 +162,62 @@ export function validatePaymentDetails(paymentDetails: PaymentDetails[]) {
       );
     }
   }
+};
+
+export function validateEmail(
+  email: string, existingUser: User | null
+) {
+  if (!validator.isEmail(email)) {
+    throw new ServerError('INVALID_REQUEST', 'The provided email address is not in a valid format.');
+  }
+  if (existingUser) {
+    throw new ServerError('CONFLICT', 'The provided email address is already registered to another user.');
+  }
+};
+
+export function validatePassword(
+  password: string
+) {
+  const hasNumber = /[0-9]/;
+  const hasLetter = /[a-zA-Z]/;
+  if (password.length < MIN_PASSWORD_LENGTH || !hasNumber.test(password) || !hasLetter.test(password)) {
+    throw new ServerError('INVALID_REQUEST', 'The provided password does not meet the required criteria.');
+  }
+};
+
+export function authoriseLogin(email: string, password: string, user: User | null): User {
+  if (!user) {
+    throw new ServerError('UNAUTHORIZED', 'The provided email address does not exist.');
+  }
+  if (user.password !== password) {
+    throw new ServerError('UNAUTHORIZED', 'The provided password is incorrect.');
+  }
+  return user;
+};
+
+export function validateUserId(id: string, user: User | null): User {
+  if (!user) {
+    throw new ServerError('NOT_FOUND', 'The provided user ID does not refer to an existing user.');
+  }
+  return user;
+};
+
+export function validatePasswordUpdate(hashedOldPassword: string, hashedNewPassword: string, user: User) {
+  if (user.password !== hashedOldPassword) {
+    throw new ServerError('INVALID_REQUEST', 'The old password provided is incorrect.');
+  }
+  if (hashedOldPassword === hashedNewPassword) {
+    throw new ServerError('INVALID_REQUEST', 'The new password provided matches the current.');
+  }
+};
+
+export async function validateSessionToken(token: string | undefined): Promise<{ userId: string }> {
+  if (!token) {
+    throw new ServerError('UNAUTHORIZED', 'No session token has been provided.');
+  }
+  const session = await getSession(token);
+  if (!session) {
+    throw new ServerError('UNAUTHORIZED', 'The provided session token does not refer to a valid logged in user session.');
+  }
+  return { userId: session.userId };
 };
