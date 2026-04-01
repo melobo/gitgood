@@ -7,8 +7,8 @@ info:
   version: 1.0.0
 
 servers:
-  - url: https://gitgood.onrender.com/
-    description: Production (Render)
+  - url: http://3.107.81.173:3000/docs/
+    description: Production (AWS)
 
 security:
   - ApiKeyAuth: []
