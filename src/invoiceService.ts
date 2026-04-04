@@ -9,7 +9,8 @@ import {
   DeleteInvoiceResponse,
   validBanks,
   validPaymentMethods,
-  CreateInvoiceInput
+  CreateInvoiceInput,
+  InvoiceStatus
 } from './invoiceInterface';
 
 import {
@@ -53,18 +54,21 @@ export async function listInvoice(filters: InvoiceListFilters): Promise<{
       'Missing or Invalid Fields'
     );
   }
+
   if (fromDate && isNaN(Date.parse(fromDate))) {
     throw new ServerError(
       'INVALID_REQUEST',
       'Missing or Invalid Fields'
     );
   }
+
   if (toDate && isNaN(Date.parse(toDate))) {
     throw new ServerError(
       'INVALID_REQUEST',
       'Missing or Invalid Fields'
     );
   }
+
   if (fromDate && toDate && new Date(fromDate) > new Date(toDate)) {
     throw new ServerError(
       'INVALID_REQUEST',
@@ -198,6 +202,7 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<Invoice>
         `The BSB provided (${pd.bsbAbnNumber}) is invalid. It must have 6 digits, and be in NNN-NNN format.`
       );
     }
+
     if (!Number(pd.accountNumber)) {
       throw new ServerError(
         'INSUFFICIENT_DATA',
@@ -391,7 +396,6 @@ export async function convertInvoice(invoiceId: string): Promise<{
       'DueDate': invoice.paymentDueDate,
       'InvoiceTypeCode': '380',
       'DocumentCurrencyCode': 'AUD',
-
       'AccountingSupplierParty': {
         Party: {
           PartyName: {
@@ -539,6 +543,7 @@ export async function updateInvoice(invoiceId: string, updates: {
           `Invalid bank name: ${pd.bankName}`
         );
       }
+
       if (!validPaymentMethods.includes(pd.paymentMethod)) {
         throw new ServerError(
           'INVALID_REQUEST',
@@ -571,18 +576,21 @@ export async function updateInvoice(invoiceId: string, updates: {
           `Invalid quantity for item: ${item.itemName}`
         );
       }
+
       if (typeof item.unitPrice !== 'number' || item.unitPrice < 0) {
         throw new ServerError(
           'INVALID_REQUEST',
           `Invalid unit price for item: ${item.itemName}`
         );
       }
+
       if (typeof item.unitCode !== 'string' || !/^[a-zA-Z]+$/.test(item.unitCode)) {
         throw new ServerError(
           'INVALID_REQUEST',
           `Invalid unit code for item: ${item.itemName}`
         );
       }
+
       const expectedTotal = parseFloat((item.quantity * item.unitPrice).toFixed(2));
       if (item.totalPrice !== undefined && item.totalPrice !== expectedTotal) {
         throw new ServerError(
@@ -685,6 +693,51 @@ export async function downloadInvoice(invoiceId: string, format: string = 'xml')
     content: JSON.stringify(invoiceJson, null, 2),
     contentType: 'application/json',
     filename: `invoice-${invoiceId}.json`,
+  };
+}
+
+export async function getInvoiceSummary(invoiceId: string): Promise<{
+  invoiceId: string;
+  status: InvoiceStatus;
+  buyerName: string;
+  supplierName: string;
+  issueDate: string;
+  paymentDueDate: string;
+  subtotal: number;
+  taxRate: number;
+  taxAmount: number;
+  totalPayable: number;
+  itemCount: number;
+  createdAt: string;
+  updatedAt: string;
+  finalisedAt?: string;
+}> {
+  const invoice = await getInvoiceById(invoiceId);
+
+  if (!invoice) {
+    throw new ServerError(
+      'NOT_FOUND',
+      'The provided invoice ID does not refer to an existing invoice.'
+    );
+  }
+
+  const subtotal = parseFloat((invoice.totalPayable - invoice.taxAmount).toFixed(2));
+
+  return {
+    invoiceId: invoice.invoiceId,
+    status: invoice.status,
+    buyerName: invoice.buyerName,
+    supplierName: invoice.supplierName,
+    issueDate: invoice.issueDate,
+    paymentDueDate: invoice.paymentDueDate,
+    subtotal,
+    taxRate: invoice.taxRate,
+    taxAmount: invoice.taxAmount,
+    totalPayable: invoice.totalPayable,
+    itemCount: invoice.itemsList.length,
+    createdAt: invoice.createdAt,
+    updatedAt: invoice.updatedAt,
+    ...(invoice.finalisedAt !== undefined && { finalisedAt: invoice.finalisedAt }),
   };
 }
 

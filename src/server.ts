@@ -17,7 +17,8 @@ import {
   downloadInvoice,
   validateInvoice,
   finaliseInvoice,
-  deleteInvoice
+  deleteInvoice,
+  getInvoiceSummary
 } from './invoiceService';
 import { authenticate } from './auth';
 import { userRegister, userLogin, userDetails, userDetailsUpdate, userPasswordUpdate, userLogout } from './user';
@@ -58,7 +59,6 @@ if (config.debug) {
 app.use('/v1', healthRouter);
 
 // ===== INVOICE ENDPOINTS ===== //
-
 app.post('/v1/invoice', authenticate, async (req: Request, res: Response) => {
   try {
     const invoice = await createInvoice(req.body);
@@ -270,8 +270,16 @@ app.post('/v1/admin/auth/logout', authenticate, async (req: Request, res: Respon
   }
 });
 
-// ========================================= //
+app.get('/v1/invoice/:invoiceId/summary', authenticate, async (req: Request, res: Response) => {
+  try {
+    const result = await getInvoiceSummary(req.params.invoiceId);
+    res.status(200).json(result);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
 
+// ========================================= //
 app.use(errorHandler);
 
 export const server = app.listen(config.port, config.ip, () => {

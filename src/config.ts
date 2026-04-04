@@ -4,7 +4,7 @@ const getApiKey = (): string => {
     if (process.env.NODE_ENV === 'production') {
       throw new Error('API_KEY is required in production.');
     }
-    console.warn('WARNING: API_KEY not set, using temporary test key.');
+    console.warn('WARNING: using temporary test key.');
     return 'test-key'; // safe fallback for dev/test
   }
   return key;
