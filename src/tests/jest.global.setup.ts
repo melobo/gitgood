@@ -6,9 +6,9 @@ export default async function globalSetup() {
 
   const server = spawn('npx', ['tsx', serverPath], {
     env: {
-      ...process.env, // inherit everything
-      NODE_ENV: 'test', // explicitly force test mode
-      API_KEY: process.env.API_KEY ?? '',
+      ...process.env,
+      NODE_ENV: 'test',
+      API_KEY: 'test-key',
       PORT: '3000',
       AWS_REGION: 'ap-southeast-2',
       AWS_ACCESS_KEY_ID: 'dummy',

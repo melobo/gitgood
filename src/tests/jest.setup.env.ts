@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config({ path: '.env.test', quiet: true });
 
 process.env.NODE_ENV = 'test';
+process.env.API_KEY = 'test-key';
 process.env.PORT = '3000';
 process.env.AWS_REGION = 'ap-southeast-2';
 process.env.AWS_ACCESS_KEY_ID = 'dummy';
