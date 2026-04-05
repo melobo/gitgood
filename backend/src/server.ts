@@ -89,7 +89,7 @@ app.get('/v1/invoice', authenticate, async (req: Request, res: Response) => {
 
 app.get('/v1/invoice/:invoiceId', authenticate, async (req: Request, res: Response) => {
   try {
-    const result = await getInvoice(req.params.invoiceId);
+    const result = await getInvoice(req.params.invoiceId as string);
     res.status(200).json({
       invoiceId: result.invoiceId,
       status: result.status,
@@ -128,7 +128,7 @@ app.get('/v1/invoice/:invoiceId', authenticate, async (req: Request, res: Respon
 
 app.post('/v1/invoice/:invoiceId/validate', authenticate, async (req: Request, res: Response) => {
   try {
-    const result = await validateInvoice(req.params.invoiceId);
+    const result = await validateInvoice(req.params.invoiceId as string);
     res.status(200).json({
       invoiceId: result.invoiceId,
       valid: result.valid,
@@ -143,7 +143,7 @@ app.post('/v1/invoice/:invoiceId/validate', authenticate, async (req: Request, r
 app.post('/v1/invoice/:invoiceId/final', authenticate, async (req: Request, res: Response) => {
   const { invoiceId } = req.params;
   try {
-    const result = await finaliseInvoice(invoiceId);
+    const result = await finaliseInvoice(invoiceId as string);
     res.status(200).json({
       invoiceId: result.invoiceId,
       status: result.status,
@@ -158,7 +158,7 @@ app.post('/v1/invoice/:invoiceId/final', authenticate, async (req: Request, res:
 app.delete('/v1/invoice/:invoiceId', authenticate, async (req: Request, res: Response) => {
   const { invoiceId: invoiceId } = req.params;
   try {
-    const result = await deleteInvoice(invoiceId);
+    const result = await deleteInvoice(invoiceId as string);
     res.status(200).json({
       invoiceId: result.invoiceId,
       message: result.message,
@@ -171,7 +171,7 @@ app.delete('/v1/invoice/:invoiceId', authenticate, async (req: Request, res: Res
 app.post('/v1/invoice/:invoiceId/convert', authenticate, async (req: Request, res: Response) => {
   const { invoiceId } = req.params;
   try {
-    const result = await convertInvoice(invoiceId);
+    const result = await convertInvoice(invoiceId as string);
     res.status(200).json(result);
   } catch (err) {
     handleError(res, err);
@@ -181,7 +181,7 @@ app.post('/v1/invoice/:invoiceId/convert', authenticate, async (req: Request, re
 app.put('/v1/invoice/:invoiceId', authenticate, async (req: Request, res: Response) => {
   const { invoiceId } = req.params;
   try {
-    const result = await updateInvoice(invoiceId, {
+    const result = await updateInvoice(invoiceId as string, {
       ...req.body,
       paymentDueDate: req.body.paymentDate ?? req.body.paymentDueDate,
       itemsList: req.body.itemDetails ?? req.body.itemsList,
@@ -196,7 +196,7 @@ app.get('/v1/invoice/:invoiceId/download', authenticate, async (req: Request, re
   const { invoiceId } = req.params;
   const format = (req.query.format as string) ?? 'xml';
   try {
-    const { content, contentType, filename } = await downloadInvoice(invoiceId, format);
+    const { content, contentType, filename } = await downloadInvoice(invoiceId as string, format);
     res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.status(200).send(content);
@@ -272,7 +272,7 @@ app.post('/v1/admin/auth/logout', authenticate, async (req: Request, res: Respon
 
 app.get('/v1/invoice/:invoiceId/summary', authenticate, async (req: Request, res: Response) => {
   try {
-    const result = await getInvoiceSummary(req.params.invoiceId);
+    const result = await getInvoiceSummary(req.params.invoiceId as string);
     res.status(200).json(result);
   } catch (err) {
     handleError(res, err);

@@ -1,48 +1,28 @@
 {
+  "name": "gitgood",
+  "version": "1.0.0",
+  "description": "gitgood - invoicing application with React frontend and Express backend",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
   "scripts": {
-    "test": "jest --runInBand --forceExit",
-    "tsc": "tsc --project tsconfig.json",
-    "lint": "eslint 'src/**/*.{ts,js}'",
-    "lint-fix": "eslint --fix 'src/**/*.{ts,js}'",
-    "start": "tsx src/server.ts",
-    "dev": "tsx watch --clear-screen=false src/server.ts",
-    "start-coverage": "NODE_ENV=test nyc --reporter=text --reporter=lcov tsx src/server.ts"
-  },
-  "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.1014.0",
-    "@aws-sdk/client-s3": "^3.1014.0",
-    "@aws-sdk/lib-dynamodb": "^3.1014.0",
-    "cors": "^2.8.6",
-    "dotenv": "^17.3.1",
-    "express": "^5.2.1",
-    "fast-xml-parser": "^5.4.2",
-    "morgan": "^1.10.0",
-    "swagger-ui-express": "^5.0.1",
-    "tsx": "^4.21.0",
-    "uuid": "^9.0.1",
-    "validator": "^13.15.26",
-    "yaml": "^2.4.5"
+    "dev": "concurrently \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\"",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev:backend": "npm run dev --prefix backend",
+    "build": "npm run build --prefix frontend",
+    "start": "npm start --prefix backend",
+    "test": "npm test --prefix backend",
+    "test:backend": "npm test --prefix backend",
+    "lint": "npm run lint --prefix backend",
+    "lint:frontend": "npm run lint --prefix frontend",
+    "lint:backend": "npm run lint --prefix backend",
+    "lint-fix": "npm run lint-fix --prefix backend",
+    "tsc": "npm run tsc --prefix backend",
+    "preview": "npm run preview --prefix frontend"
   },
   "devDependencies": {
-    "@stylistic/eslint-plugin": "^5.7.1",
-    "@types/cors": "^2.8.17",
-    "@types/express": "^5.0.6",
-    "@types/jest": "^30.0.0",
-    "@types/morgan": "^1.9.9",
-    "@types/node": "^20.14.7",
-    "@types/swagger-ui-express": "^4.1.6",
-    "@types/uuid": "^9.0.0",
-    "@types/validator": "^13.12.0",
-    "aws-sdk-client-mock": "^4.1.0",
-    "baseline-browser-mapping": "^2.10.13",
-    "eslint": "^9.39.2",
-    "eslint-plugin-jest": "^29.15.0",
-    "globals": "^17.3.0",
-    "jest": "^30.2.0",
-    "nyc": "^17.1.0",
-    "sync-request-curl": "^3.0.0",
-    "ts-jest": "^29.4.6",
-    "typescript": "^5.8.3",
-    "typescript-eslint": "^8.51.0"
+    "concurrently": "^9.1.0"
   }
 }
