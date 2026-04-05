@@ -189,6 +189,7 @@ paths:
                   reason:
                     type: string
                     example: "Database connection failed"
+
   /v1/admin/auth/register:
     post:
       summary: Register a new admin user
@@ -202,26 +203,42 @@ paths:
               type: object
               required: [email, password, name]
               properties:
-                email: { type: string, format: email }
-                password: { type: string, minLength: 8 }
-                name: { type: string }
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                name:
+                  type: string
       responses:
         '200':
           description: Registration successful
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/AuthResponse' }
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              example:
+                session: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
         '400':
           description: Invalid email, password (too short/simple), or name (invalid chars)
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "INVALID_REQUEST"
+                message: Invalid email, password, or name
         '409':
           description: Email already in use
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-              
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "CONFLICT"
+                message: Email already in use
+
   /v1/admin/auth/login:
     post:
       summary: Login to an existing account
@@ -235,23 +252,66 @@ paths:
               type: object
               required: [email, password]
               properties:
-                email: { type: string, format: email }
-                password: { type: string }
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
       responses:
         '200':
           description: Login successful
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/AuthResponse' }
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              example:
+                session: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
         '401':
           description: Unauthorized - Incorrect email or password
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: Incorrect email or password
+
+  /v1/admin/auth/logout:
+    post:
+      summary: Logout the current user
+      tags: [Auth]
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully logged out
+        '401':
+          description: Invalid or missing session token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: Invalid or missing session token
+
   /v1/admin/user/details:
     get:
       summary: Get current user details
       tags: [User]
+      parameters:
+        - in: header
+          name: session
+          required: true
+          schema:
+            type: string
+          description: Session token returned from login or register
       responses:
         '200':
           description: Successfully retrieved details
@@ -260,37 +320,89 @@ paths:
               schema:
                 type: object
                 properties:
-                  user: { $ref: '#/components/schemas/User' }
+                  user:
+                    $ref: '#/components/schemas/User'
         '401':
           description: Invalid or empty session token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: Invalid or empty session token
     put:
       summary: Update user details
       tags: [User]
+      parameters:
+        - in: header
+          name: session
+          required: true
+          schema:
+            type: string
+          description: Session token returned from login or register
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               type: object
               properties:
-                email: { type: string, format: email }
-                name: { type: string }
+                email:
+                  type: string
+                  format: email
+                name:
+                  type: string
       responses:
         '200':
           description: Details updated successfully
           content:
             application/json:
-              schema: { type: object }
+              schema:
+                $ref: '#/components/schemas/User'
+              example:
+                userId: "abc-123"
+                name: "Updated Name"
+                email: "updated@example.com"
         '400':
           description: Invalid name or email format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "INVALID_REQUEST"
+                message: Invalid name or email format
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: Invalid or empty session token
         '409':
           description: Email already taken by another user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "CONFLICT"
+                message: Email already taken by another user
 
   /v1/admin/user/password:
     put:
       summary: Update user password
       tags: [User]
+      parameters:
+        - in: header
+          name: session
+          required: true
+          schema:
+            type: string
+          description: Session token returned from login or register
       requestBody:
         required: true
         content:
@@ -299,15 +411,41 @@ paths:
               type: object
               required: [oldPassword, newPassword]
               properties:
-                oldPassword: { type: string }
-                newPassword: { type: string, minLength: 8 }
+                oldPassword:
+                  type: string
+                newPassword:
+                  type: string
+                  minLength: 8
       responses:
         '200':
-          description: Password updated
+          description: Password updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Password updated successfully
         '400':
           description: Incorrect old password, or new password is same as old/invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "INVALID_REQUEST"
+                message: Incorrect old password or new password is invalid
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: Invalid or empty session token
+
   /v1/invoice:
     post:
       summary: Create a new invoice
@@ -824,7 +962,6 @@ paths:
               example:
                   error: "NOT_FOUND"
                   message: Invoice not found
-
         '409':
           description: Invoice not yet finalised
           content:
@@ -834,3 +971,67 @@ paths:
               example:
                   error: "INVOICE_NOT_READY"
                   message: Invoice not yet converted/validated
+
+  /v1/invoice/{invoiceId}/summary:
+    get:
+      summary: Get invoice summary
+      description: Returns a concise summary of the invoice including calculated totals and item count
+      tags: [Invoice Management]
+      parameters:
+        - in: path
+          name: invoiceId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invoice summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoiceId:
+                    type: string
+                  status:
+                    type: string
+                    example: draft
+                  buyerName:
+                    type: string
+                  supplierName:
+                    type: string
+                  issueDate:
+                    type: string
+                    format: date
+                  paymentDueDate:
+                    type: string
+                    format: date
+                  subtotal:
+                    type: number
+                  taxRate:
+                    type: number
+                  taxAmount:
+                    type: number
+                  totalPayable:
+                    type: number
+                  itemCount:
+                    type: integer
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+                  finalisedAt:
+                    type: string
+                    format: date-time
+                    nullable: true
+        '404':
+          description: Invoice not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "NOT_FOUND"
+                message: Invoice not found
