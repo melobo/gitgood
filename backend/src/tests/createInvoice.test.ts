@@ -1,6 +1,9 @@
 import {
   requestClear,
   requestCreateInvoice,
+  requestUserRegister,
+  setSessionToken,
+  clearSessionToken
 } from '../httpWrappers';
 import {
   InvoiceItem,
@@ -35,6 +38,9 @@ const validPayment: PaymentDetails[] = [
 
 beforeEach(() => {
   requestClear();
+  clearSessionToken();
+  const res = requestUserRegister('test@example.com', 'password1', 'Test User');
+  setSessionToken(res.body.session);
 });
 
 describe('HTTP tests: POST /v1/invoice', () => {

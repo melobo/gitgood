@@ -1,9 +1,18 @@
-import { requestListInvoice, requestClear } from '../httpWrappers';
+import {
+  requestListInvoice,
+  requestClear,
+  requestUserRegister,
+  setSessionToken,
+  clearSessionToken,
+} from '../httpWrappers';
 
 const error = { error: expect.any(String), message: expect.any(String) };
 
 beforeEach(() => {
   requestClear();
+  clearSessionToken();
+  const res = requestUserRegister('test@example.com', 'password1', 'Test User');
+  setSessionToken(res.body.session);
 });
 
 describe('GET /invoice — listInvoices', () => {

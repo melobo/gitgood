@@ -4,7 +4,10 @@ import {
   requestValidateInvoice,
   requestFinaliseInvoice,
   requestDownloadInvoice,
-  requestClear
+  requestClear,
+  requestUserRegister,
+  setSessionToken,
+  clearSessionToken,
 } from '../httpWrappers';
 
 // creating a valid draft invoice
@@ -51,6 +54,9 @@ function createFinalisedInvoice(): string {
 
 beforeEach(() => {
   requestClear();
+  clearSessionToken();
+  const res = requestUserRegister('test@example.com', 'password1', 'Test User');
+  setSessionToken(res.body.session);
 });
 
 describe('GET /invoice/{invoice_id}/download — downloadInvoice', () => {
