@@ -9,6 +9,8 @@ export default async function globalSetup() {
       ...process.env,
       NODE_ENV: 'test',
       API_KEY: 'test-key',
+      IP: '127.0.0.1',
+      SERVER_URL: 'http://127.0.0.1:3000',
       PORT: '3000',
       AWS_REGION: 'ap-southeast-2',
       AWS_ACCESS_KEY_ID: 'dummy',
@@ -40,7 +42,8 @@ export default async function globalSetup() {
       console.log('[server stdout]', msg);
       if (msg.includes('Server running')) {
         clearTimeout(timeout);
-        resolve();
+        // Add delay to ensure server is fully ready to accept connections
+        setTimeout(() => resolve(), 500);
       }
     });
 

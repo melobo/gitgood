@@ -2,7 +2,7 @@ import request from 'sync-request-curl';
 import config from './config';
 import { InvoiceItem, PaymentDetails } from './invoiceInterface';
 
-const SERVER_URL = () => process.env.SERVER_URL ?? 'http://3.107.81.173:3000';
+const SERVER_URL = () => process.env.SERVER_URL ?? 'http://127.0.0.1:3000';
 const getHeaders = () => ({
   'x-api-key': config.apiKey,
 });
