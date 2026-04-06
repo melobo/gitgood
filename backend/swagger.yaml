@@ -7,7 +7,7 @@ info:
   version: 1.0.0
 
 servers:
-  - url: http://3.107.81.173:3000/docs/
+  - url: http://3.107.81.173:3000
     description: Production (AWS)
 
 security:
