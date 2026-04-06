@@ -1,5 +1,5 @@
 import process from 'process';
-import express, { json, Request, Response } from 'express';
+import express, { json, Request, Response, NextFunction } from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
 import config from './config';
@@ -58,8 +58,20 @@ if (config.debug) {
 
 app.use('/v1', healthRouter);
 
+// Requires a valid session token in the 'session' header.
+// Used on all invoice endpoints so only logged-in users can access them.
+async function requireSession(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const sessionToken = req.header('session');
+    await validateSessionToken(sessionToken);
+    next();
+  } catch (err) {
+    handleError(res, err);
+  }
+}
+
 // ===== INVOICE ENDPOINTS ===== //
-app.post('/v1/invoice', authenticate, async (req: Request, res: Response) => {
+app.post('/v1/invoice', authenticate, requireSession, async (req: Request, res: Response) => {
   try {
     const invoice = await createInvoice(req.body);
     res.status(201).json({
@@ -72,7 +84,7 @@ app.post('/v1/invoice', authenticate, async (req: Request, res: Response) => {
   }
 });
 
-app.get('/v1/invoice', authenticate, async (req: Request, res: Response) => {
+app.get('/v1/invoice', authenticate, requireSession, async (req: Request, res: Response) => {
   const { fromDate, toDate, page, limitPerPage } = req.query;
   try {
     const result = await listInvoice({
@@ -87,7 +99,7 @@ app.get('/v1/invoice', authenticate, async (req: Request, res: Response) => {
   }
 });
 
-app.get('/v1/invoice/:invoiceId', authenticate, async (req: Request, res: Response) => {
+app.get('/v1/invoice/:invoiceId', authenticate, requireSession, async (req: Request, res: Response) => {
   try {
     const result = await getInvoice(req.params.invoiceId as string);
     res.status(200).json({
@@ -126,7 +138,7 @@ app.get('/v1/invoice/:invoiceId', authenticate, async (req: Request, res: Respon
   }
 });
 
-app.post('/v1/invoice/:invoiceId/validate', authenticate, async (req: Request, res: Response) => {
+app.post('/v1/invoice/:invoiceId/validate', authenticate, requireSession, async (req: Request, res: Response) => {
   try {
     const result = await validateInvoice(req.params.invoiceId as string);
     res.status(200).json({
@@ -140,7 +152,7 @@ app.post('/v1/invoice/:invoiceId/validate', authenticate, async (req: Request, r
   }
 });
 
-app.post('/v1/invoice/:invoiceId/final', authenticate, async (req: Request, res: Response) => {
+app.post('/v1/invoice/:invoiceId/final', authenticate, requireSession, async (req: Request, res: Response) => {
   const { invoiceId } = req.params;
   try {
     const result = await finaliseInvoice(invoiceId as string);
@@ -155,8 +167,8 @@ app.post('/v1/invoice/:invoiceId/final', authenticate, async (req: Request, res:
   }
 });
 
-app.delete('/v1/invoice/:invoiceId', authenticate, async (req: Request, res: Response) => {
-  const { invoiceId: invoiceId } = req.params;
+app.delete('/v1/invoice/:invoiceId', authenticate, requireSession, async (req: Request, res: Response) => {
+  const { invoiceId } = req.params;
   try {
     const result = await deleteInvoice(invoiceId as string);
     res.status(200).json({
@@ -168,7 +180,7 @@ app.delete('/v1/invoice/:invoiceId', authenticate, async (req: Request, res: Res
   }
 });
 
-app.post('/v1/invoice/:invoiceId/convert', authenticate, async (req: Request, res: Response) => {
+app.post('/v1/invoice/:invoiceId/convert', authenticate, requireSession, async (req: Request, res: Response) => {
   const { invoiceId } = req.params;
   try {
     const result = await convertInvoice(invoiceId as string);
@@ -178,7 +190,7 @@ app.post('/v1/invoice/:invoiceId/convert', authenticate, async (req: Request, re
   }
 });
 
-app.put('/v1/invoice/:invoiceId', authenticate, async (req: Request, res: Response) => {
+app.put('/v1/invoice/:invoiceId', authenticate, requireSession, async (req: Request, res: Response) => {
   const { invoiceId } = req.params;
   try {
     const result = await updateInvoice(invoiceId as string, {
@@ -192,7 +204,7 @@ app.put('/v1/invoice/:invoiceId', authenticate, async (req: Request, res: Respon
   }
 });
 
-app.get('/v1/invoice/:invoiceId/download', authenticate, async (req: Request, res: Response) => {
+app.get('/v1/invoice/:invoiceId/download', authenticate, requireSession, async (req: Request, res: Response) => {
   const { invoiceId } = req.params;
   const format = (req.query.format as string) ?? 'xml';
   try {
@@ -205,7 +217,19 @@ app.get('/v1/invoice/:invoiceId/download', authenticate, async (req: Request, re
   }
 });
 
-app.post('/v1/admin/auth/register', authenticate, async (req: Request, res: Response) => {
+app.get('/v1/invoice/:invoiceId/summary', authenticate, requireSession, async (req: Request, res: Response) => {
+  try {
+    const result = await getInvoiceSummary(req.params.invoiceId as string);
+    res.status(200).json(result);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// ===== AUTH ENDPOINTS ===== //
+// Register and login do not require an API key or session —
+// the user needs these endpoints to obtain credentials in the first place.
+app.post('/v1/admin/auth/register', async (req: Request, res: Response) => {
   const { email, password, name } = req.body;
   try {
     const result = await userRegister(email, password, name);
@@ -215,7 +239,7 @@ app.post('/v1/admin/auth/register', authenticate, async (req: Request, res: Resp
   }
 });
 
-app.post('/v1/admin/auth/login', authenticate, async (req: Request, res: Response) => {
+app.post('/v1/admin/auth/login', async (req: Request, res: Response) => {
   const { email, password } = req.body;
   try {
     const result = await userLogin(email, password);
@@ -225,6 +249,8 @@ app.post('/v1/admin/auth/login', authenticate, async (req: Request, res: Respons
   }
 });
 
+// ===== USER ENDPOINTS ===== //
+// All user management endpoints require both API key and a valid session.
 app.get('/v1/admin/user/details', authenticate, async (req: Request, res: Response) => {
   try {
     const sessionToken = req.header('session');
@@ -264,15 +290,6 @@ app.post('/v1/admin/auth/logout', authenticate, async (req: Request, res: Respon
   try {
     const sessionToken = req.header('session');
     const result = await userLogout(sessionToken as string);
-    res.status(200).json(result);
-  } catch (err) {
-    handleError(res, err);
-  }
-});
-
-app.get('/v1/invoice/:invoiceId/summary', authenticate, async (req: Request, res: Response) => {
-  try {
-    const result = await getInvoiceSummary(req.params.invoiceId as string);
     res.status(200).json(result);
   } catch (err) {
     handleError(res, err);

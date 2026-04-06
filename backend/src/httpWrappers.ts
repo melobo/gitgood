@@ -3,8 +3,19 @@ import config from './config';
 import { InvoiceItem, PaymentDetails } from './invoiceInterface';
 
 const SERVER_URL = () => process.env.SERVER_URL ?? 'http://127.0.0.1:3000';
+let sessionToken: string | undefined;
+
+export function setSessionToken(token: string) {
+  sessionToken = token;
+}
+
+export function clearSessionToken() {
+  sessionToken = undefined;
+}
+
 const getHeaders = () => ({
   'x-api-key': config.apiKey,
+  ...(sessionToken && { session: sessionToken }),
 });
 const TIMEOUT_MS = 5 * 1000;
 

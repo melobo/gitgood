@@ -20,6 +20,15 @@ components:
       in: header
       name: x-api-key
 
+  parameters:
+    SessionHeader:
+      in: header
+      name: session
+      required: true
+      schema:
+        type: string
+      description: Session token returned from login or register
+
   schemas:
     InvoiceStatus:
       type: string
@@ -108,13 +117,13 @@ components:
         email:
           type: string
           format: email
+
     AuthResponse:
       type: object
       properties:
         session:
           type: string
-    
-    
+
     Item:
       type: object
       required: [itemName, quantity, unitPrice, unitCode, totalPrice]
@@ -143,7 +152,7 @@ components:
           type: string
         paymentMethod:
           type: string
-          description: "(example: bankTransfer)"
+          description: "(example: bank_transfer)"
 
     Error:
       type: object
@@ -193,6 +202,9 @@ paths:
   /v1/admin/auth/register:
     post:
       summary: Register a new admin user
+      description: >
+        Creates a new user account and returns a session token.
+        No API key or session required.
       tags: [Auth]
       security: []
       requestBody:
@@ -219,7 +231,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
               example:
-                session: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                session: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
         '400':
           description: Invalid email, password (too short/simple), or name (invalid chars)
           content:
@@ -228,7 +240,7 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "INVALID_REQUEST"
-                message: Invalid email, password, or name
+                message: "Invalid email, password, or name"
         '409':
           description: Email already in use
           content:
@@ -237,11 +249,14 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "CONFLICT"
-                message: Email already in use
+                message: "Email already in use"
 
   /v1/admin/auth/login:
     post:
       summary: Login to an existing account
+      description: >
+        Authenticates a user and returns a session token.
+        No API key or session required.
       tags: [Auth]
       security: []
       requestBody:
@@ -265,21 +280,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
               example:
-                session: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                session: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
         '401':
-          description: Unauthorized - Incorrect email or password
+          description: Incorrect email or password
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "UNAUTHORIZED"
-                message: Incorrect email or password
+                message: "Incorrect email or password"
 
   /v1/admin/auth/logout:
     post:
       summary: Logout the current user
+      description: Invalidates the session token. Requires API key and a valid session.
       tags: [Auth]
+      parameters:
+        - $ref: '#/components/parameters/SessionHeader'
       responses:
         '200':
           description: Logout successful
@@ -287,10 +305,7 @@ paths:
             application/json:
               schema:
                 type: object
-                properties:
-                  message:
-                    type: string
-                    example: Successfully logged out
+                example: {}
         '401':
           description: Invalid or missing session token
           content:
@@ -299,19 +314,15 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "UNAUTHORIZED"
-                message: Invalid or missing session token
+                message: "Invalid or missing session token"
 
   /v1/admin/user/details:
     get:
       summary: Get current user details
+      description: Returns the profile of the currently logged-in user. Requires API key and a valid session.
       tags: [User]
       parameters:
-        - in: header
-          name: session
-          required: true
-          schema:
-            type: string
-          description: Session token returned from login or register
+        - $ref: '#/components/parameters/SessionHeader'
       responses:
         '200':
           description: Successfully retrieved details
@@ -330,17 +341,13 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "UNAUTHORIZED"
-                message: Invalid or empty session token
+                message: "Invalid or empty session token"
     put:
       summary: Update user details
+      description: Updates the email and/or name of the currently logged-in user. Requires API key and a valid session.
       tags: [User]
       parameters:
-        - in: header
-          name: session
-          required: true
-          schema:
-            type: string
-          description: Session token returned from login or register
+        - $ref: '#/components/parameters/SessionHeader'
       requestBody:
         required: true
         content:
@@ -359,11 +366,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
-              example:
-                userId: "abc-123"
-                name: "Updated Name"
-                email: "updated@example.com"
+                type: object
+                example: {}
         '400':
           description: Invalid name or email format
           content:
@@ -372,7 +376,7 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "INVALID_REQUEST"
-                message: Invalid name or email format
+                message: "Invalid name or email format"
         '401':
           description: Unauthorized
           content:
@@ -381,7 +385,7 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "UNAUTHORIZED"
-                message: Invalid or empty session token
+                message: "Invalid or empty session token"
         '409':
           description: Email already taken by another user
           content:
@@ -390,19 +394,15 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "CONFLICT"
-                message: Email already taken by another user
+                message: "Email already taken by another user"
 
   /v1/admin/user/password:
     put:
       summary: Update user password
+      description: Updates the password of the currently logged-in user. Requires API key and a valid session.
       tags: [User]
       parameters:
-        - in: header
-          name: session
-          required: true
-          schema:
-            type: string
-          description: Session token returned from login or register
+        - $ref: '#/components/parameters/SessionHeader'
       requestBody:
         required: true
         content:
@@ -423,10 +423,7 @@ paths:
             application/json:
               schema:
                 type: object
-                properties:
-                  message:
-                    type: string
-                    example: Password updated successfully
+                example: {}
         '400':
           description: Incorrect old password, or new password is same as old/invalid
           content:
@@ -435,7 +432,7 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "INVALID_REQUEST"
-                message: Incorrect old password or new password is invalid
+                message: "Incorrect old password or new password is invalid"
         '401':
           description: Unauthorized
           content:
@@ -444,13 +441,17 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "UNAUTHORIZED"
-                message: Invalid or empty session token
+                message: "Invalid or empty session token"
 
   /v1/invoice:
     post:
       summary: Create a new invoice
-      description: Creates a new invoice from manually entered data in draft status.
+      description: >
+        Creates a new invoice in draft status.
+        Requires API key and a valid session token.
       tags: [Invoice Creation]
+      parameters:
+        - $ref: '#/components/parameters/SessionHeader'
       requestBody:
         required: true
         content:
@@ -488,7 +489,7 @@ paths:
                     $ref: '#/components/schemas/Item'
                 taxRate:
                   type: number
-                  description: "(example: 0.1)"
+                  description: "Decimal value, e.g. 0.1 for 10% GST"
                 paymentDetails:
                   type: array
                   items:
@@ -518,8 +519,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
               example:
-                  error: "INVALID_REQUEST"
-                  message: Missing or Invalid Fields
+                error: "INVALID_REQUEST"
+                message: "Missing or Invalid Fields"
+        '401':
+          description: Unauthorized - missing or invalid API key or session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: "No session token has been provided."
         '500':
           description: Internal server error
           content:
@@ -527,14 +537,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
               example:
-                  error: "INTERNAL_SERVER_ERROR"
-                  message: Unexpected error on the server side.
+                error: "INTERNAL_SERVER_ERROR"
+                message: "Unexpected error on the server side."
 
     get:
       summary: List all invoices
-      description: Returns list of invoices with optional date filters.
+      description: >
+        Returns a paginated list of invoices with optional date filters.
+        Requires API key and a valid session token.
       tags: [Invoice Management]
       parameters:
+        - $ref: '#/components/parameters/SessionHeader'
         - in: query
           name: fromDate
           schema:
@@ -557,7 +570,7 @@ paths:
             default: 20
       responses:
         '200':
-          description: List of Invoices generated successfully
+          description: List of invoices
           content:
             application/json:
               schema:
@@ -578,14 +591,25 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
               example:
-                  error: "INVALID_REQUEST"
-                  message: Missing or Invalid Fields
+                error: "INVALID_REQUEST"
+                message: "Missing or Invalid Fields"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: "No session token has been provided."
 
   /v1/invoice/{invoiceId}:
     get:
       summary: Get a specific invoice
+      description: Returns full details of an invoice by ID. Requires API key and a valid session token.
       tags: [Invoice Management]
       parameters:
+        - $ref: '#/components/parameters/SessionHeader'
         - in: path
           name: invoiceId
           required: true
@@ -597,42 +621,16 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  invoiceId:
-                    type: string
-                  status:
-                    type: string
-                    example: draft
-                  buyerName:
-                    type: string
-                  supplierName:
-                    type: string
-                  issueDate:
-                    type: string
-                    format: date
-                  paymentDueDate:
-                    type: string
-                    format: date
-                  itemsList:
-                    type: array
-                    items:
-                      type: object
-                  taxRate: 
-                    type: number
-                  taxAmount: 
-                    type: number
-                  totalPayable:
-                    type: number
-                  ublXml: 
-                    type: string
-                  createdAt:
-                    type: string
-                    format: date-time
-                  updatedAt: 
-                    type: string
-                    format: date-time
-
+                $ref: '#/components/schemas/Invoice'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: "No session token has been provided."
         '404':
           description: Invoice not found
           content:
@@ -640,24 +638,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
               example:
-                  error: "NOT_FOUND"
-                  message: Invoice not found
-        '400':
-          description: Invalid parameter value 
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              example:
-                  error: "INVALID_REQUEST"
-                  message: Missing or Invalid Fields
-
+                error: "NOT_FOUND"
+                message: "Invoice not found"
 
     put:
-      summary: Update an invoice 
-      description: Update an invoice using its ID
+      summary: Update an invoice
+      description: Updates fields of a draft invoice. Requires API key and a valid session token.
       tags: [Invoice Management]
       parameters:
+        - $ref: '#/components/parameters/SessionHeader'
         - in: path
           name: invoiceId
           required: true
@@ -710,16 +699,25 @@ paths:
                     example: draft
                   updatedAt:
                     type: string
-                    format: date
+                    format: date-time
         '400':
-          description: Invalid parameter value
+          description: Invalid field values
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
               example:
-                  error: "INVALID_REQUEST"
-                  message: Missing or Invalid Fields
+                error: "INVALID_REQUEST"
+                message: "Missing or Invalid Fields"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: "No session token has been provided."
         '404':
           description: Invoice not found
           content:
@@ -727,8 +725,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
               example:
-                  error: "NOT_FOUND"
-                  message: Invoice not found
+                error: "NOT_FOUND"
+                message: "Invoice not found"
         '409':
           description: Invoice already finalised
           content:
@@ -736,14 +734,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
               example:
-                  error: "ALREADY_FINALISED"
-                  message: Invoice has already been fianlised
+                error: "ALREADY_FINALISED"
+                message: "Invoice has already been finalised"
 
     delete:
       summary: Delete an invoice
-      description: delete an invoice from database
+      description: Permanently deletes an invoice. Requires API key and a valid session token.
       tags: [Invoice Management]
       parameters:
+        - $ref: '#/components/parameters/SessionHeader'
         - in: path
           name: invoiceId
           required: true
@@ -751,7 +750,7 @@ paths:
             type: string
       responses:
         '200':
-          description: Invoice deleted Successfully
+          description: Invoice deleted successfully
           content:
             application/json:
               schema:
@@ -760,8 +759,17 @@ paths:
                   invoiceId:
                     type: string
                   message:
-                    type: string 
-                    example: Invoice successfully deleted
+                    type: string
+                    example: "Invoice successfully deleted"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: "No session token has been provided."
         '404':
           description: Invoice not found
           content:
@@ -769,14 +777,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
               example:
-                  error: "NOT_FOUND"
-                  message: Invoice not found
+                error: "NOT_FOUND"
+                message: "Invoice not found"
 
   /v1/invoice/{invoiceId}/convert:
     post:
       summary: Convert invoice to UBL XML
+      description: Converts a draft invoice to UBL 2.1 XML format. Requires API key and a valid session token.
       tags: [Invoice Conversion]
       parameters:
+        - $ref: '#/components/parameters/SessionHeader'
         - in: path
           name: invoiceId
           required: true
@@ -784,7 +794,7 @@ paths:
             type: string
       responses:
         '200':
-          description: Invoice converted to UBL XML Successfully
+          description: Invoice converted successfully
           content:
             application/json:
               schema:
@@ -793,10 +803,19 @@ paths:
                   invoiceId:
                     type: string
                   ublXml:
-                    type: string 
+                    type: string
                   status:
-                    type: string 
+                    type: string
                     example: "converted"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: "No session token has been provided."
         '404':
           description: Invoice not found
           content:
@@ -804,8 +823,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
               example:
-                  error: "NOT_FOUND"
-                  message: Invoice not found
+                error: "NOT_FOUND"
+                message: "Invoice not found"
         '409':
           description: Invoice already converted
           content:
@@ -813,8 +832,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
               example:
-                  error: "ALREADY_CONVERTED"
-                  message: Invoice has already been converted
+                error: "ALREADY_CONVERTED"
+                message: "Invoice has already been converted"
         '422':
           description: Insufficient data for conversion
           content:
@@ -822,15 +841,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
               example:
-                  error: "INSUFFICIENT_DATA"
-                  message: Data is Insufficient for conversion
+                error: "INSUFFICIENT_DATA"
+                message: "Not enough data has been provided for one or more of the invoice fields."
 
   /v1/invoice/{invoiceId}/validate:
     post:
       summary: Validate an invoice
-      description: Validate an invoice converted to UBL XML format
+      description: Validates a converted invoice against UBL rules. Requires API key and a valid session token.
       tags: [Invoice Validation]
       parameters:
+        - $ref: '#/components/parameters/SessionHeader'
         - in: path
           name: invoiceId
           required: true
@@ -847,16 +867,29 @@ paths:
                   invoiceId:
                     type: string
                   valid:
-                    type: boolean 
+                    type: boolean
                   errors:
                     type: array
                     items:
                       type: object
-                    description: "empty if valid"
+                      properties:
+                        field:
+                          type: string
+                        message:
+                          type: string
+                    description: "Empty array if valid"
                   status:
                     type: string
-                    example: validated
-
+                    example: "validated"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: "No session token has been provided."
         '404':
           description: Invoice not found
           content:
@@ -864,8 +897,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
               example:
-                  error: "NOT_FOUND"
-                  message: Invoice not found
+                error: "NOT_FOUND"
+                message: "Invoice not found"
         '409':
           description: Invoice not yet converted
           content:
@@ -873,15 +906,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
               example:
-                  error: "INVOICE_NOT_CONVERTED"
-                  message: Invoice not yet converted
+                error: "INVALID_REQUEST"
+                message: "The invoice has not yet been converted."
 
   /v1/invoice/{invoiceId}/final:
     post:
       summary: Finalise a validated invoice
-      description: Finalise invoice to be ready to download/email/etc
+      description: Marks a validated invoice as finalised and ready to download. Requires API key and a valid session token.
       tags: [Invoice Finalisation]
       parameters:
+        - $ref: '#/components/parameters/SessionHeader'
         - in: path
           name: invoiceId
           required: true
@@ -898,13 +932,22 @@ paths:
                   invoiceId:
                     type: string
                   ublXml:
-                    type: string 
+                    type: string
                   status:
-                    type: string 
+                    type: string
                     example: "finalised"
                   finalisedAt:
                     type: string
-                    format: date
+                    format: date-time
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: "No session token has been provided."
         '404':
           description: Invoice not found
           content:
@@ -912,8 +955,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
               example:
-                  error: "NOT_FOUND"
-                  message: Invoice not found
+                error: "NOT_FOUND"
+                message: "Invoice not found"
         '409':
           description: Invoice not yet validated
           content:
@@ -921,15 +964,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
               example:
-                  error: "INVOICE_NOT_VALIDATED"
-                  message: Invoice not yet validated
+                error: "INVOICE_NOT_VALIDATED"
+                message: "The invoice has not yet been validated."
 
   /v1/invoice/{invoiceId}/download:
     get:
-      summary: Download invoice
-      description: Download a finalised invoice
+      summary: Download a finalised invoice
+      description: Downloads a finalised invoice as XML or JSON. Requires API key and a valid session token.
       tags: [Invoice Download]
       parameters:
+        - $ref: '#/components/parameters/SessionHeader'
         - in: path
           name: invoiceId
           required: true
@@ -943,7 +987,14 @@ paths:
             default: xml
       responses:
         '200':
-          description: Invoice file downloaded Successfully
+          description: Invoice file content
+          content:
+            application/xml:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: object
         '400':
           description: Invalid format
           content:
@@ -951,8 +1002,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
               example:
-                  error: "INVALID_REQUEST"
-                  message: Missing or Invalid Fields
+                error: "INVALID_REQUEST"
+                message: "Missing or Invalid Fields"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: "No session token has been provided."
         '404':
           description: Invoice not found
           content:
@@ -960,8 +1020,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
               example:
-                  error: "NOT_FOUND"
-                  message: Invoice not found
+                error: "NOT_FOUND"
+                message: "Invoice not found"
         '409':
           description: Invoice not yet finalised
           content:
@@ -969,15 +1029,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
               example:
-                  error: "INVOICE_NOT_READY"
-                  message: Invoice not yet converted/validated
+                error: "INVOICE_NOT_READY"
+                message: "Invoice not yet converted/validated to UBL XML format"
 
   /v1/invoice/{invoiceId}/summary:
     get:
       summary: Get invoice summary
-      description: Returns a concise summary of the invoice including calculated totals and item count
+      description: Returns a concise summary including totals and item count. Requires API key and a valid session token.
       tags: [Invoice Management]
       parameters:
+        - $ref: '#/components/parameters/SessionHeader'
         - in: path
           name: invoiceId
           required: true
@@ -994,8 +1055,7 @@ paths:
                   invoiceId:
                     type: string
                   status:
-                    type: string
-                    example: draft
+                    $ref: '#/components/schemas/InvoiceStatus'
                   buyerName:
                     type: string
                   supplierName:
@@ -1026,6 +1086,15 @@ paths:
                     type: string
                     format: date-time
                     nullable: true
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: "No session token has been provided."
         '404':
           description: Invoice not found
           content:
@@ -1034,4 +1103,4 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "NOT_FOUND"
-                message: Invoice not found
+                message: "Invoice not found"

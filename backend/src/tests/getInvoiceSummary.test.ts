@@ -5,7 +5,10 @@ import {
   requestConvertInvoice,
   requestValidateInvoice,
   requestFinaliseInvoice,
-  requestDeleteInvoice
+  requestDeleteInvoice,
+  requestUserRegister,
+  setSessionToken,
+  clearSessionToken,
 } from '../httpWrappers';
 
 import {
@@ -37,6 +40,9 @@ const validPayment: PaymentDetails[] = [
 
 beforeEach(() => {
   requestClear();
+  clearSessionToken();
+  const res = requestUserRegister('test@example.com', 'password1', 'Test User');
+  setSessionToken(res.body.session);
 });
 
 describe('HTTP tests: GET /v1/invoice/:invoiceId/summary', () => {

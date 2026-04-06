@@ -3,7 +3,10 @@ import {
   requestConvertInvoice,
   requestValidateInvoice,
   requestFinaliseInvoice,
-  requestClear
+  requestClear,
+  requestUserRegister,
+  setSessionToken,
+  clearSessionToken,
 } from '../httpWrappers';
 
 function createInvoice(): string {
@@ -44,6 +47,9 @@ function createConvertInvoice(): string {
 
 beforeEach(() => {
   requestClear();
+  clearSessionToken();
+  const res = requestUserRegister('test@example.com', 'password1', 'Test User');
+  setSessionToken(res.body.session);
 });
 
 describe('validateInvoice POST /v1/invoices/:invoice_id/validate', () => {
