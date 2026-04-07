@@ -25,7 +25,7 @@ jobs:
         run: npm ci
 
       - name: Install frontend dependencies
-        run: npm ci --prefix frontend
+        run: npm run build --workspace frontend
 
       - name: Install backend dependencies
         run: npm ci --prefix backend
