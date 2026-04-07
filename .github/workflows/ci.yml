@@ -56,7 +56,7 @@ jobs:
       - name: Restore node_modules from cache
         uses: actions/cache@v4
         with:
-          path: |
+          path:
             node_modules
             backend/node_modules
           key: node-modules-${{ hashFiles('**/package-lock.json') }}
@@ -91,14 +91,14 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-          cache-dependency-path: |
+          cache-dependency-path:
             package-lock.json
             backend/package-lock.json
 
       - name: Restore node_modules from cache
         uses: actions/cache@v4
         with:
-          path: |
+          path:
             node_modules
             backend/node_modules
           key: node-modules-${{ hashFiles('**/package-lock.json') }}
