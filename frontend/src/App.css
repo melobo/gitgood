@@ -1,3 +1,39 @@
+.App {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 300px;
+  margin: 20px auto;
+}
+
+h2 {
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.auth-container {
+  display: grid;
+  place-items: center;
+  height: 100vh;
+}
+
+.auth-form {
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  width: 300px;
+  text-align: center;
+}
+
+.input-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 10px;
+  position: relative;
+}
+
 .counter {
   font-size: 16px;
   padding: 5px 10px;
@@ -181,4 +217,29 @@
     right: 0;
     border-right-color: var(--border);
   }
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+button {
+  padding: 10px;
+  background-color: #2b73b3;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+button:hover {
+  background-color: #1f5a8c;
+}
+
+.error-message {
+  color: #f44336;
+  font-size: 12px;
+  margin-left: 10px;
+  white-space: nowrap;
 }
