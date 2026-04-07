@@ -16,7 +16,9 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-          cache-dependency-path: package-lock.json
+          cache-dependency-path:
+            package-lock.json
+            backend/package-lock.json
 
       - name: Install root dependencies
         run: npm ci
@@ -25,14 +27,17 @@ jobs:
         run: npm run build --workspace frontend
 
       - name: Install backend dependencies
-        run: npm run build --workspace backend
+        run: npm ci --prefix backend
 
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
-          path: node_modules
+          path:
+            node_modules
+            backend/node_modules
           key: node-modules-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: node-modules-
+          restore-keys:
+            node-modules-
 
   style:
     runs-on: ubuntu-latest
@@ -44,14 +49,25 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-          cache-dependency-path: package-lock.json
+          cache-dependency-path:
+            package-lock.json
+            backend/package-lock.json
 
       - name: Restore node_modules from cache
         uses: actions/cache@v4
         with:
-          path: node_modules
+          path: |
+            node_modules
+            backend/node_modules
           key: node-modules-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: node-modules-
+          restore-keys: |
+            node-modules-
+
+      - name: Install dependencies if cache miss
+        run: |
+          npm ci
+          npm run build --workspace frontend
+          npm ci --prefix backend
 
       - name: Lint frontend
         run: npm run lint --workspace frontend
