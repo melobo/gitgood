@@ -1,6 +1,6 @@
 const SERVER_URL = () => process.env.SERVER_URL ?? 'http://127.0.0.1:3000';
 
-export async function requestUserRegister(email: string, password: string, name: string): Promise<void> {
+export async function requestUserRegister(email: string, password: string, name: string): Promise<string> {
   const res = await fetch(`${SERVER_URL()}/v1/admin/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -10,9 +10,11 @@ export async function requestUserRegister(email: string, password: string, name:
     const data = await res.json().catch(() => ({}));
     throw new Error(data.message ?? "Registration failed.");
   }
+  const data = await res.json();
+  return data.session;
 }
 
-export async function requestUserLogin(email: string, password: string): Promise<void> {
+export async function requestUserLogin(email: string, password: string): Promise<string> {
   const res = await fetch(`${SERVER_URL()}/v1/admin/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -22,4 +24,6 @@ export async function requestUserLogin(email: string, password: string): Promise
     const data = await res.json().catch(() => ({}));
     throw new Error(data.message ?? "Login failed.");
   }
+  const data = await res.json();
+  return data.session;
 }

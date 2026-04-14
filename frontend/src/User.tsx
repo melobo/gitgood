@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-// import { FormField } from './FormField';
 import { UserMode, LoginInput, RegisterInput, UserPageProperties, LoginFormProperties, RegisterFormProperties } from './types';
 
 export function UserPage({ onLogin, onRegister }: UserPageProperties): React.ReactElement {

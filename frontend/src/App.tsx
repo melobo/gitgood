@@ -1,23 +1,56 @@
-/*import { useState } from 'react';
-import reactLogo from './assets/react.svg';
-import viteLogo from './assets/vite.svg';
-import heroImg from './assets/hero.png';*/
 import './App.css';
 
 import { UserPage } from './User';
+import { Layout } from './Layout';
+import { Authenticate } from "./Auth";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { LoginInput, RegisterInput } from './types';
 import { requestUserRegister, requestUserLogin } from './httpWrappers';
 
-function App() {
+function AppRoutes(): React.ReactElement {
+  const navigate = useNavigate();
   async function handleRegister(input: RegisterInput): Promise<void> {
-    await requestUserRegister(input.email, input.password, input.firstName + input.lastName);
+    const session = await requestUserRegister(input.email, input.password, input.firstName + input.lastName);
+    localStorage.setItem("session", session);
+    navigate("/dashboard");
   }
 
   async function handleLogin(input: LoginInput): Promise<void> {
-    await requestUserLogin(input.email, input.password);
+    const session = await requestUserLogin(input.email, input.password);
+    localStorage.setItem("session", session);
+    navigate("/dashboard");
   }
 
-  return <UserPage onLogin={handleLogin} onRegister={handleRegister} />;
+  return (
+    <Routes>
+      <Route
+        path="/login"
+        element={<UserPage onLogin={handleLogin} onRegister={handleRegister} />}
+      />
+
+      <Route
+        element={
+          <Authenticate>
+            <Layout />
+          </Authenticate>
+        }
+      >
+        <Route path="/dashboard" element={<div>Dashboard page</div>} />
+        <Route path="/invoices" element={<div>Invoice list page</div>} />
+        <Route path="/invoices/create" element={<div>Create invoice page</div>} />
+      </Route>
+
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
+  );
 }
 
-export default App
+function App(): React.ReactElement {
+  return (
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
+  );
+}
+
+export default App;

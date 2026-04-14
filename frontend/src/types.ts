@@ -37,3 +37,7 @@ export interface RegisterFormProperties {
   onRegister: (input: RegisterInput) => Promise<void>;
   onServerError: (message: string | null) => void;
 }
+
+export interface AuthProperties {
+  children: React.ReactNode;
+}
