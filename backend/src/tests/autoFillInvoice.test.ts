@@ -2,7 +2,7 @@ test('Boolean truthiness check', () => {
   expect(true).toBe(true);
 });
 
-/*import request from 'sync-request-curl';
+/* import request from 'sync-request-curl';
 import config from '../config';
 import {
   requestClear,
@@ -16,7 +16,7 @@ const TIMEOUT_MS = 5 * 1000;
 
 const getHeaders = () => ({
   'x-api-key': config.apiKey,
-  session: (global as any).__SESSION_TOKEN__,
+  'session': (global as String).__SESSION_TOKEN__,
 });
 
 const requestAiAutofill = (body: object) => {
@@ -38,16 +38,15 @@ beforeEach(() => {
   clearSessionToken();
   const res = requestUserRegister('test@example.com', 'password1', 'Test User');
   setSessionToken(res.body.session);
-  (global as any).__SESSION_TOKEN__ = res.body.session;
+  (global as String).__SESSION_TOKEN__ = res.body.session;
 });
-
 
 describe('POST /v1/invoice/autofill — aiAutofillInvoice', () => {
   describe('Successful cases — raw text input', () => {
     test('returns 200 with a filled invoice object from raw text', () => {
       const res = requestAiAutofill({
-        rawText: 'Invoice from Acme Corp ABN 12345678901 to Beta Ltd ABN 98765432100. ' +
-          'Two hours of consulting at $500 each. Due 30 days from issue.',
+        rawText: 'Invoice from Acme Corp ABN 12345678901 to Beta Ltd ABN 98765432100. '
+          + 'Two hours of consulting at $500 each. Due 30 days from issue.',
       });
 
       expect(res.statusCode).toBe(200);
@@ -57,8 +56,8 @@ describe('POST /v1/invoice/autofill — aiAutofillInvoice', () => {
 
     test('returned invoice object contains the core required fields', () => {
       const res = requestAiAutofill({
-        rawText: 'Supplier: GitGood Pty Ltd ABN 98765432100. Buyer: Acme Corp ABN 12345678901. ' +
-          'Item: Widget, qty 5, unit price $20. Tax 10%.',
+        rawText: 'Supplier: GitGood Pty Ltd ABN 98765432100. Buyer: Acme Corp ABN 12345678901. '
+          + 'Item: Widget, qty 5, unit price $20. Tax 10%.',
       });
 
       expect(res.statusCode).toBe(200);
@@ -239,4 +238,4 @@ describe('POST /v1/invoice/autofill — aiAutofillInvoice', () => {
       }
     });
   });
-});*/
+}); */

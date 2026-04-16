@@ -1,8 +1,8 @@
 test('Boolean truthiness check', () => {
-    expect(true).toBe(true);
+  expect(true).toBe(true);
 });
 
-/*import request from 'sync-request-curl';
+/* import request from 'sync-request-curl';
 import config from '../config';
 import {
   requestCreateInvoice,
@@ -20,7 +20,7 @@ const TIMEOUT_MS = 5 * 1000;
 
 const getHeaders = () => ({
   'x-api-key': config.apiKey,
-  session: (global as any).__SESSION_TOKEN__,
+  'session': (global as string).__SESSION_TOKEN__,
 });
 
 const requestSendInvoice = (invoiceId: string, body?: object) => {
@@ -36,7 +36,6 @@ const requestSendInvoice = (invoiceId: string, body?: object) => {
   const bodyObj = JSON.parse(res.body.toString());
   return { statusCode: res.statusCode, body: bodyObj };
 };
-
 
 function createInvoice(): string {
   const res = requestCreateInvoice(
@@ -81,7 +80,7 @@ beforeEach(() => {
   clearSessionToken();
   const res = requestUserRegister('test@example.com', 'password1', 'Test User');
   setSessionToken(res.body.session);
-  (global as any).__SESSION_TOKEN__ = res.body.session;
+  (global as string).__SESSION_TOKEN__ = res.body.session;
 });
 
 describe('POST /v1/invoice/:invoiceId/send — sendInvoice', () => {
@@ -244,4 +243,4 @@ describe('POST /v1/invoice/:invoiceId/send — sendInvoice', () => {
       });
     });
   });
-});*/
+}); */
