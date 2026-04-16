@@ -2,79 +2,36 @@ test('Boolean truthiness check', () => {
   expect(true).toBe(true);
 });
 
-/* import request from 'sync-request-curl';
+/*import request from 'sync-request-curl';
 import config from '../config';
 import {
-  requestCreateInvoice,
-  requestGetInvoice,
   requestClear,
   requestUserRegister,
   setSessionToken,
   clearSessionToken,
 } from '../httpWrappers';
-import { InvoiceItem, PaymentDetails } from '../invoiceInterface';
 
 const SERVER_URL = () => process.env.SERVER_URL ?? 'http://127.0.0.1:3000';
+const TIMEOUT_MS = 5 * 1000;
 
 const getHeaders = () => ({
   'x-api-key': config.apiKey,
-  'session': (global as any).__SESSION_TOKEN__,
+  session: (global as any).__SESSION_TOKEN__,
 });
 
-// Requests autofill suggestions for a given invoiceId and optional partial field hints
-const requestAutofillInvoice = (invoiceId: string, fields?: object) => {
-  const res = request('POST', `${SERVER_URL()}/v1/invoice/${invoiceId}/autofill`, {
-    headers: getHeaders(),
-    json: fields ?? {},
-    timeout: 5000,
-  });
+const requestAiAutofill = (body: object) => {
+  const res = request(
+    'POST',
+    `${SERVER_URL()}/v1/invoice/autofill`,
+    {
+      headers: getHeaders(),
+      json: body,
+      timeout: TIMEOUT_MS,
+    }
+  );
   const bodyObj = JSON.parse(res.body.toString());
   return { statusCode: res.statusCode, body: bodyObj };
 };
-
-const validItems: InvoiceItem[] = [
-  {
-    itemName: 'Consulting Services',
-    quantity: 2,
-    unitPrice: 500.00,
-    unitCode: 'HUR',
-    totalPrice: 1000.00,
-  },
-];
-
-const validPayment: PaymentDetails[] = [
-  {
-    bankName: 'ANZ',
-    accountNumber: '123456789',
-    bsbAbnNumber: '012-345',
-    paymentMethod: 'bank_transfer',
-  },
-];
-
-// Creates a standard draft invoice and returns its invoiceId
-function createInvoice(overrides: {
-  buyerName?: string;
-  buyerAbn?: string;
-  supplierName?: string;
-  supplierAbn?: string;
-  issueDate?: string;
-  paymentDueDate?: string;
-} = {}): string {
-  const res = requestCreateInvoice(
-    overrides.buyerName ?? 'Acme Corp',
-    overrides.buyerAbn ?? '12345678901',
-    overrides.supplierName ?? 'GitGood Pty Ltd',
-    overrides.supplierAbn ?? '98765432100',
-    overrides.issueDate ?? '2025-03-12',
-    overrides.paymentDueDate ?? '2025-04-12',
-    validItems,
-    0.1,
-    validPayment
-  );
-  return res.body.invoiceId;
-}
-
-// ── Setup ────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
   requestClear();
@@ -84,173 +41,202 @@ beforeEach(() => {
   (global as any).__SESSION_TOKEN__ = res.body.session;
 });
 
-// ── Tests ────────────────────────────────────────────────────────────────────
 
-describe('POST /v1/invoice/:invoiceId/autofill — autofillInvoice', () => {
-  describe('Successful cases', () => {
-    test('returns 200 with suggested fields for a valid draft invoice', () => {
-      const invoiceId = createInvoice();
-      const res = requestAutofillInvoice(invoiceId);
-
-      expect(res.statusCode).toBe(200);
-      expect(res.body).toHaveProperty('invoiceId', invoiceId);
-      expect(res.body).toHaveProperty('suggestions');
-      expect(typeof res.body.suggestions).toBe('object');
-    });
-
-    test('suggestions object contains at least one field', () => {
-      const invoiceId = createInvoice();
-      const res = requestAutofillInvoice(invoiceId);
+describe('POST /v1/invoice/autofill — aiAutofillInvoice', () => {
+  describe('Successful cases — raw text input', () => {
+    test('returns 200 with a filled invoice object from raw text', () => {
+      const res = requestAiAutofill({
+        rawText: 'Invoice from Acme Corp ABN 12345678901 to Beta Ltd ABN 98765432100. ' +
+          'Two hours of consulting at $500 each. Due 30 days from issue.',
+      });
 
       expect(res.statusCode).toBe(200);
-      expect(Object.keys(res.body.suggestions).length).toBeGreaterThan(0);
+      expect(res.body).toHaveProperty('invoice');
+      expect(typeof res.body.invoice).toBe('object');
     });
 
-    test('does not modify the invoice when autofill is called', () => {
-      const invoiceId = createInvoice();
-      const beforeRes = requestGetInvoice(invoiceId);
-
-      requestAutofillInvoice(invoiceId);
-
-      const afterRes = requestGetInvoice(invoiceId);
-      expect(afterRes.body.buyerName).toBe(beforeRes.body.buyerName);
-      expect(afterRes.body.supplierName).toBe(beforeRes.body.supplierName);
-      expect(afterRes.body.issueDate).toBe(beforeRes.body.issueDate);
-      expect(afterRes.body.paymentDueDate).toBe(beforeRes.body.paymentDueDate);
-      expect(afterRes.body.updatedAt).toBe(beforeRes.body.updatedAt);
-    });
-
-    test('returns suggestions for a partial invoice (missing buyerAbn)', () => {
-      const invoiceId = createInvoice({ buyerAbn: '12345678901' });
-      const res = requestAutofillInvoice(invoiceId, { buyerAbn: '' });
+    test('returned invoice object contains the core required fields', () => {
+      const res = requestAiAutofill({
+        rawText: 'Supplier: GitGood Pty Ltd ABN 98765432100. Buyer: Acme Corp ABN 12345678901. ' +
+          'Item: Widget, qty 5, unit price $20. Tax 10%.',
+      });
 
       expect(res.statusCode).toBe(200);
-      expect(res.body).toHaveProperty('suggestions');
+      const inv = res.body.invoice;
+      expect(inv).toHaveProperty('buyerName');
+      expect(inv).toHaveProperty('buyerAbn');
+      expect(inv).toHaveProperty('supplierName');
+      expect(inv).toHaveProperty('supplierAbn');
+      expect(inv).toHaveProperty('itemsList');
+      expect(inv).toHaveProperty('taxRate');
+      expect(inv).toHaveProperty('paymentDetails');
     });
 
-    test('returns suggestions for a partial invoice (missing supplierAbn)', () => {
-      const invoiceId = createInvoice({ supplierAbn: '98765432100' });
-      const res = requestAutofillInvoice(invoiceId, { supplierAbn: '' });
+    test('itemsList is an array with at least one entry when items are mentioned in text', () => {
+      const res = requestAiAutofill({
+        rawText: 'Please create an invoice for 3 software licences at $200 each from TechCorp to ClientCo.',
+      });
 
       expect(res.statusCode).toBe(200);
-      expect(res.body).toHaveProperty('suggestions');
+      expect(Array.isArray(res.body.invoice.itemsList)).toBe(true);
+      expect(res.body.invoice.itemsList.length).toBeGreaterThan(0);
     });
 
-    test('returns 200 when called with an empty hints body', () => {
-      const invoiceId = createInvoice();
-      const res = requestAutofillInvoice(invoiceId, {});
+    test('response includes a confidence score or partial flag indicating fill quality', () => {
+      const res = requestAiAutofill({
+        rawText: 'Invoice from Supplier X to Buyer Y for 1 item at $100.',
+      });
 
       expect(res.statusCode).toBe(200);
-      expect(res.body).toHaveProperty('invoiceId', invoiceId);
+      const hasQualityField = 'confidence' in res.body || 'partial' in res.body || 'missingFields' in res.body;
+      expect(hasQualityField).toBe(true);
     });
 
-    test('suggestions for paymentDueDate are a date after issueDate', () => {
-      const invoiceId = createInvoice({ issueDate: '2025-03-12' });
-      const res = requestAutofillInvoice(invoiceId, { paymentDueDate: '' });
+    test('does not persist an invoice — no invoice is created as a side effect', () => {
+      requestAiAutofill({
+        rawText: 'Acme Corp to Beta Ltd, $1000 consulting.',
+      });
+
+      const listRes = request('GET', `${SERVER_URL()}/v1/invoice`, {
+        headers: getHeaders(),
+        timeout: TIMEOUT_MS,
+      });
+      const list = JSON.parse(listRes.body.toString());
+      expect(list.total).toBe(0);
+    });
+  });
+
+  describe('Successful cases — partial structured input', () => {
+    test('returns 200 and fills in missing fields from a partial invoice object', () => {
+      const res = requestAiAutofill({
+        partial: {
+          buyerName: 'Acme Corp',
+          buyerAbn: '12345678901',
+          supplierName: 'GitGood Pty Ltd',
+          supplierAbn: '98765432100',
+        },
+      });
 
       expect(res.statusCode).toBe(200);
+      expect(res.body).toHaveProperty('invoice');
+    });
 
-      if (res.body.suggestions.paymentDueDate) {
-        const suggested = new Date(res.body.suggestions.paymentDueDate);
-        const issueDate = new Date('2025-03-12');
-        expect(suggested >= issueDate).toBe(true);
+    test('preserves supplied partial fields in the returned invoice', () => {
+      const res = requestAiAutofill({
+        partial: {
+          buyerName: 'Acme Corp',
+          supplierName: 'GitGood Pty Ltd',
+        },
+      });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.invoice.buyerName).toBe('Acme Corp');
+      expect(res.body.invoice.supplierName).toBe('GitGood Pty Ltd');
+    });
+
+    test('returns missingFields array listing fields that could not be inferred', () => {
+      const res = requestAiAutofill({
+        partial: {
+          buyerName: 'Acme Corp',
+        },
+      });
+
+      expect(res.statusCode).toBe(200);
+      if ('missingFields' in res.body) {
+        expect(Array.isArray(res.body.missingFields)).toBe(true);
       }
     });
 
-    test('returns the correct invoiceId in the response body', () => {
-      const invoiceId1 = createInvoice({ buyerName: 'First Buyer' });
-      const invoiceId2 = createInvoice({ buyerName: 'Second Buyer' });
-
-      const res1 = requestAutofillInvoice(invoiceId1);
-      const res2 = requestAutofillInvoice(invoiceId2);
-
-      expect(res1.body.invoiceId).toBe(invoiceId1);
-      expect(res2.body.invoiceId).toBe(invoiceId2);
-    });
-
-    test('can call autofill multiple times on the same invoice without error', () => {
-      const invoiceId = createInvoice();
-
-      const res1 = requestAutofillInvoice(invoiceId);
-      const res2 = requestAutofillInvoice(invoiceId);
-
-      expect(res1.statusCode).toBe(200);
-      expect(res2.statusCode).toBe(200);
-    });
-  });
-
-  describe('Not Found', () => {
-    test('returns 404 for a well-formed but non-existent invoice ID', () => {
-      const res = requestAutofillInvoice('00000000-0000-0000-0000-000000000000');
-
-      expect(res.statusCode).toBe(404);
-      expect(res.body).toStrictEqual({
-        error: 'NOT_FOUND',
-        message: expect.any(String),
+    test('returns 200 when both rawText and partial are provided together', () => {
+      const res = requestAiAutofill({
+        rawText: 'Invoice due in 30 days, 10% GST.',
+        partial: {
+          buyerName: 'Acme Corp',
+          supplierName: 'GitGood Pty Ltd',
+        },
       });
-    });
 
-    test('returns 404 for a random non-existent invoice ID', () => {
-      const res = requestAutofillInvoice('nonexistent-invoice-id-000');
-
-      expect(res.statusCode).toBe(404);
-      expect(res.body).toStrictEqual({
-        error: 'NOT_FOUND',
-        message: expect.any(String),
-      });
-    });
-  });
-
-  describe('Invalid Input', () => {
-    test('returns 400 when an unrecognised field key is provided in hints', () => {
-      const invoiceId = createInvoice();
-      const res = requestAutofillInvoice(invoiceId, { unknownField: 'someValue' });
-
-      expect(res.statusCode).toBe(400);
-      expect(res.body).toStrictEqual({
-        error: 'INVALID_REQUEST',
-        message: expect.any(String),
-      });
-    });
-
-    test('returns 400 when hint value types are incorrect (number where string expected)', () => {
-      const invoiceId = createInvoice();
-      const res = requestAutofillInvoice(invoiceId, { buyerName: 12345 });
-
-      expect(res.statusCode).toBe(400);
-      expect(res.body).toStrictEqual({
-        error: 'INVALID_REQUEST',
-        message: expect.any(String),
-      });
-    });
-  });
-
-  describe('Status Constraints', () => {
-    test('returns 200 for a converted invoice (autofill is still applicable)', () => {
-      const invoiceId = createInvoice();
-      const convertRes = request('POST', `${SERVER_URL()}/v1/invoice/${invoiceId}/convert`, {
-        headers: getHeaders(),
-        timeout: 5000,
-      });
-      expect(JSON.parse(convertRes.body.toString()).status).toBe('converted');
-
-      const res = requestAutofillInvoice(invoiceId);
       expect(res.statusCode).toBe(200);
+      expect(res.body).toHaveProperty('invoice');
+    });
+  });
+
+  describe('Error Cases — Missing or Empty Input', () => {
+    test('returns 400 when neither rawText nor partial is provided', () => {
+      const res = requestAiAutofill({});
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body).toStrictEqual({
+        error: 'INVALID_REQUEST',
+        message: expect.any(String),
+      });
     });
 
-    test('returns 409 when attempting to autofill a finalised invoice', () => {
-      const invoiceId = createInvoice();
-      request('POST', `${SERVER_URL()}/v1/invoice/${invoiceId}/convert`, { headers: getHeaders(), timeout: 5000 });
-      request('POST', `${SERVER_URL()}/v1/invoice/${invoiceId}/validate`, { headers: getHeaders(), timeout: 5000 });
-      request('POST', `${SERVER_URL()}/v1/invoice/${invoiceId}/final`, { headers: getHeaders(), timeout: 5000 });
+    test('returns 400 when rawText is an empty string', () => {
+      const res = requestAiAutofill({ rawText: '' });
 
-      const res = requestAutofillInvoice(invoiceId);
-
-      expect(res.statusCode).toBe(409);
+      expect(res.statusCode).toBe(400);
       expect(res.body).toStrictEqual({
-        error: expect.any(String),
+        error: 'INVALID_REQUEST',
+        message: expect.any(String),
+      });
+    });
+
+    test('returns 400 when partial is an empty object and rawText is absent', () => {
+      const res = requestAiAutofill({ partial: {} });
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body).toStrictEqual({
+        error: 'INVALID_REQUEST',
+        message: expect.any(String),
+      });
+    });
+
+    test('returns 400 when the request body is entirely absent', () => {
+      const res = request('POST', `${SERVER_URL()}/v1/invoice/autofill`, {
+        headers: getHeaders(),
+        timeout: TIMEOUT_MS,
+      });
+      const body = JSON.parse(res.body.toString());
+
+      expect(res.statusCode).toBe(400);
+      expect(body).toStrictEqual({
+        error: 'INVALID_REQUEST',
         message: expect.any(String),
       });
     });
   });
-}); */
+
+  describe('Error Cases — Invalid Field Types', () => {
+    test('returns 400 when rawText is not a string', () => {
+      const res = requestAiAutofill({ rawText: 12345 });
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body).toStrictEqual({
+        error: 'INVALID_REQUEST',
+        message: expect.any(String),
+      });
+    });
+
+    test('returns 400 when partial is not an object', () => {
+      const res = requestAiAutofill({ partial: 'this should be an object' });
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body).toStrictEqual({
+        error: 'INVALID_REQUEST',
+        message: expect.any(String),
+      });
+    });
+  });
+
+  describe('Insufficient Data', () => {
+    test('returns 200 with empty or minimal invoice and a non-empty missingFields array when text is too vague', () => {
+      const res = requestAiAutofill({ rawText: 'Please make me an invoice.' });
+
+      expect(res.statusCode).toBe(200);
+      if ('missingFields' in res.body) {
+        expect(res.body.missingFields.length).toBeGreaterThan(0);
+      }
+    });
+  });
+});*/
