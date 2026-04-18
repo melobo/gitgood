@@ -16,25 +16,30 @@ export interface LoginInput {
 }
 
 export interface RegisterInput {
-  firstName: string;
-  lastName: string;
+  name: string;
   email: string;
   password: string;
   confirm: string;
 }
 
 export interface UserPageProperties {
-  onLogin: (input: LoginInput) => Promise<void>;
-  onRegister: (input: RegisterInput) => Promise<void>;
+  children: React.ReactNode;
+  response: string | null;
 }
 
-export interface LoginFormProperties {
+export interface LoginPageProperties {
   onLogin: (input: LoginInput) => Promise<void>;
+}
+
+export interface LoginFormProperties extends LoginPageProperties {
   onServerError: (message: string | null) => void;
 }
 
-export interface RegisterFormProperties {
+export interface RegisterPageProperties {
   onRegister: (input: RegisterInput) => Promise<void>;
+}
+
+export interface RegisterFormProperties extends RegisterPageProperties {
   onServerError: (message: string | null) => void;
 }
 

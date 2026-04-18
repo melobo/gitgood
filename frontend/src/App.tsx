@@ -1,6 +1,6 @@
 import './App.css';
 
-import { UserPage } from './User';
+import { LoginPage, RegisterPage } from './User';
 import { Layout } from './Layout';
 import { Authenticate } from "./Auth";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
@@ -10,9 +10,15 @@ import { requestUserRegister, requestUserLogin } from './httpWrappers';
 function AppRoutes(): React.ReactElement {
   const navigate = useNavigate();
   async function handleRegister(input: RegisterInput): Promise<void> {
-    const session = await requestUserRegister(input.email, input.password, input.firstName + input.lastName);
-    localStorage.setItem("session", session);
-    navigate("/dashboard");
+    try {
+      const session = await requestUserRegister(input.email, input.password, input.name);
+      localStorage.setItem("session", session);
+      console.log("SESSION FROM SERVER:", session);
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("REGISTER ERROR:", err);
+      throw err;
+    }
   }
 
   async function handleLogin(input: LoginInput): Promise<void> {
@@ -25,7 +31,11 @@ function AppRoutes(): React.ReactElement {
     <Routes>
       <Route
         path="/login"
-        element={<UserPage onLogin={handleLogin} onRegister={handleRegister} />}
+        element={<LoginPage onLogin={handleLogin} />}
+      />
+      <Route
+        path="/register"
+        element={<RegisterPage onRegister={handleRegister} />}
       />
 
       <Route
