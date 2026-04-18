@@ -10,15 +10,9 @@ import { requestUserRegister, requestUserLogin } from './httpWrappers';
 function AppRoutes(): React.ReactElement {
   const navigate = useNavigate();
   async function handleRegister(input: RegisterInput): Promise<void> {
-    try {
-      const session = await requestUserRegister(input.email, input.password, input.name);
-      localStorage.setItem("session", session);
-      console.log("SESSION FROM SERVER:", session);
-      navigate("/dashboard");
-    } catch (err) {
-      console.error("REGISTER ERROR:", err);
-      throw err;
-    }
+    const session = await requestUserRegister(input.email, input.password, input.name);
+    localStorage.setItem("session", session);
+    navigate("/dashboard");
   }
 
   async function handleLogin(input: LoginInput): Promise<void> {

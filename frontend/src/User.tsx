@@ -69,43 +69,43 @@ function LoginForm({onLogin, onServerError}: LoginFormProperties): React.ReactEl
 
   return (
     <form onSubmit={handleLogin} className='user-form'>
-        <h2> Login to your account </h2>
-        <div className='field'>
-          <label> Email Address </label>
-          <div className={`input-container ${errors.email ? 'input-error' : ''}`}>
-            <input
-              type='email'
-              placeholder='yourbusiness@example.com'
-              value={loginInput.email}
-              onChange={e => setLoginInput(prev => ({ ...prev, email: e.target.value }))}
-            />
-          </div>
-          {errors.email && (<span className='error-message'> ⚠ {errors.email} </span>)}
+      <h2> Login to your account </h2>
+      <div className='field'>
+        <label> Email Address </label>
+        <div className={`input-container ${errors.email ? 'input-error' : ''}`}>
+          <input
+            type='email'
+            placeholder='yourbusiness@example.com'
+            value={loginInput.email}
+            onChange={e => setLoginInput(prev => ({ ...prev, email: e.target.value }))}
+          />
         </div>
+        {errors.email && (<span className='error-message'> ⚠ {errors.email} </span>)}
+      </div>
 
-        <div className='field'>
-          <label> Password </label>
-          <div className={`input-container ${errors.password ? 'input-error' : ''}`}>
-            <input
-              type='password'
-              placeholder='••••••••'
-              value={loginInput.password}
-              onChange={e => setLoginInput(prev => ({ ...prev, password: e.target.value }))}
-            />
-          </div>
-          {errors.password && (<span className='error-message'> ⚠ {errors.password} </span>)}
+      <div className='field'>
+        <label> Password </label>
+        <div className={`input-container ${errors.password ? 'input-error' : ''}`}>
+          <input
+            type='password'
+            placeholder='••••••••'
+            value={loginInput.password}
+            onChange={e => setLoginInput(prev => ({ ...prev, password: e.target.value }))}
+          />
         </div>
+        {errors.password && (<span className='error-message'> ⚠ {errors.password} </span>)}
+      </div>
 
-        <button type='submit'>
-          Sign in
-        </button>
-        <p className='form-footer'>
+      <button type='submit'>
+        Sign in
+      </button>
+      <p className='form-footer'>
         Don't have an account?{' '}
         <Link to='/register' className='navigate'>
           Sign up
         </Link>
       </p>
-      </form>
+    </form>
   );
 }
 
@@ -157,7 +157,6 @@ export function RegisterForm({onRegister, onServerError}: RegisterFormProperties
 
   async function handleRegister(event: React.FormEvent): Promise<void> {
     event.preventDefault();
-    console.log("🔥 FORM SUBMIT FIRED");
 
     onServerError(null);
     setErrors({});
@@ -169,7 +168,6 @@ export function RegisterForm({onRegister, onServerError}: RegisterFormProperties
     }
 
     try {
-      console.log("onRegister called");
       await onRegister(registerInput);
     } catch (err: any) {
       onServerError(err.message ?? 'Registration failed.');
@@ -177,68 +175,68 @@ export function RegisterForm({onRegister, onServerError}: RegisterFormProperties
   }
 
   return (
-      <form onSubmit={handleRegister} className='user-form'>
-        <h2> Create your account </h2>
-        <div className='field'>
-          <label>Business Name</label>
-          <div className={`input-container ${errors.name ? 'input-error' : ''}`}>
-            <input
-              placeholder='Your Business Ltd'
-              value={registerInput.name}
-              onChange={e => setRegisterInput(prev => ({ ...prev, name: e.target.value }))}
-            />
-          </div>
-          {errors.name && (<span className='error-message'> ⚠ {errors.name} </span>)}
+    <form onSubmit={handleRegister} className='user-form'>
+      <h2> Create your account </h2>
+      <div className='field'>
+        <label>Business Name</label>
+        <div className={`input-container ${errors.name ? 'input-error' : ''}`}>
+          <input
+            placeholder='Your Business Ltd'
+            value={registerInput.name}
+            onChange={e => setRegisterInput(prev => ({ ...prev, name: e.target.value }))}
+          />
         </div>
+        {errors.name && (<span className='error-message'> ⚠ {errors.name} </span>)}
+      </div>
 
-        <div className='field'>
-          <label>Email Address</label>
-          <div className={`input-container ${errors.email ? 'input-error' : ''}`}>
-            <input
-              type='email'
-              placeholder='yourbusiness@example.com'
-              value={registerInput.email}
-              onChange={e => setRegisterInput(prev => ({ ...prev, email: e.target.value }))}
-            />
-          </div>
-          {errors.email && (<span className='error-message'> ⚠ {errors.email} </span>)}
+      <div className='field'>
+        <label>Email Address</label>
+        <div className={`input-container ${errors.email ? 'input-error' : ''}`}>
+          <input
+            type='email'
+            placeholder='yourbusiness@example.com'
+            value={registerInput.email}
+            onChange={e => setRegisterInput(prev => ({ ...prev, email: e.target.value }))}
+          />
         </div>
+        {errors.email && (<span className='error-message'> ⚠ {errors.email} </span>)}
+      </div>
 
-        <div className='field'>
-          <label>Password</label>
-          <div className={`input-container ${errors.password ? 'input-error' : ''}`}>
-            <input
-              type='password'
-              placeholder='••••••••'
-              value={registerInput.password}
-              onChange={e => setRegisterInput(prev => ({ ...prev, password: e.target.value }))}
-            />
-          </div>
-          {errors.password && (<span className='error-message'> ⚠ {errors.password} </span>)}
+      <div className='field'>
+        <label>Password</label>
+        <div className={`input-container ${errors.password ? 'input-error' : ''}`}>
+          <input
+            type='password'
+            placeholder='••••••••'
+            value={registerInput.password}
+            onChange={e => setRegisterInput(prev => ({ ...prev, password: e.target.value }))}
+          />
         </div>
+        {errors.password && (<span className='error-message'> ⚠ {errors.password} </span>)}
+      </div>
 
-        <div className='field'>
-          <label>Confirm password</label>
-          <div className={`input-container ${errors.confirm ? 'input-error' : ''}`}>
-            <input
-              type='password'
-              placeholder='••••••••'
-              value={registerInput.confirm}
-              onChange={e => setRegisterInput(prev => ({ ...prev, confirm: e.target.value }))}
-            />
-          </div>
-          {errors.confirm && (<span className='error-message'> ⚠ {errors.confirm} </span>)}
+      <div className='field'>
+        <label>Confirm password</label>
+        <div className={`input-container ${errors.confirm ? 'input-error' : ''}`}>
+          <input
+            type='password'
+            placeholder='••••••••'
+            value={registerInput.confirm}
+            onChange={e => setRegisterInput(prev => ({ ...prev, confirm: e.target.value }))}
+          />
         </div>
+        {errors.confirm && (<span className='error-message'> ⚠ {errors.confirm} </span>)}
+      </div>
 
-        <button type='submit'>
-          Create account
-        </button>
-        <p className='form-footer'>
-          Already have an account?{' '}
-          <Link to="/login" className='navigate'>
-            Sign in
-          </Link>
-        </p>
-      </form>
+      <button type='submit'>
+        Create account
+      </button>
+      <p className='form-footer'>
+        Already have an account?{' '}
+        <Link to="/login" className='navigate'>
+          Sign in
+        </Link>
+      </p>
+    </form>
   );
 }
