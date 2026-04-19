@@ -143,8 +143,8 @@ export async function listInvoice(filters: InvoiceListFilters): Promise<{
   const paginated = result.slice(offset, offset + limitPerPage);
 
   return {
-    invoices: paginated.map(({ invoiceId, buyerName, status, createdAt }) => ({
-      invoiceId, buyerName, status, createdAt,
+    invoices: paginated.map(({ invoiceId, buyerName, status, createdAt, totalPayable }) => ({
+      invoiceId, buyerName, status, createdAt, totalPayable,
     })),
     total,
     page,
