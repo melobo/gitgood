@@ -2,7 +2,7 @@ test('Boolean truthiness check', () => {
   expect(true).toBe(true);
 });
 
-/* import request from 'sync-request-curl';
+import request from 'sync-request-curl';
 import config from '../config';
 import {
   requestCreateInvoice,
@@ -18,7 +18,7 @@ const TIMEOUT_MS = 5 * 1000;
 
 const getHeaders = () => ({
   'x-api-key': config.apiKey,
-  'session': (global as string).__SESSION_TOKEN__,
+  'session': (global as any).__SESSION_TOKEN__,
 });
 
 const requestBatchAction = (action: string, invoiceIds: string[]) => {
@@ -70,7 +70,7 @@ beforeEach(() => {
   clearSessionToken();
   const res = requestUserRegister('test@example.com', 'password1', 'Test User');
   setSessionToken(res.body.session);
-  (global as string).__SESSION_TOKEN__ = res.body.session;
+  (global as any).__SESSION_TOKEN__ = res.body.session;
 });
 
 describe('POST /v1/invoices/batch/:action — batchInvoice', () => {
@@ -121,8 +121,8 @@ describe('POST /v1/invoices/batch/:action — batchInvoice', () => {
         expect(res.statusCode).toBe(200);
         expect(res.body.results).toHaveLength(2);
 
-        const succeeded = res.body.results.find((r: String) => r.invoiceId === invoiceId);
-        const failed = res.body.results.find((r: String) => r.invoiceId === '00000000-0000-0000-0000-000000000000');
+        const succeeded = res.body.results.find((r: any) => r.invoiceId === invoiceId);
+        const failed = res.body.results.find((r: any) => r.invoiceId === '00000000-0000-0000-0000-000000000000');
 
         expect(succeeded.success).toBe(true);
         expect(failed.success).toBe(false);
@@ -348,4 +348,4 @@ describe('POST /v1/invoices/batch/:action — batchInvoice', () => {
       }
     });
   });
-}); */
+}); 
