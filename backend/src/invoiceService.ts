@@ -46,38 +46,34 @@ export async function listInvoice(filters: InvoiceListFilters): Promise<{
   total: number;
   page: number;
 }> {
-  const { 
-    fromDate, toDate, page = 1, limitPerPage = 20, 
-    filter, status, buyerName, supplierName, minAmount, maxAmount, search 
-  } = filters;
+  const { fromDate, toDate, page = 1, limitPerPage = 20 } = filters;
 
   if (!Number.isInteger(page) || !Number.isInteger(limitPerPage)) {
-    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+    throw new ServerError(
+      'INVALID_REQUEST',
+      'Missing or Invalid Fields'
+    );
   }
 
   if (fromDate && isNaN(Date.parse(fromDate))) {
-    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+    throw new ServerError(
+      'INVALID_REQUEST',
+      'Missing or Invalid Fields'
+    );
   }
 
   if (toDate && isNaN(Date.parse(toDate))) {
-    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+    throw new ServerError(
+      'INVALID_REQUEST',
+      'Missing or Invalid Fields'
+    );
   }
 
   if (fromDate && toDate && new Date(fromDate) > new Date(toDate)) {
-    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
-  }
-
-  // validate amount ranges are actually numbers
-  if (minAmount !== undefined && isNaN(minAmount)) {
-    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
-  }
-
-  if (maxAmount !== undefined && isNaN(maxAmount)) {
-    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
-  }
-
-  if (minAmount !== undefined && maxAmount !== undefined && minAmount > maxAmount) {
-    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+    throw new ServerError(
+      'INVALID_REQUEST',
+      'Missing or Invalid Fields'
+    );
   }
 
   let result = await listAllInvoices();
@@ -92,59 +88,13 @@ export async function listInvoice(filters: InvoiceListFilters): Promise<{
     result = result.filter(inv => new Date(inv.createdAt) <= end);
   }
 
-  // filter by status
-  if (status) {
-    result = result.filter(inv => inv.status === status);
-  }
-
-  // filter by buyer name
-  if (buyerName) {
-    result = result.filter(inv => inv.buyerName === buyerName);
-  }
-
-  // filter by supplier name
-  if (supplierName) {
-    result = result.filter(inv => inv.supplierName === supplierName);
-  }
-
-  // filter by total payable range
-  if (minAmount !== undefined) {
-    result = result.filter(inv => inv.totalPayable >= minAmount);
-  }
-
-  if (maxAmount !== undefined) {
-    result = result.filter(inv => inv.totalPayable <= maxAmount);
-  }
-
-  // broad keyword search across buyer/supplier name and ABN fields
-  if (filter && filter.trim()) {
-    const term = filter.trim().toLowerCase();
-    result = result.filter(inv =>
-      inv.buyerName?.toLowerCase().includes(term) ||
-      inv.supplierName?.toLowerCase().includes(term) ||
-      inv.buyerAbn?.toLowerCase().includes(term) ||
-      inv.supplierAbn?.toLowerCase().includes(term)
-    );
-  }
-
-  // search is the same as filter but used as a separate param in the tests
-  if (search && search.trim()) {
-    const term = search.trim().toLowerCase();
-    result = result.filter(inv =>
-      inv.buyerName?.toLowerCase().includes(term) ||
-      inv.supplierName?.toLowerCase().includes(term) ||
-      inv.buyerAbn?.toLowerCase().includes(term) ||
-      inv.supplierAbn?.toLowerCase().includes(term)
-    );
-  }
-
   const total = result.length;
   const offset = (page - 1) * limitPerPage;
   const paginated = result.slice(offset, offset + limitPerPage);
 
   return {
-    invoices: paginated.map(({ invoiceId, buyerName, status, createdAt, totalPayable }) => ({
-      invoiceId, buyerName, status, createdAt, totalPayable,
+    invoices: paginated.map(({ invoiceId, buyerName, status, createdAt }) => ({
+      invoiceId, buyerName, status, createdAt,
     })),
     total,
     page,

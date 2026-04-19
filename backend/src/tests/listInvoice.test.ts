@@ -29,7 +29,7 @@ describe('GET /invoice — listInvoices', () => {
     });
 
     test('returns 200 with valid fromDate and toDate', () => {
-      const res = requestListInvoice({ fromDate: '2024-01-01', toDate: '2026-12-31' });
+      const res = requestListInvoice('2024-01-01', '2026-12-31', undefined, undefined);
 
       expect(res.statusCode).toBe(200);
       expect(res.body).toHaveProperty('invoices');
@@ -37,7 +37,7 @@ describe('GET /invoice — listInvoices', () => {
     });
 
     test('returns 200 with valid page and limitPerPage', () => {
-      const res = requestListInvoice({ page: 1, limitPerPage: 5 });
+      const res = requestListInvoice(undefined, undefined, 1, 5);
 
       expect(res.statusCode).toBe(200);
       expect(res.body).toHaveProperty('page');
@@ -47,14 +47,14 @@ describe('GET /invoice — listInvoices', () => {
   // date range errors
   describe('Date Range Errors', () => {
     test('returns 400 when fromDate is after toDate', () => {
-      const res = requestListInvoice({ fromDate: '2026-01-01', toDate: '2024-01-01' });
+      const res = requestListInvoice('2026-01-01', '2024-01-01');
 
       expect(res.statusCode).toBe(400);
       expect(res.body).toStrictEqual(error);
     });
 
     test('returns 400 when toDate is before fromDate', () => {
-      const res = requestListInvoice({ fromDate: '2026-06-01', toDate: '2024-01-01' });
+      const res = requestListInvoice('2026-06-01', '2024-01-01');
 
       expect(res.statusCode).toBe(400);
       expect(res.body).toStrictEqual(error);
