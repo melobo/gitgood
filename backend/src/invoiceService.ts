@@ -48,7 +48,7 @@ export async function listInvoice(filters: InvoiceListFilters): Promise<{
 }> {
   const {
     fromDate, toDate, page = 1, limitPerPage = 20,
-    filter, status, buyerName, supplierName, minAmount, maxAmount, search
+    filter, status, buyerName, supplierName, minAmount, maxAmount,
   } = filters;
 
   if (!Number.isInteger(page) || !Number.isInteger(limitPerPage)) {
@@ -119,17 +119,6 @@ export async function listInvoice(filters: InvoiceListFilters): Promise<{
   // broad keyword search across buyer/supplier name and ABN fields
   if (filter && filter.trim()) {
     const term = filter.trim().toLowerCase();
-    result = result.filter(inv =>
-      inv.buyerName?.toLowerCase().includes(term)
-      || inv.supplierName?.toLowerCase().includes(term)
-      || inv.buyerAbn?.toLowerCase().includes(term)
-      || inv.supplierAbn?.toLowerCase().includes(term)
-    );
-  }
-
-  // search is the same as filter but used as a separate param in the tests
-  if (search && search.trim()) {
-    const term = search.trim().toLowerCase();
     result = result.filter(inv =>
       inv.buyerName?.toLowerCase().includes(term)
       || inv.supplierName?.toLowerCase().includes(term)

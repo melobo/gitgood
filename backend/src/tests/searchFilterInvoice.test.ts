@@ -110,7 +110,7 @@ describe('GET /v1/invoice — Advanced Search and Filtering', () => {
       createInv({ buyerName: 'Cyberdyne Systems' });
       createInv({ buyerName: 'Weyland-Yutani' });
 
-      const res = requestListInvoice({ search: 'Cyber' });
+      const res = requestListInvoice({ filter: 'Cyber' });
       expect(res.body.total).toBe(1);
       expect(res.body.invoices[0].buyerName).toContain('Cyberdyne');
     });
@@ -123,7 +123,7 @@ describe('GET /v1/invoice — Advanced Search and Filtering', () => {
       createInv({ buyerName: 'Banana', price: 100 });
 
       const res = requestListInvoice({
-        search: 'Apple',
+        filter: 'Apple',
         page: 1,
         limitPerPage: 1
       });

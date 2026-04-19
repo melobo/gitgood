@@ -86,12 +86,11 @@ export interface InvoiceListFilters {
   page?: number;
   limitPerPage?: number;
   filter?: string;
-  status?: string;
+  status?: InvoiceStatus;
   buyerName?: string;
   supplierName?: string;
   minAmount?: number;
   maxAmount?: number;
-  search?: string;
 }
 
 export interface InvoiceOverrides {
