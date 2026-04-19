@@ -3,6 +3,8 @@ import config from './config';
 import { InvoiceItem, PaymentDetails } from './invoiceInterface';
 
 const SERVER_URL = () => process.env.SERVER_URL ?? 'http://127.0.0.1:3000';
+const TIMEOUT_MS = 5 * 1000;
+
 let sessionToken: string | undefined;
 
 export function setSessionToken(token: string) {
@@ -13,11 +15,10 @@ export function clearSessionToken() {
   sessionToken = undefined;
 }
 
-const getHeaders = () => ({
+export const getHeaders = () => ({
   'x-api-key': config.apiKey,
   ...(sessionToken && { session: sessionToken }),
 });
-const TIMEOUT_MS = 5 * 1000;
 
 export const requestClear = () => {
   const res = request('DELETE', `${SERVER_URL()}/debug/clear`, { headers: getHeaders() });

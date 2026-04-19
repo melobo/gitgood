@@ -1,3 +1,10 @@
-.env
+# Environment
 .env.test
+.env
+
+# Dependencies
 node_modules/
+
+# Coverage
+coverage/
+.nyc_output/

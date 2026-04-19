@@ -1,9 +1,4 @@
-test('Boolean truthiness check', () => {
-  expect(true).toBe(true);
-});
-
-/* import request from 'sync-request-curl';
-import config from '../config';
+import request from 'sync-request-curl';
 import {
   requestCreateInvoice,
   requestConvertInvoice,
@@ -13,15 +8,11 @@ import {
   requestUserRegister,
   setSessionToken,
   clearSessionToken,
-} from '../httpWrappers';
+  getHeaders,
+} from '../../httpWrappers';
 
 const SERVER_URL = () => process.env.SERVER_URL ?? 'http://127.0.0.1:3000';
 const TIMEOUT_MS = 5 * 1000;
-
-const getHeaders = () => ({
-  'x-api-key': config.apiKey,
-  'session': (global as string).__SESSION_TOKEN__,
-});
 
 const requestSendInvoice = (invoiceId: string, body?: object) => {
   const res = request(
@@ -80,7 +71,6 @@ beforeEach(() => {
   clearSessionToken();
   const res = requestUserRegister('test@example.com', 'password1', 'Test User');
   setSessionToken(res.body.session);
-  (global as string).__SESSION_TOKEN__ = res.body.session;
 });
 
 describe('POST /v1/invoice/:invoiceId/send — sendInvoice', () => {
@@ -243,4 +233,4 @@ describe('POST /v1/invoice/:invoiceId/send — sendInvoice', () => {
       });
     });
   });
-}); */
+});

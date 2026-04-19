@@ -1,5 +1,5 @@
-import { HttpReturnObject } from '../invoiceInterface';
-import { requestClear, requestUserRegister, requestUserPasswordUpdate, requestUserLogout } from '../httpWrappers';
+import { HttpReturnObject } from '../../invoiceInterface';
+import { requestClear, requestUserRegister, requestUserPasswordUpdate, requestUserLogout } from '../../httpWrappers';
 
 beforeEach(() => {
   requestClear();

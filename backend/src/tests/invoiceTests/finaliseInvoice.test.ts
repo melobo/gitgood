@@ -7,7 +7,7 @@ import {
   requestUserRegister,
   setSessionToken,
   clearSessionToken,
-} from '../httpWrappers';
+} from '../../httpWrappers';
 
 // creating a valid draft invoice
 function createInvoice(): string {

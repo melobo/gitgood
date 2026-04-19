@@ -4,7 +4,7 @@ import {
   requestUserRegister,
   setSessionToken,
   clearSessionToken,
-} from '../httpWrappers';
+} from '../../httpWrappers';
 
 const error = { error: expect.any(String), message: expect.any(String) };
 

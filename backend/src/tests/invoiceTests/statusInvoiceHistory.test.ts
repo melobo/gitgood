@@ -13,7 +13,7 @@ import {
   setSessionToken,
   clearSessionToken,
   requestGetInvoiceHistory
-} from '../httpWrappers';
+} from '../../httpWrappers';
 
 function createInvoice(): string {
   const res = requestCreateInvoice(

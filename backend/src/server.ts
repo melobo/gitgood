@@ -24,6 +24,8 @@ import { getInvoiceById } from './dynamoService';
 import { authenticate } from './auth';
 import { userRegister, userLogin, userDetails, userDetailsUpdate, userPasswordUpdate, userLogout } from './user';
 import { validateSessionToken } from './validation';
+import { aiAutofillInvoice } from './autofillService';
+import { sendInvoice } from './sendService';
 import { InvoiceStatus } from './invoiceInterface';
 
 const app = express();
@@ -73,6 +75,15 @@ async function requireSession(req: Request, res: Response, next: NextFunction): 
 }
 
 // ===== INVOICE ENDPOINTS ===== //
+app.post('/v1/invoice/autofill', authenticate, requireSession, async (req: Request, res: Response) => {
+  try {
+    const result = await aiAutofillInvoice(req.body ?? {});
+    res.status(200).json(result);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
 app.post('/v1/invoice', authenticate, requireSession, async (req: Request, res: Response) => {
   try {
     const invoice = await createInvoice(req.body);
@@ -205,6 +216,17 @@ app.post('/v1/invoice/:invoiceId/final', authenticate, requireSession, async (re
   }
 });
 
+app.post('/v1/invoice/:invoiceId/send', authenticate, requireSession, async (req: Request, res: Response) => {
+  const { invoiceId } = req.params;
+  try {
+    const { recipientEmail } = req.body ?? {};
+    const result = await sendInvoice(invoiceId as string, recipientEmail);
+    res.status(200).json(result);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
 app.delete('/v1/invoice/:invoiceId', authenticate, requireSession, async (req: Request, res: Response) => {
   const { invoiceId } = req.params;
   try {
@@ -265,8 +287,6 @@ app.get('/v1/invoice/:invoiceId/summary', authenticate, requireSession, async (r
 });
 
 // ===== AUTH ENDPOINTS ===== //
-// Register and login do not require an API key or session —
-// the user needs these endpoints to obtain credentials in the first place.
 app.post('/v1/admin/auth/register', async (req: Request, res: Response) => {
   const { email, password, name } = req.body;
   try {
@@ -288,7 +308,6 @@ app.post('/v1/admin/auth/login', async (req: Request, res: Response) => {
 });
 
 // ===== USER ENDPOINTS ===== //
-// All user management endpoints require both API key and a valid session.
 app.get('/v1/admin/user/details', authenticate, async (req: Request, res: Response) => {
   try {
     const sessionToken = req.header('session');
