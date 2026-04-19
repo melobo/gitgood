@@ -68,22 +68,71 @@ export const requestCreateInvoice = (
   return { statusCode: res.statusCode, body: bodyObj };
 };
 
-export const requestListInvoice = (
-  fromDate?: string,
-  toDate?: string,
-  page?: number,
-  limitPerPage?: number
-) => {
+export const requestListInvoice = (filters: {
+  fromDate?: string;
+  toDate?: string;
+  page?: number;
+  limitPerPage?: number;
+} = {}) => {
+  const { fromDate, toDate, page, limitPerPage } = filters;
+
   const params = new URLSearchParams();
   if (fromDate) params.append('fromDate', fromDate);
   if (toDate) params.append('toDate', toDate);
   if (page !== undefined) params.append('page', String(page));
   if (limitPerPage !== undefined) params.append('limitPerPage', String(limitPerPage));
+
   const qs = params.toString() ? `?${params.toString()}` : '';
 
   const res = request('GET', `${SERVER_URL()}/v1/invoice${qs}`, {
     headers: getHeaders(),
     timeout: TIMEOUT_MS
+  });
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
+};
+
+export const requestListInvoiceV2 = (filters: {
+  fromDate?: string;
+  toDate?: string;
+  page?: number;
+  limitPerPage?: number;
+  filter?: string;
+  status?: string;
+  buyerName?: string;
+  supplierName?: string;
+  minAmount?: number;
+  maxAmount?: number;
+  search?: string;
+} = {}) => {
+  const { fromDate, toDate, page, limitPerPage, filter, status, buyerName, supplierName, minAmount, maxAmount } = filters;
+
+  const params = new URLSearchParams();
+  if (fromDate) params.append('fromDate', fromDate);
+  if (toDate) params.append('toDate', toDate);
+  if (page !== undefined) params.append('page', String(page));
+  if (limitPerPage !== undefined) params.append('limitPerPage', String(limitPerPage));
+  if (filter) params.append('filter', filter);
+  if (status) params.append('status', status);
+  if (buyerName) params.append('buyerName', buyerName);
+  if (supplierName) params.append('supplierName', supplierName);
+  if (minAmount !== undefined) params.append('minAmount', String(minAmount));
+  if (maxAmount !== undefined) params.append('maxAmount', String(maxAmount));
+
+  const qs = params.toString() ? `?${params.toString()}` : '';
+
+  const res = request('GET', `${SERVER_URL()}/v2/invoice${qs}`, {
+    headers: getHeaders(),
+    timeout: TIMEOUT_MS
+  });
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
+};
+
+export const requestGetInvoiceHistory = (invoiceId: string) => {
+  const res = request('GET', `${SERVER_URL()}/v1/invoice/${invoiceId}/history`, {
+    headers: getHeaders(),
+    timeout: TIMEOUT_MS,
   });
   const bodyObj = JSON.parse(res.body.toString());
   return { statusCode: res.statusCode, body: bodyObj };

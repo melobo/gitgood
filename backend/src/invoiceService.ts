@@ -41,39 +41,53 @@ import { ServerError } from './errors';
 import { v4 as uuidv4 } from 'uuid';
 import { XMLBuilder } from 'fast-xml-parser';
 
+function pushStatus(invoice: Invoice, newStatus: InvoiceStatus): void {
+  // don't push if the last status in history is already the same
+  const lastEntry = invoice.statusHistory[invoice.statusHistory.length - 1];
+
+  if (!lastEntry || lastEntry.status !== newStatus) {
+    invoice.status = newStatus;
+    invoice.statusHistory.push({ status: newStatus, changedAt: new Date().toISOString() });
+  }
+}
+
 export async function listInvoice(filters: InvoiceListFilters): Promise<{
   invoices: Pick<Invoice, 'invoiceId' | 'buyerName' | 'status' | 'createdAt'>[];
   total: number;
   page: number;
 }> {
-  const { fromDate, toDate, page = 1, limitPerPage = 20 } = filters;
+  const {
+    fromDate, toDate, page = 1, limitPerPage = 20,
+    filter, status, buyerName, supplierName, minAmount, maxAmount,
+  } = filters;
 
   if (!Number.isInteger(page) || !Number.isInteger(limitPerPage)) {
-    throw new ServerError(
-      'INVALID_REQUEST',
-      'Missing or Invalid Fields'
-    );
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
   }
 
   if (fromDate && isNaN(Date.parse(fromDate))) {
-    throw new ServerError(
-      'INVALID_REQUEST',
-      'Missing or Invalid Fields'
-    );
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
   }
 
   if (toDate && isNaN(Date.parse(toDate))) {
-    throw new ServerError(
-      'INVALID_REQUEST',
-      'Missing or Invalid Fields'
-    );
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
   }
 
   if (fromDate && toDate && new Date(fromDate) > new Date(toDate)) {
-    throw new ServerError(
-      'INVALID_REQUEST',
-      'Missing or Invalid Fields'
-    );
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+  }
+
+  // validate amount ranges are actually numbers
+  if (minAmount !== undefined && isNaN(minAmount)) {
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+  }
+
+  if (maxAmount !== undefined && isNaN(maxAmount)) {
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+  }
+
+  if (minAmount !== undefined && maxAmount !== undefined && minAmount > maxAmount) {
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
   }
 
   let result = await listAllInvoices();
@@ -88,13 +102,48 @@ export async function listInvoice(filters: InvoiceListFilters): Promise<{
     result = result.filter(inv => new Date(inv.createdAt) <= end);
   }
 
+  // filter by exact status match
+  if (status) {
+    result = result.filter(inv => inv.status === status);
+  }
+
+  // filter by exact buyer name match
+  if (buyerName) {
+    result = result.filter(inv => inv.buyerName === buyerName);
+  }
+
+  // filter by exact supplier name match
+  if (supplierName) {
+    result = result.filter(inv => inv.supplierName === supplierName);
+  }
+
+  // filter by total payable range
+  if (minAmount !== undefined) {
+    result = result.filter(inv => inv.totalPayable >= minAmount);
+  }
+
+  if (maxAmount !== undefined) {
+    result = result.filter(inv => inv.totalPayable <= maxAmount);
+  }
+
+  // broad keyword search across buyer/supplier name and ABN fields
+  if (filter && filter.trim()) {
+    const term = filter.trim().toLowerCase();
+    result = result.filter(inv =>
+      inv.buyerName?.toLowerCase().includes(term)
+      || inv.supplierName?.toLowerCase().includes(term)
+      || inv.buyerAbn?.toLowerCase().includes(term)
+      || inv.supplierAbn?.toLowerCase().includes(term)
+    );
+  }
+
   const total = result.length;
   const offset = (page - 1) * limitPerPage;
   const paginated = result.slice(offset, offset + limitPerPage);
 
   return {
-    invoices: paginated.map(({ invoiceId, buyerName, status, createdAt }) => ({
-      invoiceId, buyerName, status, createdAt,
+    invoices: paginated.map(({ invoiceId, buyerName, status, createdAt, totalPayable }) => ({
+      invoiceId, buyerName, status, createdAt, totalPayable,
     })),
     total,
     page,
@@ -236,6 +285,7 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<Invoice>
     additionalNotes: additionalNotes ?? '',
     createdAt: now,
     updatedAt: now,
+    statusHistory: [{ status: 'draft', changedAt: now }],
   };
 
   await saveInvoice(invoice);
@@ -312,7 +362,7 @@ export async function validateInvoice(invoiceId: string): Promise<ValidateInvoic
   }
 
   if (errors.length === 0 && invoice.status !== 'finalised') {
-    invoice.status = 'validated';
+    pushStatus(invoice, 'validated');
   }
 
   await saveInvoice(invoice);
@@ -342,7 +392,7 @@ export async function finaliseInvoice(invoiceId: string): Promise<FinaliseInvoic
     );
   }
 
-  invoice.status = 'finalised';
+  pushStatus(invoice, 'finalised');
   invoice.finalisedAt = new Date().toLocaleString();
 
   await saveInvoice(invoice);
@@ -474,7 +524,7 @@ export async function convertInvoice(invoiceId: string): Promise<{
 
   await saveXMLToS3(invoiceId, ublXMLInvoice);
 
-  invoice.status = 'converted';
+  pushStatus(invoice, 'converted');
   invoice.ublXml = ublXMLInvoice;
   invoice.updatedAt = new Date().toISOString();
   await saveInvoice(invoice);

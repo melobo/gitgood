@@ -52,6 +52,12 @@ export interface Invoice {
   createdAt: string;
   updatedAt: string;
   finalisedAt?: string;
+  statusHistory: StatusHistoryEntry[];
+}
+
+export interface StatusHistoryEntry {
+  status: InvoiceStatus;
+  changedAt: string;
 }
 
 export interface CreateInvoiceInput {
@@ -85,6 +91,18 @@ export interface InvoiceListFilters {
   toDate?: string;
   page?: number;
   limitPerPage?: number;
+  filter?: string;
+  status?: InvoiceStatus;
+  buyerName?: string;
+  supplierName?: string;
+  minAmount?: number;
+  maxAmount?: number;
+}
+
+export interface InvoiceOverrides {
+  buyerName?: string;
+  supplierName?: string;
+  price?: number;
 }
 
 export interface ValidationError {

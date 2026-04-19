@@ -1,10 +1,6 @@
-test('Boolean truthiness check', () => {
-  expect(true).toBe(true);
-});
-
-/* import {
+import {
   requestCreateInvoice,
-  requestListInvoice,
+  requestListInvoiceV2,
   requestConvertInvoice,
   requestValidateInvoice,
   requestFinaliseInvoice,
@@ -13,7 +9,7 @@ test('Boolean truthiness check', () => {
   setSessionToken,
   clearSessionToken,
 } from '../httpWrappers';
-import { InvoiceItem, PaymentDetails } from '../invoiceInterface';
+import { InvoiceItem, PaymentDetails, InvoiceOverrides } from '../invoiceInterface';
 
 const validItems = (price = 500.00): InvoiceItem[] => [
   {
@@ -34,7 +30,7 @@ const validPayment: PaymentDetails[] = [
   },
 ];
 
-function createInv(overrides: any = {}): string {
+function createInv(overrides: InvoiceOverrides = {}): string {
   const res = requestCreateInvoice(
     overrides.buyerName ?? 'Acme Corp',
     '12345678901',
@@ -65,9 +61,9 @@ describe('GET /v1/invoice — Advanced Search and Filtering', () => {
       requestValidateInvoice(finalId);
       requestFinaliseInvoice(finalId);
 
-      const res = requestListInvoice({ status: 'draft' });
+      const res = requestListInvoiceV2({ status: 'draft' });
       expect(res.statusCode).toBe(200);
-      expect(res.body.invoices.every((i: any) => i.status === 'draft')).toBe(true);
+      expect(res.body.invoices.every((i: { status: string }) => i.status === 'draft')).toBe(true);
       expect(res.body.total).toBe(1);
     });
   });
@@ -77,7 +73,7 @@ describe('GET /v1/invoice — Advanced Search and Filtering', () => {
       createInv({ buyerName: 'Unique Buyer' });
       createInv({ buyerName: 'Other Corp' });
 
-      const res = requestListInvoice({ buyerName: 'Unique Buyer' });
+      const res = requestListInvoiceV2({ buyerName: 'Unique Buyer' });
       expect(res.body.total).toBe(1);
       expect(res.body.invoices[0].buyerName).toBe('Unique Buyer');
     });
@@ -85,7 +81,7 @@ describe('GET /v1/invoice — Advanced Search and Filtering', () => {
     test('filters by supplierName correctly', () => {
       createInv({ supplierName: 'Specialist Supplies' });
 
-      const res = requestListInvoice({ supplierName: 'Specialist Supplies' });
+      const res = requestListInvoiceV2({ supplierName: 'Specialist Supplies' });
       expect(res.body.total).toBe(1);
     });
   });
@@ -96,15 +92,15 @@ describe('GET /v1/invoice — Advanced Search and Filtering', () => {
       createInv({ price: 500 });
       createInv({ price: 1000 });
 
-      const res = requestListInvoice({ minAmount: 200, maxAmount: 600 });
+      const res = requestListInvoiceV2({ minAmount: 200, maxAmount: 600 });
       expect(res.body.total).toBe(1);
 
-      expect(res.body.invoices[0].totalAmount).toBe(550);
+      expect(res.body.invoices[0].totalPayable).toBe(550);
     });
 
     test('returns 400 for invalid amount values (non-numeric strings)', () => {
       // @ts-expect-error because an error is expected
-      const res = requestListInvoice({ minAmount: 'invalid-price' });
+      const res = requestListInvoiceV2({ minAmount: 'invalid-price' });
       expect(res.statusCode).toBe(400);
     });
   });
@@ -114,7 +110,7 @@ describe('GET /v1/invoice — Advanced Search and Filtering', () => {
       createInv({ buyerName: 'Cyberdyne Systems' });
       createInv({ buyerName: 'Weyland-Yutani' });
 
-      const res = requestListInvoice({ search: 'Cyber' });
+      const res = requestListInvoiceV2({ filter: 'Cyber' });
       expect(res.body.total).toBe(1);
       expect(res.body.invoices[0].buyerName).toContain('Cyberdyne');
     });
@@ -126,8 +122,8 @@ describe('GET /v1/invoice — Advanced Search and Filtering', () => {
       createInv({ buyerName: 'Apple', price: 200 });
       createInv({ buyerName: 'Banana', price: 100 });
 
-      const res = requestListInvoice({
-        search: 'Apple',
+      const res = requestListInvoiceV2({
+        filter: 'Apple',
         page: 1,
         limitPerPage: 1
       });
@@ -136,4 +132,4 @@ describe('GET /v1/invoice — Advanced Search and Filtering', () => {
       expect(res.body.invoices).toHaveLength(1); // But only one per page
     });
   });
-}); */
+});
