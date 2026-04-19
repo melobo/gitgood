@@ -42,41 +42,42 @@ import { v4 as uuidv4 } from 'uuid';
 import { XMLBuilder } from 'fast-xml-parser';
 
 export async function listInvoice(filters: InvoiceListFilters): Promise<{
-  invoices: Pick<Invoice, 'invoiceId' | 'buyerName' | 'status' | 'createdAt' | 'totalPayable'>[];
+  invoices: Pick<Invoice, 'invoiceId' | 'buyerName' | 'status' | 'createdAt'>[];
   total: number;
   page: number;
 }> {
-  const {
-    fromDate, toDate, page = 1, limitPerPage = 20,
-    filter, status, buyerName, supplierName, minAmount, maxAmount, search
+  const { 
+    fromDate, toDate, page = 1, limitPerPage = 20, 
+    filter, status, buyerName, supplierName, minAmount, maxAmount, search 
   } = filters;
 
   if (!Number.isInteger(page) || !Number.isInteger(limitPerPage)) {
-    throw new ServerError(
-      'INVALID_REQUEST',
-      'Missing or Invalid Fields'
-    );
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
   }
 
   if (fromDate && isNaN(Date.parse(fromDate))) {
-    throw new ServerError(
-      'INVALID_REQUEST',
-      'Missing or Invalid Fields'
-    );
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
   }
 
   if (toDate && isNaN(Date.parse(toDate))) {
-    throw new ServerError(
-      'INVALID_REQUEST',
-      'Missing or Invalid Fields'
-    );
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
   }
 
   if (fromDate && toDate && new Date(fromDate) > new Date(toDate)) {
-    throw new ServerError(
-      'INVALID_REQUEST',
-      'Missing or Invalid Fields'
-    );
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+  }
+
+  // validate amount ranges are actually numbers
+  if (minAmount !== undefined && isNaN(minAmount)) {
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+  }
+
+  if (maxAmount !== undefined && isNaN(maxAmount)) {
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+  }
+
+  if (minAmount !== undefined && maxAmount !== undefined && minAmount > maxAmount) {
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
   }
 
   let result = await listAllInvoices();
@@ -119,21 +120,21 @@ export async function listInvoice(filters: InvoiceListFilters): Promise<{
   if (filter && filter.trim()) {
     const term = filter.trim().toLowerCase();
     result = result.filter(inv =>
-      inv.buyerName?.toLowerCase().includes(term)
-      || inv.supplierName?.toLowerCase().includes(term)
-      || inv.buyerAbn?.toLowerCase().includes(term)
-      || inv.supplierAbn?.toLowerCase().includes(term)
+      inv.buyerName?.toLowerCase().includes(term) ||
+      inv.supplierName?.toLowerCase().includes(term) ||
+      inv.buyerAbn?.toLowerCase().includes(term) ||
+      inv.supplierAbn?.toLowerCase().includes(term)
     );
   }
 
-  // search param does the same as filter
+  // search is the same as filter but used as a separate param in the tests
   if (search && search.trim()) {
     const term = search.trim().toLowerCase();
     result = result.filter(inv =>
-      inv.buyerName?.toLowerCase().includes(term)
-      || inv.supplierName?.toLowerCase().includes(term)
-      || inv.buyerAbn?.toLowerCase().includes(term)
-      || inv.supplierAbn?.toLowerCase().includes(term)
+      inv.buyerName?.toLowerCase().includes(term) ||
+      inv.supplierName?.toLowerCase().includes(term) ||
+      inv.buyerAbn?.toLowerCase().includes(term) ||
+      inv.supplierAbn?.toLowerCase().includes(term)
     );
   }
 
