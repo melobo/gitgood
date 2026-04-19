@@ -8,8 +8,8 @@ import {
   requestUserRegister,
   setSessionToken,
   clearSessionToken,
-} from '../httpWrappers';
-import { InvoiceItem, PaymentDetails, InvoiceOverrides } from '../invoiceInterface';
+} from '../../httpWrappers';
+import { InvoiceItem, PaymentDetails, InvoiceOverrides } from '../../invoiceInterface';
 
 const validItems = (price = 500.00): InvoiceItem[] => [
   {

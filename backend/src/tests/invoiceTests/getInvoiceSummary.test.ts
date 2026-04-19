@@ -9,12 +9,12 @@ import {
   requestUserRegister,
   setSessionToken,
   clearSessionToken,
-} from '../httpWrappers';
+} from '../../httpWrappers';
 
 import {
   InvoiceItem,
   PaymentDetails,
-} from '../invoiceInterface';
+} from '../../invoiceInterface';
 
 const SUCCESS_CODE = 200;
 const NOT_FOUND_CODE = 404;

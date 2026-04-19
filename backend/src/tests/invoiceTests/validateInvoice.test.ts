@@ -7,7 +7,7 @@ import {
   requestUserRegister,
   setSessionToken,
   clearSessionToken,
-} from '../httpWrappers';
+} from '../../httpWrappers';
 
 function createInvoice(): string {
   const res = requestCreateInvoice(

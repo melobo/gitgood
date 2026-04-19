@@ -4,11 +4,11 @@ import {
   requestUserRegister,
   setSessionToken,
   clearSessionToken
-} from '../httpWrappers';
+} from '../../httpWrappers';
 import {
   InvoiceItem,
   PaymentDetails
-} from '../invoiceInterface';
+} from '../../invoiceInterface';
 
 const SUCCESS_CODE = 201;
 const BAD_REQUEST_CODE = 400;
