@@ -81,9 +81,8 @@ export const requestListInvoice = (filters: {
   maxAmount?: number;
   search?: string;
 } = {}) => {
-
   const { fromDate, toDate, page, limitPerPage, filter, status, buyerName, supplierName, minAmount, maxAmount, search } = filters;
-  
+
   const params = new URLSearchParams();
   if (fromDate) params.append('fromDate', fromDate);
   if (toDate) params.append('toDate', toDate);
@@ -96,7 +95,7 @@ export const requestListInvoice = (filters: {
   if (minAmount !== undefined) params.append('minAmount', String(minAmount));
   if (maxAmount !== undefined) params.append('maxAmount', String(maxAmount));
   if (search) params.append('search', search);
-  
+
   const qs = params.toString() ? `?${params.toString()}` : '';
 
   const res = request('GET', `${SERVER_URL()}/v1/invoice${qs}`, {

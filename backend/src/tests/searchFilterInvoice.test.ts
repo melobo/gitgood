@@ -1,7 +1,3 @@
-test('Boolean truthiness check', () => {
-  expect(true).toBe(true);
-});
-
 import {
   requestCreateInvoice,
   requestListInvoice,
@@ -13,7 +9,7 @@ import {
   setSessionToken,
   clearSessionToken,
 } from '../httpWrappers';
-import { InvoiceItem, PaymentDetails } from '../invoiceInterface';
+import { InvoiceItem, PaymentDetails, InvoiceOverrides } from '../invoiceInterface';
 
 const validItems = (price = 500.00): InvoiceItem[] => [
   {
@@ -34,7 +30,7 @@ const validPayment: PaymentDetails[] = [
   },
 ];
 
-function createInv(overrides: any = {}): string {
+function createInv(overrides: InvoiceOverrides = {}): string {
   const res = requestCreateInvoice(
     overrides.buyerName ?? 'Acme Corp',
     '12345678901',
@@ -67,7 +63,7 @@ describe('GET /v1/invoice — Advanced Search and Filtering', () => {
 
       const res = requestListInvoice({ status: 'draft' });
       expect(res.statusCode).toBe(200);
-      expect(res.body.invoices.every((i: any) => i.status === 'draft')).toBe(true);
+      expect(res.body.invoices.every((i: { status: string }) => i.status === 'draft')).toBe(true);
       expect(res.body.total).toBe(1);
     });
   });
@@ -136,4 +132,4 @@ describe('GET /v1/invoice — Advanced Search and Filtering', () => {
       expect(res.body.invoices).toHaveLength(1); // But only one per page
     });
   });
-}); 
+});
