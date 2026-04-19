@@ -129,6 +129,15 @@ export const requestListInvoiceV2 = (filters: {
   return { statusCode: res.statusCode, body: bodyObj };
 };
 
+export const requestGetInvoiceHistory = (invoiceId: string) => {
+  const res = request('GET', `${SERVER_URL()}/v1/invoice/${invoiceId}/history`, {
+    headers: getHeaders(),
+    timeout: TIMEOUT_MS,
+  });
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
+};
+
 export const requestGetInvoice = (invoiceId: string) => {
   const res = request('GET', `${SERVER_URL()}/v1/invoice/${invoiceId}`, {
     headers: getHeaders(),

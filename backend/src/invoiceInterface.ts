@@ -52,6 +52,12 @@ export interface Invoice {
   createdAt: string;
   updatedAt: string;
   finalisedAt?: string;
+  statusHistory: StatusHistoryEntry[];
+}
+
+export interface StatusHistoryEntry {
+  status: InvoiceStatus;
+  changedAt: string;
 }
 
 export interface CreateInvoiceInput {
