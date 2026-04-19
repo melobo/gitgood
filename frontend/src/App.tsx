@@ -1,6 +1,7 @@
 import './App.css';
 
 import { LoginPage, RegisterPage } from './User';
+import { DashboardLayout, DashboardHome } from './Dashboard';
 import { Layout } from './Layout';
 import { Authenticate } from './Auth';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
@@ -39,7 +40,9 @@ function AppRoutes(): React.ReactElement {
           </Authenticate>
         }
       >
-        <Route path='/dashboard' element={<div>Dashboard page</div>} />
+        <Route path="/dashboard" element={<DashboardLayout />}>
+          <Route index element={<DashboardHome />} />
+        </Route>
         <Route path='/invoices' element={<div>Invoice list page</div>} />
         <Route path='/invoices/create' element={<div>Create invoice page</div>} />
       </Route>

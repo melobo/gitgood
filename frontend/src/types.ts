@@ -22,6 +22,10 @@ export interface RegisterInput {
   confirm: string;
 }
 
+export interface SearchInput {
+  query: string;
+}
+
 export interface UserPageProperties {
   children: React.ReactNode;
   response: string | null;

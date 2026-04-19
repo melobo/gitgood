@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LoginInput, RegisterInput, UserPageProperties, LoginFormProperties, RegisterFormProperties, LoginPageProperties, RegisterPageProperties } from './types';
 
-export function UserLayout({ children, response }: UserPageProperties): React.ReactElement {
+function UserLayout({ children, response }: UserPageProperties): React.ReactElement {
   return (
     <div className='user-page'>
       <header>
@@ -96,7 +96,7 @@ function LoginForm({onLogin, onServerError}: LoginFormProperties): React.ReactEl
         {errors.password && (<span className='error-message'> ⚠ {errors.password} </span>)}
       </div>
 
-      <button type='submit'>
+      <button className= 'submit-button' type='submit'>
         Sign in
       </button>
       <p className='form-footer'>
@@ -119,7 +119,7 @@ export function RegisterPage({ onRegister }: RegisterPageProperties): React.Reac
   );
 }
 
-export function RegisterForm({onRegister, onServerError}: RegisterFormProperties): React.ReactElement {
+function RegisterForm({onRegister, onServerError}: RegisterFormProperties): React.ReactElement {
   const [registerInput, setRegisterInput] = useState<RegisterInput>({
     name: '',
     email: '',
@@ -228,7 +228,7 @@ export function RegisterForm({onRegister, onServerError}: RegisterFormProperties
         {errors.confirm && (<span className='error-message'> ⚠ {errors.confirm} </span>)}
       </div>
 
-      <button type='submit'>
+      <button className= 'submit-button' type='submit'>
         Create account
       </button>
       <p className='form-footer'>
