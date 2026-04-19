@@ -24,9 +24,14 @@ import { getInvoiceById } from './dynamoService';
 import { authenticate } from './auth';
 import { userRegister, userLogin, userDetails, userDetailsUpdate, userPasswordUpdate, userLogout } from './user';
 import { validateSessionToken } from './validation';
+<<<<<<< HEAD
 import { aiAutofillInvoice } from './autofillService';
 import { sendInvoice } from './sendService';
 import { InvoiceStatus } from './invoiceInterface';
+=======
+import { aiAutofillInvoice } from './autofillService';
+import { sendInvoice } from './sendService';
+>>>>>>> 2ded055d (feat: implemented the autofill and email service feature)
 
 const app = express();
 app.use(json());
