@@ -3,6 +3,7 @@ dotenv.config({ path: '.env.test', quiet: true });
 
 process.env.NODE_ENV = 'test';
 process.env.API_KEY = 'test-key';
+process.env.ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY ?? '';
 process.env.PORT = '3000';
 process.env.IP = '127.0.0.1';
 process.env.SERVER_URL = 'http://127.0.0.1:3000';
