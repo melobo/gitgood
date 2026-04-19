@@ -101,7 +101,7 @@ app.get('/v1/invoice', authenticate, requireSession, async (req: Request, res: R
 });
 
 app.get('/v2/invoice', authenticate, requireSession, async (req: Request, res: Response) => {
-  const { fromDate, toDate, page, limitPerPage, filter, status, buyerName, supplierName, minAmount, maxAmount, search } = req.query;
+  const { fromDate, toDate, page, limitPerPage, filter, status, buyerName, supplierName, minAmount, maxAmount } = req.query;
   try {
     const result = await listInvoice({
       fromDate: fromDate as string | undefined,
