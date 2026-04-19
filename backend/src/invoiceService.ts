@@ -46,9 +46,9 @@ export async function listInvoice(filters: InvoiceListFilters): Promise<{
   total: number;
   page: number;
 }> {
-  const { 
-    fromDate, toDate, page = 1, limitPerPage = 20, 
-    filter, status, buyerName, supplierName, minAmount, maxAmount, search 
+  const {
+    fromDate, toDate, page = 1, limitPerPage = 20,
+    filter, status, buyerName, supplierName, minAmount, maxAmount, search
   } = filters;
 
   if (!Number.isInteger(page) || !Number.isInteger(limitPerPage)) {
@@ -120,10 +120,10 @@ export async function listInvoice(filters: InvoiceListFilters): Promise<{
   if (filter && filter.trim()) {
     const term = filter.trim().toLowerCase();
     result = result.filter(inv =>
-      inv.buyerName?.toLowerCase().includes(term) ||
-      inv.supplierName?.toLowerCase().includes(term) ||
-      inv.buyerAbn?.toLowerCase().includes(term) ||
-      inv.supplierAbn?.toLowerCase().includes(term)
+      inv.buyerName?.toLowerCase().includes(term)
+      || inv.supplierName?.toLowerCase().includes(term)
+      || inv.buyerAbn?.toLowerCase().includes(term)
+      || inv.supplierAbn?.toLowerCase().includes(term)
     );
   }
 
@@ -131,10 +131,10 @@ export async function listInvoice(filters: InvoiceListFilters): Promise<{
   if (search && search.trim()) {
     const term = search.trim().toLowerCase();
     result = result.filter(inv =>
-      inv.buyerName?.toLowerCase().includes(term) ||
-      inv.supplierName?.toLowerCase().includes(term) ||
-      inv.buyerAbn?.toLowerCase().includes(term) ||
-      inv.supplierAbn?.toLowerCase().includes(term)
+      inv.buyerName?.toLowerCase().includes(term)
+      || inv.supplierName?.toLowerCase().includes(term)
+      || inv.buyerAbn?.toLowerCase().includes(term)
+      || inv.supplierAbn?.toLowerCase().includes(term)
     );
   }
 
