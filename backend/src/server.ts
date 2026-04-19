@@ -88,7 +88,7 @@ app.post('/v1/invoice', authenticate, requireSession, async (req: Request, res: 
 
 app.get('/v1/invoice/:invoiceId/history', authenticate, async (req: Request, res: Response) => {
   try {
-    const invoice = await getInvoiceById(req.params.invoiceId);
+    const invoice = await getInvoiceById(req.params.invoiceId as string);
     if (!invoice) {
       return res.status(404).json({ error: 'NOT_FOUND', message: 'Invoice not found' });
     }
