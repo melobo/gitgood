@@ -93,13 +93,6 @@ app.get('/v1/invoice', authenticate, requireSession, async (req: Request, res: R
       toDate: toDate as string | undefined,
       page: page !== undefined ? Number(page) : undefined,
       limitPerPage: limitPerPage !== undefined ? Number(limitPerPage) : undefined,
-      filter: filter as string | undefined,
-      status: status as string | undefined,
-      buyerName: buyerName as string | undefined,
-      supplierName: supplierName as string | undefined,
-      minAmount: minAmount !== undefined ? Number(minAmount) : undefined,
-      maxAmount: maxAmount !== undefined ? Number(maxAmount) : undefined,
-      search: search as string | undefined,
     });
     res.status(200).json(result);
   } catch (err) {

@@ -52,32 +52,31 @@ export async function listInvoice(filters: InvoiceListFilters): Promise<{
   } = filters;
 
   if (!Number.isInteger(page) || !Number.isInteger(limitPerPage)) {
-    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+    throw new ServerError(
+      'INVALID_REQUEST',
+      'Missing or Invalid Fields'
+    );
   }
 
   if (fromDate && isNaN(Date.parse(fromDate))) {
-    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+    throw new ServerError(
+      'INVALID_REQUEST',
+      'Missing or Invalid Fields'
+    );
   }
 
   if (toDate && isNaN(Date.parse(toDate))) {
-    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+    throw new ServerError(
+      'INVALID_REQUEST',
+      'Missing or Invalid Fields'
+    );
   }
 
   if (fromDate && toDate && new Date(fromDate) > new Date(toDate)) {
-    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
-  }
-
-  // validate amount ranges are actually numbers
-  if (minAmount !== undefined && isNaN(minAmount)) {
-    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
-  }
-
-  if (maxAmount !== undefined && isNaN(maxAmount)) {
-    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
-  }
-
-  if (minAmount !== undefined && maxAmount !== undefined && minAmount > maxAmount) {
-    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+    throw new ServerError(
+      'INVALID_REQUEST',
+      'Missing or Invalid Fields'
+    );
   }
 
   let result = await listAllInvoices();
@@ -143,8 +142,8 @@ export async function listInvoice(filters: InvoiceListFilters): Promise<{
   const paginated = result.slice(offset, offset + limitPerPage);
 
   return {
-    invoices: paginated.map(({ invoiceId, buyerName, status, createdAt, totalPayable }) => ({
-      invoiceId, buyerName, status, createdAt, totalPayable,
+    invoices: paginated.map(({ invoiceId, buyerName, status, createdAt }) => ({
+      invoiceId, buyerName, status, createdAt,
     })),
     total,
     page,
