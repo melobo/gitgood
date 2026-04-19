@@ -18,13 +18,15 @@ import {
   validateInvoice,
   finaliseInvoice,
   deleteInvoice,
-  getInvoiceSummary
+  getInvoiceSummary,
 } from './invoiceService';
+import { getInvoiceById } from './dynamoService';
 import { authenticate } from './auth';
 import { userRegister, userLogin, userDetails, userDetailsUpdate, userPasswordUpdate, userLogout } from './user';
 import { validateSessionToken } from './validation';
 import { aiAutofillInvoice } from './autofillService';
 import { sendInvoice } from './sendService';
+import { InvoiceStatus } from './invoiceInterface';
 
 const app = express();
 app.use(json());
@@ -95,6 +97,21 @@ app.post('/v1/invoice', authenticate, requireSession, async (req: Request, res: 
   }
 });
 
+app.get('/v1/invoice/:invoiceId/history', authenticate, async (req: Request, res: Response) => {
+  try {
+    const invoice = await getInvoiceById(req.params.invoiceId as string);
+    if (!invoice) {
+      return res.status(404).json({ error: 'NOT_FOUND', message: 'Invoice not found' });
+    }
+    res.status(200).json({
+      invoiceId: invoice.invoiceId,
+      statusHistory: invoice.statusHistory,
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
 app.get('/v1/invoice', authenticate, requireSession, async (req: Request, res: Response) => {
   const { fromDate, toDate, page, limitPerPage } = req.query;
   try {
@@ -103,6 +120,27 @@ app.get('/v1/invoice', authenticate, requireSession, async (req: Request, res: R
       toDate: toDate as string | undefined,
       page: page !== undefined ? Number(page) : undefined,
       limitPerPage: limitPerPage !== undefined ? Number(limitPerPage) : undefined,
+    });
+    res.status(200).json(result);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+app.get('/v2/invoice', authenticate, requireSession, async (req: Request, res: Response) => {
+  const { fromDate, toDate, page, limitPerPage, filter, status, buyerName, supplierName, minAmount, maxAmount } = req.query;
+  try {
+    const result = await listInvoice({
+      fromDate: fromDate as string | undefined,
+      toDate: toDate as string | undefined,
+      page: page !== undefined ? Number(page) : undefined,
+      limitPerPage: limitPerPage !== undefined ? Number(limitPerPage) : undefined,
+      filter: filter as string | undefined,
+      status: status as InvoiceStatus | undefined,
+      buyerName: buyerName as string | undefined,
+      supplierName: supplierName as string | undefined,
+      minAmount: minAmount !== undefined ? Number(minAmount) : undefined,
+      maxAmount: maxAmount !== undefined ? Number(maxAmount) : undefined,
     });
     res.status(200).json(result);
   } catch (err) {

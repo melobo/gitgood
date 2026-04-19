@@ -2,7 +2,7 @@ test('Boolean truthiness check', () => {
   expect(true).toBe(true);
 });
 
-/* import {
+import {
   requestCreateInvoice,
   requestConvertInvoice,
   requestValidateInvoice,
@@ -12,30 +12,8 @@ test('Boolean truthiness check', () => {
   requestUserRegister,
   setSessionToken,
   clearSessionToken,
+  requestGetInvoiceHistory
 } from '../httpWrappers';
-import request from 'sync-request-curl';
-import config from '../config';
-
-const SERVER_URL = () => process.env.SERVER_URL ?? 'http://127.0.0.1:3000';
-const TIMEOUT_MS = 5 * 1000;
-
-const getHeaders = () => ({
-  'x-api-key': config.apiKey,
-  'session': (global as string).__SESSION_TOKEN__,
-});
-
-const requestGetInvoiceHistory = (invoiceId: string) => {
-  const res = request(
-    'GET',
-    `${SERVER_URL()}/v1/invoice/${invoiceId}/history`,
-    {
-      headers: getHeaders(),
-      timeout: TIMEOUT_MS,
-    }
-  );
-  const bodyObj = JSON.parse(res.body.toString());
-  return { statusCode: res.statusCode, body: bodyObj };
-};
 
 function createInvoice(): string {
   const res = requestCreateInvoice(
@@ -72,7 +50,6 @@ beforeEach(() => {
   clearSessionToken();
   const res = requestUserRegister('test@example.com', 'password1', 'Test User');
   setSessionToken(res.body.session);
-  (global as string).__SESSION_TOKEN__ = res.body.session;
 });
 
 describe('GET /v1/invoice/:invoiceId/history — getInvoiceHistory', () => {
@@ -251,4 +228,4 @@ describe('GET /v1/invoice/:invoiceId/history — getInvoiceHistory', () => {
       });
     });
   });
-}); */
+});
