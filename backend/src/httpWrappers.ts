@@ -1,6 +1,6 @@
 import request from 'sync-request-curl';
 import config from './config';
-import { InvoiceItem, PaymentDetails } from './invoiceInterface';
+import { InvoiceItem, InvoiceStatus, PaymentDetails } from './invoiceInterface';
 
 const SERVER_URL = () => process.env.SERVER_URL ?? 'http://127.0.0.1:3000';
 let sessionToken: string | undefined;
@@ -98,12 +98,11 @@ export const requestListInvoiceV2 = (filters: {
   page?: number;
   limitPerPage?: number;
   filter?: string;
-  status?: string;
+  status?: InvoiceStatus;
   buyerName?: string;
   supplierName?: string;
   minAmount?: number;
   maxAmount?: number;
-  search?: string;
 } = {}) => {
   const { fromDate, toDate, page, limitPerPage, filter, status, buyerName, supplierName, minAmount, maxAmount } = filters;
 
