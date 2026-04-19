@@ -73,6 +73,30 @@ export const requestListInvoice = (filters: {
   toDate?: string;
   page?: number;
   limitPerPage?: number;
+} = {}) => {
+  const { fromDate, toDate, page, limitPerPage } = filters;
+
+  const params = new URLSearchParams();
+  if (fromDate) params.append('fromDate', fromDate);
+  if (toDate) params.append('toDate', toDate);
+  if (page !== undefined) params.append('page', String(page));
+  if (limitPerPage !== undefined) params.append('limitPerPage', String(limitPerPage));
+
+  const qs = params.toString() ? `?${params.toString()}` : '';
+
+  const res = request('GET', `${SERVER_URL()}/v1/invoice${qs}`, {
+    headers: getHeaders(),
+    timeout: TIMEOUT_MS
+  });
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
+};
+
+export const requestListInvoiceV2 = (filters: {
+  fromDate?: string;
+  toDate?: string;
+  page?: number;
+  limitPerPage?: number;
   filter?: string;
   status?: string;
   buyerName?: string;
@@ -97,7 +121,7 @@ export const requestListInvoice = (filters: {
 
   const qs = params.toString() ? `?${params.toString()}` : '';
 
-  const res = request('GET', `${SERVER_URL()}/v1/invoice${qs}`, {
+  const res = request('GET', `${SERVER_URL()}/v2/invoice${qs}`, {
     headers: getHeaders(),
     timeout: TIMEOUT_MS
   });
