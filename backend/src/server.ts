@@ -18,8 +18,9 @@ import {
   validateInvoice,
   finaliseInvoice,
   deleteInvoice,
-  getInvoiceSummary
+  getInvoiceSummary,
 } from './invoiceService';
+import { getInvoiceById } from './dynamoService';
 import { authenticate } from './auth';
 import { userRegister, userLogin, userDetails, userDetailsUpdate, userPasswordUpdate, userLogout } from './user';
 import { validateSessionToken } from './validation';
@@ -79,6 +80,21 @@ app.post('/v1/invoice', authenticate, requireSession, async (req: Request, res: 
       invoiceId: invoice.invoiceId,
       status: invoice.status,
       createdAt: invoice.createdAt,
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+app.get('/v1/invoice/:invoiceId/history', authenticate, async (req: Request, res: Response) => {
+  try {
+    const invoice = await getInvoiceById(req.params.invoiceId as string);
+    if (!invoice) {
+      return res.status(404).json({ error: 'NOT_FOUND', message: 'Invoice not found' });
+    }
+    res.status(200).json({
+      invoiceId: invoice.invoiceId,
+      statusHistory: invoice.statusHistory,
     });
   } catch (err) {
     handleError(res, err);

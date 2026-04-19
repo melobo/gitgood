@@ -41,6 +41,16 @@ import { ServerError } from './errors';
 import { v4 as uuidv4 } from 'uuid';
 import { XMLBuilder } from 'fast-xml-parser';
 
+function pushStatus(invoice: Invoice, newStatus: InvoiceStatus): void {
+  // don't push if the last status in history is already the same
+  const lastEntry = invoice.statusHistory[invoice.statusHistory.length - 1];
+
+  if (!lastEntry || lastEntry.status !== newStatus) {
+    invoice.status = newStatus;
+    invoice.statusHistory.push({ status: newStatus, changedAt: new Date().toISOString() });
+  }
+}
+
 export async function listInvoice(filters: InvoiceListFilters): Promise<{
   invoices: Pick<Invoice, 'invoiceId' | 'buyerName' | 'status' | 'createdAt'>[];
   total: number;
@@ -275,6 +285,7 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<Invoice>
     additionalNotes: additionalNotes ?? '',
     createdAt: now,
     updatedAt: now,
+    statusHistory: [{ status: 'draft', changedAt: now }],
   };
 
   await saveInvoice(invoice);
@@ -351,7 +362,7 @@ export async function validateInvoice(invoiceId: string): Promise<ValidateInvoic
   }
 
   if (errors.length === 0 && invoice.status !== 'finalised') {
-    invoice.status = 'validated';
+    pushStatus(invoice, 'validated');
   }
 
   await saveInvoice(invoice);
@@ -381,7 +392,7 @@ export async function finaliseInvoice(invoiceId: string): Promise<FinaliseInvoic
     );
   }
 
-  invoice.status = 'finalised';
+  pushStatus(invoice, 'finalised');
   invoice.finalisedAt = new Date().toLocaleString();
 
   await saveInvoice(invoice);
@@ -513,7 +524,7 @@ export async function convertInvoice(invoiceId: string): Promise<{
 
   await saveXMLToS3(invoiceId, ublXMLInvoice);
 
-  invoice.status = 'converted';
+  pushStatus(invoice, 'converted');
   invoice.ublXml = ublXMLInvoice;
   invoice.updatedAt = new Date().toISOString();
   await saveInvoice(invoice);
