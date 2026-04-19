@@ -6,7 +6,7 @@ export function UserLayout({ children, response }: UserPageProperties): React.Re
   return (
     <div className='user-page'>
       <header>
-        <h1> PayMe </h1>
+        <h1> payMe </h1>
         <h2> Your Invoice Management Portal </h2>
       </header>
       <main>
@@ -139,7 +139,7 @@ export function RegisterForm({onRegister, onServerError}: RegisterFormProperties
     }
     if (!input.email) {
       errors.email = 'Email is required.';
-    } else if (!input.email.includes("@")) {
+    } else if (!input.email.includes('@')) {
       errors.email = 'Invalid email format';
     }
     if (!input.password) {
@@ -233,7 +233,7 @@ export function RegisterForm({onRegister, onServerError}: RegisterFormProperties
       </button>
       <p className='form-footer'>
         Already have an account?{' '}
-        <Link to="/login" className='navigate'>
+        <Link to='/login' className='navigate'>
           Sign in
         </Link>
       </p>
