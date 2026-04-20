@@ -8,6 +8,7 @@
 
   --text: #000000;
   --text-muted: #1e1e1e;
+  --text-muted2: #615d58;
   --text-h: #000000;
   --text-inverse: #ffffff;
   --error: #cc0000;
@@ -15,11 +16,15 @@
   --bg: #ffffff;
   --form-bg: #f2e9dd;
   --input-bg: #ffffff;
-  --button-bg: #111111;
+  --input2-bg: #f0f0f0;
+  --container-bg: #2c2c2c;
+  --active-bg: #4d4d4d;
+  --bg-inverse: #111111;
 
   --border: #000000;
   --border-muted: #666666;
   --input-border: #d9d9d9;
+  --active-border: #ffffff;
   --code-bg: #f4f3ec;
 
   --accent: #aa3bff;
@@ -38,6 +43,7 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  --sidebar-width: 280px;
 
   @media (max-width: 1024px) {
     font-size: 16px;
@@ -55,6 +61,7 @@
     --bg: #121212;
     --form-bg: #1b1611;
     --input-bg: #23201d;
+    --container-bg: #2c2c2c;
     --button-bg: #f2e9dd;
 
     --border: #3a332c;
