@@ -20,7 +20,7 @@ import {
   deleteInvoice,
   getInvoiceSummary,
   bulkCreateInvoices,
-  batchProcessInvoices
+  batchProcessInvoices,
 } from './invoiceService';
 import { getInvoiceById } from './dynamoService';
 import { authenticate } from './auth';
