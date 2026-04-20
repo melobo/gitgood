@@ -1,39 +1,39 @@
-test('Boolean truthiness check', () => {
-  expect(true).toBe(true);
-});
-
-import request from 'sync-request-curl';
-import config from '../config';
 import {
   requestCreateInvoice,
   requestGetInvoice,
   requestClear,
   requestUserRegister,
+  requestBatchAction,
   setSessionToken,
   clearSessionToken,
-} from '../httpWrappers';
+} from '../../httpWrappers';
 
-const SERVER_URL = () => process.env.SERVER_URL ?? 'http://127.0.0.1:3000';
-const TIMEOUT_MS = 5 * 1000;
-
-const getHeaders = () => ({
-  'x-api-key': config.apiKey,
-  'session': (global as any).__SESSION_TOKEN__,
-});
-
-const requestBatchAction = (action: string, invoiceIds: string[]) => {
-  const res = request(
-    'POST',
-    `${SERVER_URL()}/v1/invoices/batch/${action}`,
-    {
-      headers: getHeaders(),
-      json: { invoiceIds },
-      timeout: TIMEOUT_MS,
-    }
-  );
-  const bodyObj = JSON.parse(res.body.toString());
-  return { statusCode: res.statusCode, body: bodyObj };
+type BatchResult = {
+  invoiceId: string;
+  success: boolean;
+  status?: string;
+  error?: string;
+  message?: string;
 };
+
+const validItems = [
+  {
+    itemName: 'item',
+    quantity: 2,
+    unitPrice: 50.0,
+    unitCode: 'ea',
+    totalPrice: 100.0,
+  },
+];
+
+const validPayment = [
+  {
+    bankName: 'ANZ',
+    accountNumber: '123456789',
+    bsbAbnNumber: '012-345',
+    paymentMethod: 'bank_transfer',
+  },
+];
 
 function createInvoice(): string {
   const res = requestCreateInvoice(
@@ -43,24 +43,9 @@ function createInvoice(): string {
     '98765432101',
     '2025-01-01',
     '2025-02-01',
-    [
-      {
-        itemName: 'item',
-        quantity: 2,
-        unitPrice: 50.0,
-        unitCode: 'ea',
-        totalPrice: 100.0,
-      },
-    ],
+    validItems,
     0.1,
-    [
-      {
-        bankName: 'ANZ',
-        accountNumber: '123456789',
-        bsbAbnNumber: '012-345',
-        paymentMethod: 'bank_transfer',
-      },
-    ]
+    validPayment
   );
   return res.body.invoiceId;
 }
@@ -70,7 +55,6 @@ beforeEach(() => {
   clearSessionToken();
   const res = requestUserRegister('test@example.com', 'password1', 'Test User');
   setSessionToken(res.body.session);
-  (global as any).__SESSION_TOKEN__ = res.body.session;
 });
 
 describe('POST /v1/invoices/batch/:action — batchInvoice', () => {
@@ -93,12 +77,11 @@ describe('POST /v1/invoices/batch/:action — batchInvoice', () => {
         const id1 = createInvoice();
         const id2 = createInvoice();
         const id3 = createInvoice();
-
         const res = requestBatchAction('convert', [id1, id2, id3]);
 
         expect(res.statusCode).toBe(200);
         expect(res.body.results).toHaveLength(3);
-        for (const result of res.body.results) {
+        for (const result of res.body.results as BatchResult[]) {
           expect(result.success).toBe(true);
           expect(result.status).toBe('converted');
         }
@@ -107,7 +90,6 @@ describe('POST /v1/invoices/batch/:action — batchInvoice', () => {
       test('each converted invoice is retrievable with status "converted"', () => {
         const id1 = createInvoice();
         const id2 = createInvoice();
-
         requestBatchAction('convert', [id1, id2]);
 
         expect(requestGetInvoice(id1).body.status).toBe('converted');
@@ -121,22 +103,21 @@ describe('POST /v1/invoices/batch/:action — batchInvoice', () => {
         expect(res.statusCode).toBe(200);
         expect(res.body.results).toHaveLength(2);
 
-        const succeeded = res.body.results.find((r: any) => r.invoiceId === invoiceId);
-        const failed = res.body.results.find((r: any) => r.invoiceId === '00000000-0000-0000-0000-000000000000');
+        const succeeded = (res.body.results as BatchResult[]).find(r => r.invoiceId === invoiceId);
+        const failed = (res.body.results as BatchResult[]).find(r => r.invoiceId === '00000000-0000-0000-0000-000000000000');
 
-        expect(succeeded.success).toBe(true);
-        expect(failed.success).toBe(false);
-        expect(failed.error).toBe('NOT_FOUND');
+        expect(succeeded?.success).toBe(true);
+        expect(failed?.success).toBe(false);
+        expect(failed?.error).toBe('NOT_FOUND');
       });
 
       test('already-converted invoice returns a failure entry with ALREADY_CONVERTED error', () => {
         const invoiceId = createInvoice();
         requestBatchAction('convert', [invoiceId]);
-
         const res = requestBatchAction('convert', [invoiceId]);
 
         expect(res.statusCode).toBe(200);
-        const result = res.body.results[0];
+        const result = res.body.results[0] as BatchResult;
         expect(result.success).toBe(false);
         expect(result.error).toBe('ALREADY_CONVERTED');
       });
@@ -154,15 +135,10 @@ describe('POST /v1/invoices/batch/:action — batchInvoice', () => {
       });
 
       test('returns 400 when invoiceIds is missing from the body', () => {
-        const res = request('POST', `${SERVER_URL()}/v1/invoices/batch/convert`, {
-          headers: getHeaders(),
-          json: {},
-          timeout: TIMEOUT_MS,
-        });
-        const body = JSON.parse(res.body.toString());
+        const res = requestBatchAction('convert', undefined as unknown as string[]);
 
         expect(res.statusCode).toBe(400);
-        expect(body).toStrictEqual({
+        expect(res.body).toStrictEqual({
           error: 'INVALID_REQUEST',
           message: expect.any(String),
         });
@@ -186,7 +162,6 @@ describe('POST /v1/invoices/batch/:action — batchInvoice', () => {
       test('returns 200 with per-invoice results for a single converted invoice', () => {
         const invoiceId = createInvoice();
         requestBatchAction('convert', [invoiceId]);
-
         const res = requestBatchAction('validate', [invoiceId]);
 
         expect(res.statusCode).toBe(200);
@@ -200,12 +175,11 @@ describe('POST /v1/invoices/batch/:action — batchInvoice', () => {
         const id1 = createInvoice();
         const id2 = createInvoice();
         requestBatchAction('convert', [id1, id2]);
-
         const res = requestBatchAction('validate', [id1, id2]);
 
         expect(res.statusCode).toBe(200);
         expect(res.body.results).toHaveLength(2);
-        for (const result of res.body.results) {
+        for (const result of res.body.results as BatchResult[]) {
           expect(result.success).toBe(true);
           expect(result.status).toBe('validated');
         }
@@ -216,7 +190,7 @@ describe('POST /v1/invoices/batch/:action — batchInvoice', () => {
         const res = requestBatchAction('validate', [invoiceId]);
 
         expect(res.statusCode).toBe(200);
-        const result = res.body.results[0];
+        const result = res.body.results[0] as BatchResult;
         expect(result.success).toBe(false);
         expect(result.error).toBe('INVALID_REQUEST');
       });
@@ -225,7 +199,7 @@ describe('POST /v1/invoices/batch/:action — batchInvoice', () => {
         const res = requestBatchAction('validate', ['00000000-0000-0000-0000-000000000000']);
 
         expect(res.statusCode).toBe(200);
-        const result = res.body.results[0];
+        const result = res.body.results[0] as BatchResult;
         expect(result.success).toBe(false);
         expect(result.error).toBe('NOT_FOUND');
       });
@@ -250,7 +224,6 @@ describe('POST /v1/invoices/batch/:action — batchInvoice', () => {
         const invoiceId = createInvoice();
         requestBatchAction('convert', [invoiceId]);
         requestBatchAction('validate', [invoiceId]);
-
         const res = requestBatchAction('finalise', [invoiceId]);
 
         expect(res.statusCode).toBe(200);
@@ -265,12 +238,11 @@ describe('POST /v1/invoices/batch/:action — batchInvoice', () => {
         const id2 = createInvoice();
         requestBatchAction('convert', [id1, id2]);
         requestBatchAction('validate', [id1, id2]);
-
         const res = requestBatchAction('finalise', [id1, id2]);
 
         expect(res.statusCode).toBe(200);
         expect(res.body.results).toHaveLength(2);
-        for (const result of res.body.results) {
+        for (const result of res.body.results as BatchResult[]) {
           expect(result.success).toBe(true);
           expect(result.status).toBe('finalised');
         }
@@ -292,7 +264,7 @@ describe('POST /v1/invoices/batch/:action — batchInvoice', () => {
         const res = requestBatchAction('finalise', [invoiceId]);
 
         expect(res.statusCode).toBe(200);
-        const result = res.body.results[0];
+        const result = res.body.results[0] as BatchResult;
         expect(result.success).toBe(false);
         expect(result.error).toBe('INVOICE_NOT_VALIDATED');
       });
@@ -300,11 +272,10 @@ describe('POST /v1/invoices/batch/:action — batchInvoice', () => {
       test('converted (not validated) invoice returns a failure entry', () => {
         const invoiceId = createInvoice();
         requestBatchAction('convert', [invoiceId]);
-
         const res = requestBatchAction('finalise', [invoiceId]);
 
         expect(res.statusCode).toBe(200);
-        const result = res.body.results[0];
+        const result = res.body.results[0] as BatchResult;
         expect(result.success).toBe(false);
         expect(result.error).toBe('INVOICE_NOT_VALIDATED');
       });
@@ -313,7 +284,7 @@ describe('POST /v1/invoices/batch/:action — batchInvoice', () => {
         const res = requestBatchAction('finalise', ['00000000-0000-0000-0000-000000000000']);
 
         expect(res.statusCode).toBe(200);
-        const result = res.body.results[0];
+        const result = res.body.results[0] as BatchResult;
         expect(result.success).toBe(false);
         expect(result.error).toBe('NOT_FOUND');
       });
@@ -342,10 +313,10 @@ describe('POST /v1/invoices/batch/:action — batchInvoice', () => {
       const finalRes = requestBatchAction('finalise', [id1, id2]);
 
       expect(finalRes.statusCode).toBe(200);
-      for (const result of finalRes.body.results) {
+      for (const result of finalRes.body.results as BatchResult[]) {
         expect(result.success).toBe(true);
         expect(result.status).toBe('finalised');
       }
     });
   });
-}); 
+});

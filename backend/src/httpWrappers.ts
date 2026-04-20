@@ -1,7 +1,6 @@
 import request from 'sync-request-curl';
 import config from './config';
 import { InvoiceItem, InvoiceStatus, PaymentDetails } from './invoiceInterface';
-
 const SERVER_URL = () => process.env.SERVER_URL ?? 'http://127.0.0.1:3000';
 const TIMEOUT_MS = 5 * 1000;
 
@@ -268,6 +267,26 @@ export const requestUserPasswordUpdate = (token: string, oldPassword: string, ne
 export const requestUserLogout = (token: string) => {
   const res = request('POST', `${SERVER_URL()}/v1/admin/auth/logout`, {
     headers: { ...getHeaders(), session: token },
+    timeout: TIMEOUT_MS,
+  });
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
+};
+
+export const requestBulkCreateInvoice = (invoices: object[]) => {
+  const res = request('POST', `${SERVER_URL()}/v1/invoice/bulk`, {
+    headers: getHeaders(),
+    json: { invoices },
+    timeout: TIMEOUT_MS,
+  });
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
+};
+
+export const requestBatchAction = (action: string, invoiceIds: string[]) => {
+  const res = request('POST', `${SERVER_URL()}/v1/invoices/batch/${action}`, {
+    headers: getHeaders(),
+    json: { invoiceIds },
     timeout: TIMEOUT_MS,
   });
   const bodyObj = JSON.parse(res.body.toString());
