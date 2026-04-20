@@ -273,3 +273,23 @@ export const requestUserLogout = (token: string) => {
   const bodyObj = JSON.parse(res.body.toString());
   return { statusCode: res.statusCode, body: bodyObj };
 };
+
+export const requestBulkCreateInvoice = (invoices: object[]) => {
+  const res = request('POST', `${SERVER_URL()}/v1/invoice/bulk`, {
+    headers: getHeaders(),
+    json: { invoices },
+    timeout: TIMEOUT_MS,
+  });
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
+};
+
+export const requestBatchAction = (action: string, invoiceIds: string[]) => {
+  const res = request('POST', `${SERVER_URL()}/v1/invoices/batch/${action}`, {
+    headers: getHeaders(),
+    json: { invoiceIds },
+    timeout: TIMEOUT_MS,
+  });
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
+};
