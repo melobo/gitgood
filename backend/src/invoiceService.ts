@@ -808,3 +808,187 @@ export async function clearInvoices(): Promise<void> {
     })
   );
 }
+
+export async function bulkCreateInvoices(
+  invoices: CreateInvoiceInput[]
+): Promise<{ invoices: Invoice[] }> {
+  if (!Array.isArray(invoices) || invoices.length === 0) {
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+  }
+
+  // validate + build every invoice in memory first (no DB writes yet).
+  // If any invoice throws, we propagate immediately and nothing has been saved.
+  const built: Invoice[] = [];
+
+  for (const input of invoices) {
+    const invoice = await buildInvoice(input); // pure validation + object construction
+    built.push(invoice);
+  }
+
+  await Promise.all(built.map(inv => saveInvoice(inv)));
+
+  return { invoices: built };
+}
+
+// Internal helper — same logic as createInvoice() but returns the Invoice object without persisting
+async function buildInvoice(input: CreateInvoiceInput): Promise<Invoice> {
+  const {
+    buyerName, buyerAbn, supplierName, supplierAbn,
+    issueDate, paymentDueDate, itemsList,
+    taxRate, paymentDetails, additionalNotes,
+  } = input;
+
+  if (!buyerName || !buyerAbn || !supplierName || !supplierAbn || !issueDate || !paymentDueDate) {
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+  }
+
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(issueDate) || !dateRegex.test(paymentDueDate)) {
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+  }
+
+  if (new Date(paymentDueDate) <= new Date(issueDate)) {
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+  }
+
+  if (taxRate === undefined || taxRate === null || isNaN(taxRate) || taxRate < 0 || taxRate > 1) {
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+  }
+
+  if (!Array.isArray(itemsList) || itemsList.length === 0) {
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+  }
+
+  for (const item of itemsList) {
+    if (!item.itemName || !item.unitCode) {
+      throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+    }
+    if (!item.quantity || item.quantity <= 0) {
+      throw new ServerError('INVALID_REQUEST', `Item quantity must be > 0; ${item.itemName}.`);
+    }
+    if (item.unitPrice === undefined || item.unitPrice < 0) {
+      throw new ServerError('INVALID_REQUEST', `Item prices cannot be negative; ${item.itemName}.`);
+    }
+    if (item.quantity * item.unitPrice !== item.totalPrice) {
+      throw new ServerError(
+        'INSUFFICIENT_DATA',
+        `Invoice totals are inconsistent. Item totals must equal quantity * unitPrice; ${item.itemName}.`
+      );
+    }
+  }
+
+  if (!Array.isArray(paymentDetails) || paymentDetails.length === 0) {
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+  }
+
+  for (const pd of paymentDetails) {
+    if (!validBanks.includes(pd.bankName)) {
+      throw new ServerError(
+        'INSUFFICIENT_DATA',
+        `Payment details on invoice include an invalid bank name; ${pd.bankName}.`
+      );
+    }
+    if (!validPaymentMethods.includes(pd.paymentMethod)) {
+      throw new ServerError(
+        'INSUFFICIENT_DATA',
+        `Payment details on invoice include an invalid payment method; ${pd.paymentMethod}.`
+      );
+    }
+    if (pd.bsbAbnNumber.charAt(3) !== '-' || pd.bsbAbnNumber.replace(/-/g, '').length < 6) {
+      throw new ServerError(
+        'INSUFFICIENT_DATA',
+        `The BSB provided (${pd.bsbAbnNumber}) is invalid. It must have 6 digits, and be in NNN-NNN format.`
+      );
+    }
+    if (!Number(pd.accountNumber)) {
+      throw new ServerError(
+        'INSUFFICIENT_DATA',
+        `The account number provided (${pd.accountNumber}) is invalid. Only numbers are allowed.`
+      );
+    }
+  }
+
+  const subtotal = itemsList.reduce(
+    (sum, item) => parseFloat((sum + item.totalPrice).toFixed(2)), 0
+  );
+  const taxAmount = parseFloat((subtotal * taxRate).toFixed(2));
+  const totalPayable = parseFloat((subtotal + taxAmount).toFixed(2));
+  const now = new Date().toISOString();
+
+  return {
+    invoiceId: uuidv4(),
+    status: 'draft',
+    buyerName,
+    buyerAbn,
+    supplierName,
+    supplierAbn,
+    issueDate,
+    paymentDueDate,
+    itemsList,
+    taxRate,
+    taxAmount,
+    totalPayable,
+    paymentDetails,
+    additionalNotes: additionalNotes ?? '',
+    createdAt: now,
+    updatedAt: now,
+
+    statusHistory: [
+      {
+        status: 'draft',
+        changedAt: now,
+      },
+    ],
+  };
+}
+
+type BatchAction = 'convert' | 'validate' | 'finalise';
+const VALID_BATCH_ACTIONS: BatchAction[] = ['convert', 'validate', 'finalise'];
+
+type BatchResult
+  = | { invoiceId: string; success: true; status: string }
+    | { invoiceId: string; success: false; error: string; message: string };
+
+export async function batchProcessInvoices(
+  invoiceIds: string[],
+  action: string
+): Promise<{ results: BatchResult[] }> {
+  if (!VALID_BATCH_ACTIONS.includes(action as BatchAction)) {
+    throw new ServerError('INVALID_REQUEST', `Unknown batch action: "${action}". Must be one of: convert, validate, finalise.`);
+  }
+
+  if (!Array.isArray(invoiceIds) || invoiceIds.length === 0) {
+    throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
+  }
+
+  const results: BatchResult[] = await Promise.all(
+    invoiceIds.map(async (invoiceId): Promise<BatchResult> => {
+      try {
+        let status: string;
+
+        if (action === 'convert') {
+          const res = await convertInvoice(invoiceId);
+          status = res.status;
+        } else if (action === 'validate') {
+          const res = await validateInvoice(invoiceId);
+          // validateInvoice returns { valid, errors, status } — treat validation
+          // errors in the invoice data as a successful operation (status reflects outcome).
+          status = res.status;
+        } else {
+          // finalise
+          const res = await finaliseInvoice(invoiceId);
+          status = res.status;
+        }
+
+        return { invoiceId, success: true, status };
+      } catch (err) {
+        if (err instanceof ServerError) {
+          return { invoiceId, success: false, error: err.error, message: err.message };
+        }
+        return { invoiceId, success: false, error: 'INTERNAL_ERROR', message: String(err) };
+      }
+    })
+  );
+
+  return { results };
+}

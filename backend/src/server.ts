@@ -19,6 +19,8 @@ import {
   finaliseInvoice,
   deleteInvoice,
   getInvoiceSummary,
+  bulkCreateInvoices,
+  batchProcessInvoices
 } from './invoiceService';
 import { getInvoiceById } from './dynamoService';
 import { authenticate } from './auth';
@@ -62,8 +64,6 @@ if (config.debug) {
 
 app.use('/v1', healthRouter);
 
-// Requires a valid session token in the 'session' header.
-// Used on all invoice endpoints so only logged-in users can access them.
 async function requireSession(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const sessionToken = req.header('session');
@@ -75,6 +75,8 @@ async function requireSession(req: Request, res: Response, next: NextFunction): 
 }
 
 // ===== INVOICE ENDPOINTS ===== //
+
+// ── Single create ────────────────────────────────────────────────────────────
 app.post('/v1/invoice/autofill', authenticate, requireSession, async (req: Request, res: Response) => {
   try {
     const result = await aiAutofillInvoice(req.body ?? {});
@@ -97,6 +99,49 @@ app.post('/v1/invoice', authenticate, requireSession, async (req: Request, res: 
   }
 });
 
+// ── Bulk create — BEFORE /v1/invoice/:invoiceId so "bulk" isn't treated as an ID
+app.post('/v1/invoice/bulk', authenticate, requireSession, async (req: Request, res: Response) => {
+  try {
+    const { invoices } = req.body;
+
+    if (!invoices) {
+      return res.status(400).json({
+        error: 'INVALID_REQUEST',
+        message: 'Missing or Invalid Fields',
+      });
+    }
+
+    const result = await bulkCreateInvoices(invoices);
+    return res.status(201).json(result);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+// ── Batch processing — /v1/invoices/batch/:action (note: "invoices" plural)
+app.post('/v1/invoices/batch/:action', authenticate, requireSession, async (req: Request, res: Response) => {
+  try {
+    const action = req.params.action as string;
+    const { invoiceIds } = req.body;
+
+    if (!invoiceIds || (Array.isArray(invoiceIds) && invoiceIds.length === 0)) {
+      return res.status(400).json({ error: 'INVALID_REQUEST', message: 'Missing or Invalid Fields' });
+    }
+
+    const VALID_ACTIONS = ['convert', 'validate', 'finalise'];
+    if (!VALID_ACTIONS.includes(action)) {
+      return res.status(400).json({ error: 'INVALID_REQUEST', message: `Unknown batch action: "${action}"` });
+    }
+
+    const result = await batchProcessInvoices(invoiceIds, action);
+    return res.status(200).json(result);
+  } catch (err) {
+    console.error('BATCH ROUTE CAUGHT:', err); // ← add this temporarily
+    handleError(res, err);
+  }
+});
+
+// ── List ─────────────────────────────────────────────────────────────────────
 app.get('/v1/invoice/:invoiceId/history', authenticate, async (req: Request, res: Response) => {
   try {
     const invoice = await getInvoiceById(req.params.invoiceId as string);
@@ -148,6 +193,7 @@ app.get('/v2/invoice', authenticate, requireSession, async (req: Request, res: R
   }
 });
 
+// ── All /:invoiceId routes below — "bulk" is already handled above ────────────
 app.get('/v1/invoice/:invoiceId', authenticate, requireSession, async (req: Request, res: Response) => {
   try {
     const result = await getInvoice(req.params.invoiceId as string);
