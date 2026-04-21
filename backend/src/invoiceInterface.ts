@@ -35,6 +35,7 @@ export interface PaymentDetails {
 
 export interface Invoice {
   invoiceId: string;
+  userId: string;
   status: InvoiceStatus;
   buyerName: string;
   buyerAbn: string;
@@ -62,6 +63,7 @@ export interface StatusHistoryEntry {
 }
 
 export interface CreateInvoiceInput {
+  userId: string;
   buyerName: string;
   buyerAbn: string;
   buyerEmail: string;

@@ -151,7 +151,7 @@ export async function listInvoice(filters: InvoiceListFilters): Promise<{
   };
 }
 
-export async function createInvoice(input: CreateInvoiceInput): Promise<Invoice> {
+export async function createInvoice(userId: string, input: CreateInvoiceInput): Promise<Invoice> {
   const {
     buyerName, buyerAbn, buyerEmail, supplierName, supplierAbn,
     issueDate, paymentDueDate, itemsList,
@@ -271,6 +271,7 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<Invoice>
 
   const invoice: Invoice = {
     invoiceId: uuidv4(),
+    userId,
     status: 'draft',
     buyerName,
     buyerAbn,
@@ -816,7 +817,7 @@ export async function clearInvoices(): Promise<void> {
 }
 
 export async function bulkCreateInvoices(
-  invoices: CreateInvoiceInput[]
+  userId: string, invoices: CreateInvoiceInput[]
 ): Promise<{ invoices: Invoice[] }> {
   if (!Array.isArray(invoices) || invoices.length === 0) {
     throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
@@ -827,7 +828,7 @@ export async function bulkCreateInvoices(
   const built: Invoice[] = [];
 
   for (const input of invoices) {
-    const invoice = await buildInvoice(input); // pure validation + object construction
+    const invoice = await buildInvoice(userId, input); // pure validation + object construction
     built.push(invoice);
   }
 
@@ -837,7 +838,7 @@ export async function bulkCreateInvoices(
 }
 
 // Internal helper — same logic as createInvoice() but returns the Invoice object without persisting
-async function buildInvoice(input: CreateInvoiceInput): Promise<Invoice> {
+async function buildInvoice(userId: string, input: CreateInvoiceInput): Promise<Invoice> {
   const {
     buyerName, buyerAbn, buyerEmail, supplierName, supplierAbn,
     issueDate, paymentDueDate, itemsList,
@@ -926,6 +927,7 @@ async function buildInvoice(input: CreateInvoiceInput): Promise<Invoice> {
 
   return {
     invoiceId: uuidv4(),
+    userId,
     status: 'draft',
     buyerName,
     buyerAbn, 
