@@ -39,6 +39,7 @@ export interface Invoice {
   status: InvoiceStatus;
   buyerName: string;
   buyerAbn: string;
+  buyerEmail: string;
   supplierName: string;
   supplierAbn: string;
   issueDate: string;
@@ -65,6 +66,7 @@ export interface CreateInvoiceInput {
   userId: string;
   buyerName: string;
   buyerAbn: string;
+  buyerEmail: string;
   supplierName: string;
   supplierAbn: string;
   issueDate: string;
