@@ -11,11 +11,10 @@
   --text-muted2: #615d58;
   --text-h: #000000;
   --text-inverse: #ffffff;
-  --container-text: #ffffff;
   --error: #cc0000;
 
   --bg: #ffffff;
-  --bg2: #f2e9dd;
+  --form-bg: #f2e9dd;
   --input-bg: #ffffff;
   --input2-bg: #f0f0f0;
   --container-bg: #2c2c2c;
@@ -55,24 +54,19 @@
   :root {
     --text: #f5f1eb;
     --text-muted: #b8b1a8;
-    --text-muted2: #9a928a;
     --text-h: #ffffff;
     --text-inverse: #111111;
-    --container-text: #ffffff;
-    --error: #e55555;
+    --error: #a61b1b;
 
     --bg: #121212;
-    --bg2: #241c17;
+    --form-bg: #1b1611;
     --input-bg: #23201d;
-    --input2-bg: #302c27;
-    --container-bg: #454545;
-    --active-bg: #403932;
-    --bg-inverse: #f5f1eb;
+    --container-bg: #2c2c2c;
+    --button-bg: #f2e9dd;
 
     --border: #3a332c;
     --border-muted: #5a5048;
     --input-border: #4a4038;
-    --active-border: #ffffff;
     --code-bg: #1f2028;
 
     --accent: #c084fc;

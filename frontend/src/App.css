@@ -20,7 +20,7 @@
 }
 
 .user-form {
-  background: var(--bg2);
+  background: var(--form-bg);
   border: 1px solid var(--border);
   border-radius: 30px;
   width: min(600px, 85vw);
@@ -331,7 +331,7 @@ input {
   padding: 0 12px;
   gap: 8px;
   text-decoration: none;
-  color: var(--container-text);
+  color: var(--text-inverse);
   background-color: var(--container-bg);
   border-radius: 8px;
   transition: opacity 0.3s ease-in-out, background-color 0.3s ease-in-out;
@@ -353,7 +353,7 @@ input {
   padding: 40px 20px 20px;
   display: grid;
   grid-template-rows: auto;
-  background-color: var(--bg2);
+  background-color: var(--form-bg);
   gap: 10px;
   align-content: start;
 }
