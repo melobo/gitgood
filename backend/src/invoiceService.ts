@@ -842,6 +842,9 @@ async function buildInvoice(input: CreateInvoiceInput): Promise<Invoice> {
     throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
   }
 
+  validateABN(buyerAbn, 'BUYER');
+  validateABN(supplierAbn, 'SUPPLIER');
+
   const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
   if (!dateRegex.test(issueDate) || !dateRegex.test(paymentDueDate)) {
     throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
