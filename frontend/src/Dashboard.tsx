@@ -25,23 +25,17 @@ export function DashboardHome(): React.ReactElement {
     finalised: 0,
   });
 
-  async function loadStats(): Promise<void> {
+  useEffect(() => {
     const session = localStorage.getItem('session');
     if (!session) {
       navigate('/login');
       return;
     }
-    try {
-      const res = await requestDashboardStats();
-      setStats(res.body);
-    } catch (err) {
-      console.error(err);
-    }
-  }
 
-  useEffect(() => {
-    loadStats();
-  }, []);
+    requestDashboardStats()
+      .then(setStats)
+      .catch(console.error);
+  }, [navigate]);
 
   return (
     <div className='dashboard-stats'>
