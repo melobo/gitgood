@@ -1,8 +1,8 @@
 test('Boolean truthiness check', () => {
-    expect(true).toBe(true);
+  expect(true).toBe(true);
 });
 
-/*import request from 'sync-request-curl';
+/* import request from 'sync-request-curl';
 import config from '../../config';
 import {
   requestCreateInvoice,
@@ -347,4 +347,4 @@ describe('GET /v1/invoice/stats — getDashboardStats', () => {
       expect(res.body).toStrictEqual({ total: 1, draft: 0, converted: 0, validated: 0, finalised: 1 });
     });
   });
-});*/
+}); */
