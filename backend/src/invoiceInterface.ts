@@ -131,6 +131,14 @@ export interface DeleteInvoiceResponse {
   message: string;
 }
 
+export interface InvoiceStatsResponse {
+  total: number;
+  draft: number;
+  converted: number;
+  validated: number;
+  finalised: number;
+}
+
 export interface ErrorObject {
   error: string;
   message: string;

@@ -1,11 +1,5 @@
-test('Boolean truthiness check', () => {
-  expect(true).toBe(true);
-});
-
-/* import request from 'sync-request-curl';
-import config from '../../config';
 import {
-  requestCreateInvoice,
+  requestCreateInvoiceV2,
   requestConvertInvoice,
   requestValidateInvoice,
   requestFinaliseInvoice,
@@ -14,29 +8,13 @@ import {
   requestUserRegister,
   setSessionToken,
   clearSessionToken,
+  requestDashboardStats,
 } from '../../httpWrappers';
-
-const SERVER_URL = () => process.env.SERVER_URL ?? 'http://127.0.0.1:3000';
-const TIMEOUT_MS = 5 * 1000;
-
-const getHeaders = () => ({
-  'x-api-key': config.apiKey,
-  'session': (global as any).__SESSION_TOKEN__,
-});
-
-const requestDashboardStats = () => {
-  const res = request('GET', x`${SERVER_URL()}/v1/invoice/stats`, {
-    headers: getHeaders(),
-    timeout: TIMEOUT_MS,
-  });
-  const bodyObj = JSON.parse(res.body.toString());
-  return { statusCode: res.statusCode, body: bodyObj };
-};
 
 // ── Shared helper ─────────────────────────────────────────────────────────────
 
 function createInvoice(): string {
-  const res = requestCreateInvoice(
+  const res = requestCreateInvoiceV2(
     'Test Buyer',
     '12345678901',
     'Test Supplier',
@@ -72,7 +50,6 @@ beforeEach(() => {
   clearSessionToken();
   const res = requestUserRegister('test@example.com', 'password1', 'Test User');
   setSessionToken(res.body.session);
-  (global as any).__SESSION_TOKEN__ = res.body.session;
 });
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -347,4 +324,4 @@ describe('GET /v1/invoice/stats — getDashboardStats', () => {
       expect(res.body).toStrictEqual({ total: 1, draft: 0, converted: 0, validated: 0, finalised: 1 });
     });
   });
-}); */
+});

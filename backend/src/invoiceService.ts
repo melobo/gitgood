@@ -10,7 +10,8 @@ import {
   validBanks,
   validPaymentMethods,
   CreateInvoiceInput,
-  InvoiceStatus
+  InvoiceStatus,
+  InvoiceStatsResponse
 } from './invoiceInterface';
 
 import {
@@ -27,7 +28,8 @@ import {
   getInvoiceById,
   listAllInvoices,
   deleteInvoiceById,
-  clearStore as clearDynamo
+  clearStore as clearDynamo,
+  listInvoicesByUser
 } from './dynamoService';
 
 import {
@@ -996,4 +998,16 @@ export async function batchProcessInvoices(
   );
 
   return { results };
+}
+
+export async function getInvoiceStats(userId: string): Promise<InvoiceStatsResponse> {
+  const invoices = await listInvoicesByUser(userId);
+
+  return {
+    total: invoices.length,
+    draft: invoices.filter(i => i.status === 'draft').length,
+    converted: invoices.filter(i => i.status === 'converted').length,
+    validated: invoices.filter(i => i.status === 'validated').length,
+    finalised: invoices.filter(i => i.status === 'finalised').length,
+  };
 }
