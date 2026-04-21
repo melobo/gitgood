@@ -1,8 +1,9 @@
 // import { UserInfo, Session } from '../../backend/src/invoiceInterface';
 
-export type { InvoiceStatus, UserInfo, Session, Invoice, InvoiceItem, PaymentDetails, CreateInvoiceInput, UpdateInvoiceInput, InvoiceListFilters } from '../../backend/src/invoiceInterface';
+export type { UserInfo, Session, Invoice, InvoiceItem, PaymentDetails, CreateInvoiceInput, UpdateInvoiceInput, InvoiceListFilters } from '../../backend/src/invoiceInterface';
 
 export type UserMode = 'login' | 'register';
+export type InvoiceStatus = 'draft' | 'converted' | 'validated' | 'finalised';
 
 export interface FormFieldProperties {
   label: string;
@@ -51,3 +52,9 @@ export interface AuthProperties {
   children: React.ReactNode;
 }
 
+export interface ActivityTimelineItem {
+  invoiceId: string,
+  status: InvoiceStatus,
+  changedAt: string,
+  buyerName: string,
+}

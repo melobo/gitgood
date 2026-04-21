@@ -27,6 +27,10 @@
   --input-border: #d9d9d9;
   --active-border: #ffffff;
   --code-bg: #f4f3ec;
+  --data1: #2a5b8c;
+  --data2: #8c5b2a;
+  --data3: #8c8c2a;
+  --data4: #8c2a5b;
 
   --accent: #aa3bff;
   --accent-bg: rgba(170, 59, 255, 0.1);
@@ -74,6 +78,10 @@
     --input-border: #4a4038;
     --active-border: #ffffff;
     --code-bg: #1f2028;
+    --data1: #82add8;
+    --data2: #d8ad82;
+    --data3: #d8d882;
+    --data4: #d882ad;
 
     --accent: #c084fc;
     --accent-bg: rgba(192, 132, 252, 0.15);

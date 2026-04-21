@@ -54,7 +54,7 @@ function pushStatus(invoice: Invoice, newStatus: InvoiceStatus): void {
   }
 }
 
-export async function listInvoice(filters: InvoiceListFilters): Promise<{
+export async function listInvoice(userId: string, filters: InvoiceListFilters): Promise<{
   invoices: Pick<Invoice, 'invoiceId' | 'buyerName' | 'status' | 'createdAt'>[];
   total: number;
   page: number;
@@ -93,7 +93,7 @@ export async function listInvoice(filters: InvoiceListFilters): Promise<{
     throw new ServerError('INVALID_REQUEST', 'Missing or Invalid Fields');
   }
 
-  let result = await listAllInvoices();
+  let result = await listInvoicesByUser(userId);
 
   if (fromDate) {
     result = result.filter(inv => new Date(inv.createdAt) >= new Date(fromDate));
@@ -1005,6 +1005,11 @@ export async function batchProcessInvoices(
   );
 
   return { results };
+}
+
+export async function getUserInvoices(userId: string): Promise<Invoice[]> {
+  const invoices = await listInvoicesByUser(userId);
+  return invoices;
 }
 
 export async function getInvoiceStats(userId: string): Promise<InvoiceStatsResponse> {

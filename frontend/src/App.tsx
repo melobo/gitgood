@@ -7,6 +7,7 @@ import { Authenticate } from './Auth';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { LoginInput, RegisterInput } from './types';
 import { requestUserRegister, requestUserLogin } from './httpWrappers';
+import { InvoiceLayout, InvoicesList } from './Invoices';
 
 function AppRoutes(): React.ReactElement {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ function AppRoutes(): React.ReactElement {
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<DashboardHome />} />
         </Route>
-        <Route path='/invoices' element={<div>Invoice list page</div>} />
+        <Route path='/invoices' element={<div>Invoices list page</div>} />
         <Route path='/invoices/create' element={<div>Create invoice page</div>} />
       </Route>
 

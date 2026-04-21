@@ -1,5 +1,4 @@
 import {
-  requestCreateInvoice,
   requestListInvoiceV2,
   requestConvertInvoice,
   requestValidateInvoice,
@@ -8,6 +7,7 @@ import {
   requestUserRegister,
   setSessionToken,
   clearSessionToken,
+  requestCreateInvoiceV2,
 } from '../../httpWrappers';
 import { InvoiceItem, PaymentDetails, InvoiceOverrides } from '../../invoiceInterface';
 
@@ -31,7 +31,7 @@ const validPayment: PaymentDetails[] = [
 ];
 
 function createInv(overrides: InvoiceOverrides = {}): string {
-  const res = requestCreateInvoice(
+  const res = requestCreateInvoiceV2(
     overrides.buyerName ?? 'Acme Corp',
     '12345678901',
     overrides.supplierName ?? 'GitGood Pty Ltd',

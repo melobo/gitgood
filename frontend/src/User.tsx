@@ -1,3 +1,4 @@
+import logo from './assets/logo.png';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LoginInput, RegisterInput, UserPageProperties, LoginFormProperties, RegisterFormProperties, LoginPageProperties, RegisterPageProperties } from './types';
@@ -6,6 +7,7 @@ function UserLayout({ children, response }: UserPageProperties): React.ReactElem
   return (
     <div className='user-page'>
       <header>
+        <img src={logo} alt='Site Logo' width='80' height='80'></img>
         <h1> payMe </h1>
         <h2> Your Invoice Management Portal </h2>
       </header>
