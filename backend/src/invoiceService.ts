@@ -930,7 +930,7 @@ async function buildInvoice(userId: string, input: CreateInvoiceInput): Promise<
     userId,
     status: 'draft',
     buyerName,
-    buyerAbn, 
+    buyerAbn,
     buyerEmail,
     supplierName,
     supplierAbn,
