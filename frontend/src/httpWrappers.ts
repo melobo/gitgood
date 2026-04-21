@@ -64,3 +64,19 @@ export async function requestListInvoice(fromDate?: string, toDate?: string, pag
   }
   return data;
 }
+
+export async function requestDashboardStats() {
+  const res = await fetch(`${BASE_URL}v1/invoices/stats`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'session': localStorage.getItem('session') ?? '',
+      'x-api-key': import.meta.env.VITE_API_KEY
+     },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.message ?? 'Stats retrieval failed.');
+  }
+  return data;
+};
