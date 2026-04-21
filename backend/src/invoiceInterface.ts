@@ -38,6 +38,7 @@ export interface Invoice {
   status: InvoiceStatus;
   buyerName: string;
   buyerAbn: string;
+  buyerEmail: string;
   supplierName: string;
   supplierAbn: string;
   issueDate: string;
@@ -63,6 +64,7 @@ export interface StatusHistoryEntry {
 export interface CreateInvoiceInput {
   buyerName: string;
   buyerAbn: string;
+  buyerEmail: string;
   supplierName: string;
   supplierAbn: string;
   issueDate: string;

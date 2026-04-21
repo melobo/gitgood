@@ -37,6 +37,7 @@ import {
   clearStore as clearS3
 } from './s3Service';
 
+import { sendInvoice } from './sendService';
 import { ServerError } from './errors';
 import { v4 as uuidv4 } from 'uuid';
 import { XMLBuilder } from 'fast-xml-parser';
@@ -152,7 +153,7 @@ export async function listInvoice(filters: InvoiceListFilters): Promise<{
 
 export async function createInvoice(input: CreateInvoiceInput): Promise<Invoice> {
   const {
-    buyerName, buyerAbn, supplierName, supplierAbn,
+    buyerName, buyerAbn, buyerEmail, supplierName, supplierAbn,
     issueDate, paymentDueDate, itemsList,
     taxRate, paymentDetails, additionalNotes,
   } = input;
@@ -273,6 +274,7 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<Invoice>
     status: 'draft',
     buyerName,
     buyerAbn,
+    buyerEmail,
     supplierName,
     supplierAbn,
     issueDate,
@@ -396,6 +398,10 @@ export async function finaliseInvoice(invoiceId: string): Promise<FinaliseInvoic
   invoice.finalisedAt = new Date().toLocaleString();
 
   await saveInvoice(invoice);
+
+  if (process.env.NODE_ENV !== 'test') {
+    await sendInvoice(invoiceId, invoice.buyerEmail);
+  }
 
   return {
     invoiceId,
@@ -833,7 +839,7 @@ export async function bulkCreateInvoices(
 // Internal helper — same logic as createInvoice() but returns the Invoice object without persisting
 async function buildInvoice(input: CreateInvoiceInput): Promise<Invoice> {
   const {
-    buyerName, buyerAbn, supplierName, supplierAbn,
+    buyerName, buyerAbn, buyerEmail, supplierName, supplierAbn,
     issueDate, paymentDueDate, itemsList,
     taxRate, paymentDetails, additionalNotes,
   } = input;
@@ -922,7 +928,8 @@ async function buildInvoice(input: CreateInvoiceInput): Promise<Invoice> {
     invoiceId: uuidv4(),
     status: 'draft',
     buyerName,
-    buyerAbn,
+    buyerAbn, 
+    buyerEmail,
     supplierName,
     supplierAbn,
     issueDate,
