@@ -88,7 +88,7 @@ app.post('/v1/invoice/autofill', authenticate, requireSession, async (req: Reque
 
 app.post('/v1/invoice', authenticate, requireSession, async (req: Request, res: Response) => {
   try {
-    const invoice = await createInvoice(req.body);
+    const invoice = await createInvoice('', req.body);
     res.status(201).json({
       invoiceId: invoice.invoiceId,
       status: invoice.status,
@@ -111,7 +111,7 @@ app.post('/v1/invoice/bulk', authenticate, requireSession, async (req: Request, 
       });
     }
 
-    const result = await bulkCreateInvoices(invoices);
+    const result = await bulkCreateInvoices('', invoices);
     return res.status(201).json(result);
   } catch (err) {
     handleError(res, err);
@@ -327,6 +327,38 @@ app.get('/v1/invoice/:invoiceId/summary', authenticate, requireSession, async (r
   try {
     const result = await getInvoiceSummary(req.params.invoiceId as string);
     res.status(200).json(result);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+app.post('/v2/invoice', authenticate, requireSession, async (req: Request, res: Response) => {
+  try {
+    const sessionToken = req.header('session');
+    const validated = await validateSessionToken(sessionToken);
+    const invoice = await createInvoice(validated.userId, req.body);
+    res.status(201).json({
+      invoiceId: invoice.invoiceId,
+      status: invoice.status,
+      createdAt: invoice.createdAt,
+    });
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+app.post('/v2/invoice/bulk', authenticate, requireSession, async (req: Request, res: Response) => {
+  try {
+    const sessionToken = req.header('session');
+    const validated = await validateSessionToken(sessionToken);
+    const { invoices } = req.body;
+
+    if (!invoices) {
+      return res.status(400).json({ error: 'INVALID_REQUEST', message: 'Missing or Invalid Fields' });
+    }
+
+    const result = await bulkCreateInvoices(validated.userId, invoices);
+    return res.status(201).json(result);
   } catch (err) {
     handleError(res, err);
   }
