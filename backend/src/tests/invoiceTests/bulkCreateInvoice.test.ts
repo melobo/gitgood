@@ -2,7 +2,6 @@ test('Boolean truthiness check', () => {
   expect(true).toBe(true);
 });
 
-
 import request from 'sync-request-curl';
 import config from '../../config';
 import {
@@ -18,7 +17,7 @@ const SERVER_URL = () => process.env.SERVER_URL ?? 'http://127.0.0.1:3000';
 
 const getHeaders = () => ({
   'x-api-key': config.apiKey,
-  'session': (global as any).__SESSION_TOKEN__,
+  'session': (global as unknown as Record<string, string>).__SESSION_TOKEN__,
 });
 
 const requestBulkCreateInvoice = (invoices: object[]) => {
@@ -68,7 +67,7 @@ beforeEach(() => {
   clearSessionToken();
   const res = requestUserRegister('test@example.com', 'password1', 'Test User');
   setSessionToken(res.body.session);
-  (global as any).__SESSION_TOKEN__ = res.body.session;
+  (global as unknown as Record<string, string>).__SESSION_TOKEN__ = res.body.session;
 });
 
 describe('POST /v1/invoice/bulk — bulkCreateInvoice', () => {
@@ -314,4 +313,4 @@ describe('POST /v1/invoice/bulk — bulkCreateInvoice', () => {
       expect(list.total).toBe(0);
     });
   });
-}); 
+});
