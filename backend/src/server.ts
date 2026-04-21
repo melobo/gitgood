@@ -31,8 +31,8 @@ import { sendInvoice } from './sendService';
 import { InvoiceStatus } from './invoiceInterface';
 
 const app = express();
-app.use(json());
 app.use(cors());
+app.use(json());
 app.use(morgan('dev'));
 
 if (config.showDocs) {

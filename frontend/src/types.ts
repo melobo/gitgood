@@ -50,3 +50,4 @@ export interface RegisterFormProperties extends RegisterPageProperties {
 export interface AuthProperties {
   children: React.ReactNode;
 }
+

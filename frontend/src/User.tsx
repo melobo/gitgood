@@ -62,8 +62,12 @@ function LoginForm({onLogin, onServerError}: LoginFormProperties): React.ReactEl
 
     try {
       await onLogin(loginInput);
-    } catch (err: any) {
-      onServerError(err.message ?? 'Login failed.');
+    } catch (err) {
+      if (err instanceof Error) {
+        onServerError(err.message ?? 'Login failed.');
+      } else {
+        onServerError('Login failed.');
+      }
     }
   }
 
@@ -169,8 +173,12 @@ function RegisterForm({onRegister, onServerError}: RegisterFormProperties): Reac
 
     try {
       await onRegister(registerInput);
-    } catch (err: any) {
-      onServerError(err.message ?? 'Registration failed.');
+    } catch (err) {
+      if (err instanceof Error) {
+        onServerError(err.message ?? 'Registration failed.');
+      } else {
+        onServerError('Registration failed.');
+      }
     }
   }
 

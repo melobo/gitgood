@@ -1,37 +1,42 @@
 import { InvoiceStatus } from "./types";
 
-const SERVER_URL = import.meta.env.VITE_SERVER_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export async function requestUserRegister(email: string, password: string, name: string): Promise<string> {
-  const res = await fetch(`${SERVER_URL}/v1/admin/auth/register`, {
+  console.log(import.meta.env.VITE_API_BASE_URL)
+  const res = await fetch(`${BASE_URL}/v1/admin/auth/register`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': import.meta.env.VITE_API_KEY
+     },
     body: JSON.stringify({ email, password, name }),
   });
+  const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
     throw new Error(data.message ?? 'Registration failed.');
   }
-  const data = await res.json();
   return data.session;
 }
 
 export async function requestUserLogin(email: string, password: string): Promise<string> {
-  const res = await fetch(`${SERVER_URL}/v1/admin/auth/login`, {
+  const res = await fetch(`${BASE_URL}/v1/admin/auth/login`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': import.meta.env.VITE_API_KEY
+    },
     body: JSON.stringify({ email, password }),
   });
+  const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
     throw new Error(data.message ?? 'Invalid credentials.');
   }
-  const data = await res.json();
   return data.session;
 }
 
 export async function requestListInvoice(fromDate?: string, toDate?: string, page?: number, limitPerPage?: number,
-  filter?: string, status?: InvoiceStatus, buyerName?: string, supplierName?: string, minAmount?: number, maxAmount?: number): Promise<void> {
+  filter?: string, status?: InvoiceStatus, buyerName?: string, supplierName?: string, minAmount?: number, maxAmount?: number) {
   const params = new URLSearchParams();
   if (fromDate) params.append('fromDate', fromDate);
   if (toDate) params.append('toDate', toDate);
@@ -45,13 +50,17 @@ export async function requestListInvoice(fromDate?: string, toDate?: string, pag
   if (maxAmount !== undefined) params.append('maxAmount', String(maxAmount));
 
   const qs = params.toString() ? `?${params.toString()}` : '';
-  const res = await fetch(`${SERVER_URL}/v2/invoice${qs}`, {
+  const res = await fetch(`${BASE_URL}/v2/invoice${qs}`, {
     method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'session': localStorage.getItem('session') ?? '',
+      'x-api-key': import.meta.env.VITE_API_KEY
+     },
   });
+  const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
     throw new Error(data.message ?? 'Failed to fetch invoices.');
   }
-  return await res.json();
+  return data;
 }
