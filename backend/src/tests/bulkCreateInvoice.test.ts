@@ -3,15 +3,15 @@ test('Boolean truthiness check', () => {
 });
 
 import request from 'sync-request-curl';
-import config from '../../config';
+import config from '../config';
 import {
   requestClear,
   requestUserRegister,
   requestGetInvoice,
   setSessionToken,
   clearSessionToken,
-} from '../../httpWrappers';
-import { InvoiceItem, PaymentDetails } from '../../invoiceInterface';
+} from '../httpWrappers';
+import { InvoiceItem, PaymentDetails } from '../invoiceInterface';
 
 const SERVER_URL = () => process.env.SERVER_URL ?? 'http://127.0.0.1:3000';
 
