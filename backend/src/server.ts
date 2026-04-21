@@ -21,6 +21,7 @@ import {
   getInvoiceSummary,
   bulkCreateInvoices,
   batchProcessInvoices,
+  getInvoiceStats,
 } from './invoiceService';
 import { getInvoiceById } from './dynamoService';
 import { authenticate } from './auth';
@@ -326,6 +327,17 @@ app.get('/v1/invoice/:invoiceId/download', authenticate, requireSession, async (
 app.get('/v1/invoice/:invoiceId/summary', authenticate, requireSession, async (req: Request, res: Response) => {
   try {
     const result = await getInvoiceSummary(req.params.invoiceId as string);
+    res.status(200).json(result);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
+app.get('/v1/invoices/stats', authenticate, requireSession, async (req: Request, res: Response) => {
+  try {
+    const sessionToken = req.header('session');
+    const validated = await validateSessionToken(sessionToken);
+    const result = await getInvoiceStats(validated.userId);
     res.status(200).json(result);
   } catch (err) {
     handleError(res, err);

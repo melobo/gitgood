@@ -2,7 +2,8 @@ import {
   PutCommand,
   GetCommand,
   DeleteCommand,
-  ScanCommand
+  ScanCommand,
+  QueryCommand
 } from '@aws-sdk/lib-dynamodb';
 import { dynamoDB, DYNAMO_TABLE, USER_TABLE, SESSION_TABLE } from './awsConfig';
 import { Invoice, User, Session } from './invoiceInterface';
@@ -44,6 +45,23 @@ export async function listAllInvoices(): Promise<Invoice[]> {
 
   const response = await dynamoDB.send(new ScanCommand({
     TableName: DYNAMO_TABLE
+  }));
+
+  return response.Items as Invoice[] || [];
+}
+
+export async function listInvoicesByUser(userId: string): Promise<Invoice[]> {
+  if (isTest) {
+    return Array.from(invoiceStore.values()).filter(inv => inv.userId === userId);
+  }
+
+  const response = await dynamoDB.send(new QueryCommand({
+    TableName: DYNAMO_TABLE,
+    IndexName: 'userId',
+    KeyConditionExpression: 'userId = :uid',
+    ExpressionAttributeValues: {
+      ':uid': userId
+    }
   }));
 
   return response.Items as Invoice[] || [];

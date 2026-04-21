@@ -69,6 +69,38 @@ export const requestCreateInvoice = (
   return { statusCode: res.statusCode, body: bodyObj };
 };
 
+export const requestCreateInvoiceV2 = (
+  buyerName: string,
+  buyerAbn: string,
+  supplierName: string,
+  supplierAbn: string,
+  issueDate: string,
+  paymentDueDate: string,
+  itemsList: InvoiceItem[],
+  taxRate: number,
+  paymentDetails: PaymentDetails[],
+  additionalNotes?: string
+) => {
+  const res = request('POST', `${SERVER_URL()}/v2/invoice`, {
+    headers: getHeaders(),
+    json: {
+      buyerName,
+      buyerAbn,
+      supplierName,
+      supplierAbn,
+      issueDate,
+      paymentDueDate,
+      itemsList,
+      taxRate,
+      paymentDetails,
+      ...(additionalNotes && { additionalNotes }),
+    },
+    timeout: TIMEOUT_MS,
+  });
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
+};
+
 export const requestListInvoice = (filters: {
   fromDate?: string;
   toDate?: string;
@@ -288,6 +320,15 @@ export const requestBatchAction = (action: string, invoiceIds: string[]) => {
   const res = request('POST', `${SERVER_URL()}/v1/invoices/batch/${action}`, {
     headers: getHeaders(),
     json: { invoiceIds },
+    timeout: TIMEOUT_MS,
+  });
+  const bodyObj = JSON.parse(res.body.toString());
+  return { statusCode: res.statusCode, body: bodyObj };
+};
+
+export const requestDashboardStats = () => {
+  const res = request('GET', `${SERVER_URL()}/v1/invoices/stats`, {
+    headers: getHeaders(),
     timeout: TIMEOUT_MS,
   });
   const bodyObj = JSON.parse(res.body.toString());
