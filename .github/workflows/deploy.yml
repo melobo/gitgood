@@ -18,6 +18,6 @@ jobs:
           script: |
             cd ~/gitgood
             git pull origin main
-            # restart your app, e.g.:
-            # pm2 restart all
-            # sudo systemctl restart myapp
+            npm install
+            npm run build
+            pm2 restart gitgood-api
