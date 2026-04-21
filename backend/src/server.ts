@@ -159,9 +159,11 @@ app.get('/v1/invoice/:invoiceId/history', authenticate, async (req: Request, res
 });
 
 app.get('/v1/invoice', authenticate, requireSession, async (req: Request, res: Response) => {
+  const sessionToken = req.header('session');
+  const validated = await validateSessionToken(sessionToken);
   const { fromDate, toDate, page, limitPerPage } = req.query;
   try {
-    const result = await listInvoice({
+    const result = await listInvoice(validated.userId, {
       fromDate: fromDate as string | undefined,
       toDate: toDate as string | undefined,
       page: page !== undefined ? Number(page) : undefined,
@@ -174,9 +176,11 @@ app.get('/v1/invoice', authenticate, requireSession, async (req: Request, res: R
 });
 
 app.get('/v2/invoice', authenticate, requireSession, async (req: Request, res: Response) => {
+  const sessionToken = req.header('session');
+  const validated = await validateSessionToken(sessionToken);
   const { fromDate, toDate, page, limitPerPage, filter, status, buyerName, supplierName, minAmount, maxAmount } = req.query;
   try {
-    const result = await listInvoice({
+    const result = await listInvoice(validated.userId, {
       fromDate: fromDate as string | undefined,
       toDate: toDate as string | undefined,
       page: page !== undefined ? Number(page) : undefined,
