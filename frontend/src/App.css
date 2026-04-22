@@ -657,3 +657,75 @@ input {
 .normal-button:hover {
   opacity: 0.6;
 }
+
+.invoices-page {
+  margin-left: var(--sidebar-width);
+  min-height: 100vh;
+  padding: 40px 20px 20px;
+  display: grid;
+  grid-template-rows: auto;
+  background-color: var(--bg2);
+  gap: 10px;
+  align-content: start;
+}
+
+.invoices-page header {
+  margin-left: 10px;
+}
+
+.invoices-page header h1 {
+  font-size: 30px;
+  text-align: left;
+  margin: 0 0 6px 0;
+}
+
+.invoices-page header p {
+  text-align: left;
+  margin: 0 0 0 0;
+  color: var(--text-muted2);
+}
+
+.table-card {
+  background: var(--bg);
+  border: 1px solid var(--border-muted);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.invoice-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg);
+}
+
+.invoice-table th {
+  text-align: left;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--border-muted);
+  background: var(--table-h-bg);
+  padding: 16px 20px;
+}
+
+.invoice-table td {
+  padding: 20px;
+  border-bottom: 1px solid var(--table-i-border);
+  font-size: 12px;
+}
+
+.invoice-table tr:last-child td {
+  border-bottom: none;
+}
+
+.status-badge {
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.status-draft     { background: var(--draft-bg); color: var(--draft); }
+.status-converted { background: var(--convert-bg); color: var(--convert); }
+.status-validated { background: var(--valid-bg); color: var(--valid); }
+.status-finalised { background: var(--final-bg); color: var(--final); }
