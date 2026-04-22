@@ -80,3 +80,19 @@ export async function requestDashboardStats() {
   }
   return data;
 };
+
+export async function requestDeleteInvoice(invoiceId: string) {
+  const res = await fetch(`${BASE_URL}/v1/invoice/${invoiceId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'session': localStorage.getItem('session') ?? '',
+      'x-api-key': import.meta.env.VITE_API_KEY
+     },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.message ?? 'Stats retrieval failed.');
+  }
+  return data;
+};

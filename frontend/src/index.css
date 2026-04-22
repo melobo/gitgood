@@ -13,6 +13,10 @@
   --text-inverse: #ffffff;
   --container-text: #ffffff;
   --error: #cc0000;
+  --final: #2e9e59;
+  --valid: #3878de;
+  --convert: #aba96b;
+  --draft: #8c8c8c;
 
   --bg: #ffffff;
   --bg2: #f2e9dd;
@@ -21,12 +25,18 @@
   --container-bg: #2c2c2c;
   --active-bg: #4d4d4d;
   --bg-inverse: #111111;
+  --table-h-bg: #f7f7f7;
+  --final-bg: #e0f0e6;
+  --valid-bg: #e1ebfa;
+  --convert-bg: #f8f4db;
+  --draft-bg: #eeeeee;
 
   --border: #000000;
   --border-muted: #666666;
   --input-border: #d9d9d9;
   --active-border: #ffffff;
   --code-bg: #f4f3ec;
+  --table-i-border: #e0e0e0;
   --data1: #2a5b8c;
   --data2: #8c5b2a;
   --data3: #8c8c2a;
