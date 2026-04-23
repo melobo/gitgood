@@ -363,6 +363,16 @@ app.post('/v2/invoice', authenticate, requireSession, async (req: Request, res: 
   }
 });
 
+app.post('/v2/invoice/:invoiceId/convert', authenticate, requireSession, async (req: Request, res: Response) => {
+  const { invoiceId } = req.params;
+  try {
+    const result = await convertInvoice(invoiceId as string);
+    res.status(200).json(result);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
+
 app.post('/v2/invoice/bulk', authenticate, requireSession, async (req: Request, res: Response) => {
   try {
     const sessionToken = req.header('session');
@@ -436,7 +446,17 @@ app.put('/v1/admin/user/password', authenticate, async (req: Request, res: Respo
     handleError(res, err);
   }
 });
-
+app.put('/v2/admin/user/details', authenticate, async (req: Request, res: Response) => {
+  const { email, name } = req.body;
+  try {
+    const sessionToken = req.header('session');
+    const validated = await validateSessionToken(sessionToken);
+    const result = await userDetailsUpdate(validated.userId, email, name);
+    res.status(200).json(result);
+  } catch (err) {
+    handleError(res, err);
+  }
+});
 app.post('/v1/admin/auth/logout', authenticate, async (req: Request, res: Response) => {
   try {
     const sessionToken = req.header('session');
