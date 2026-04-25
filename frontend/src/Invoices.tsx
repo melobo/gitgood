@@ -30,13 +30,12 @@ export function InvoicesTable(): React.ReactElement {
   useEffect(() => {
     async function retrieveInvoices() {
       try {
-        const res = await requestListInvoice();
-        const data: Invoice[] = await res.json();
-        setInvoices(data);
+        const data = await requestListInvoice();
+        setInvoices(data.invoices ?? []); 
       } catch (error) {
         console.error('Failed to fetch invoices:', error);
       }
-   }
+    }
     retrieveInvoices();
   }, []);
 

@@ -3,7 +3,7 @@ name: Deploy to EC2
 on:
   push:
     branches:
-      - main  # or master
+      - master
 
 jobs:
   deploy:
@@ -18,6 +18,13 @@ jobs:
           script: |
             cd ~/gitgood
             git pull origin main
+            
+            # Backend
+            cd backend
+            npm install
+            pm2 restart gitgood-api
+            
+            # Frontend  
+            cd ../frontend
             npm install
             npm run build
-            pm2 restart gitgood-api

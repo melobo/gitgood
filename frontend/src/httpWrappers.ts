@@ -9,7 +9,7 @@ export async function requestUserRegister(email: string, password: string, name:
     headers: {
       'Content-Type': 'application/json',
       'x-api-key': import.meta.env.VITE_API_KEY
-     },
+    },
     body: JSON.stringify({ email, password, name }),
   });
   const data = await res.json().catch(() => ({}));
@@ -56,7 +56,7 @@ export async function requestListInvoice(fromDate?: string, toDate?: string, pag
       'Content-Type': 'application/json',
       'session': localStorage.getItem('session') ?? '',
       'x-api-key': import.meta.env.VITE_API_KEY
-     },
+    },
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -66,13 +66,13 @@ export async function requestListInvoice(fromDate?: string, toDate?: string, pag
 }
 
 export async function requestDashboardStats() {
-  const res = await fetch(`${BASE_URL}v1/invoices/stats`, {
+  const res = await fetch(`${BASE_URL}/v1/invoices/stats`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
       'session': localStorage.getItem('session') ?? '',
       'x-api-key': import.meta.env.VITE_API_KEY
-     },
+    },
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
