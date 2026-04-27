@@ -70,7 +70,7 @@ export function InvoiceDetailsPage(): React.ReactElement {
 
       let content: string;
       let contentType: string;
-      let filename: string = `invoice-${invoiceId}.${format}`;
+      const filename: string = `invoice-${invoiceId}.${format}`;
 
       if (format === 'xml') {
         content = body.content;
