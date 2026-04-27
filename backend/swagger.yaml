@@ -7,7 +7,7 @@ info:
   version: 1.0.0
 
 servers:
-  - url: http://3.107.81.173:3000 
+  - url: http://3.107.81.173:3000
     description: Production (AWS)
 
 security:
@@ -34,7 +34,7 @@ components:
       type: string
       enum: ['draft', 'converted', 'validated', 'finalised']
       example: "draft"
-      
+
     Invoice:
       type: object
       required:
@@ -42,6 +42,7 @@ components:
         - status
         - buyerName
         - buyerAbn
+        - buyerEmail
         - supplierName
         - supplierAbn
         - issueDate
@@ -53,6 +54,7 @@ components:
         - paymentDetails
         - createdAt
         - updatedAt
+        - statusHistory
       properties:
         invoiceId:
           type: string
@@ -63,6 +65,9 @@ components:
           type: string
         buyerAbn:
           type: string
+        buyerEmail:
+          type: string
+          format: email
         supplierName:
           type: string
         supplierAbn:
@@ -106,7 +111,21 @@ components:
           type: string
           format: date
           nullable: true
-          
+        statusHistory:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusHistoryEntry'
+
+    StatusHistoryEntry:
+      type: object
+      required: [status, changedAt]
+      properties:
+        status:
+          $ref: '#/components/schemas/InvoiceStatus'
+        changedAt:
+          type: string
+          format: date-time
+
     User:
       type: object
       properties:
@@ -136,7 +155,7 @@ components:
           type: number
         unitCode:
           type: string
-          description: "(example: kg)"
+          description: "(example: ea, kg, hr)"
         totalPrice:
           type: number
 
@@ -146,13 +165,95 @@ components:
       properties:
         bankName:
           type: string
+          enum: ['ANZ', 'CommBank', 'Westpac', 'StGeorge', 'ApplePay', 'NAB', 'PayPal']
         accountNumber:
           type: string
         bsbAbnNumber:
           type: string
+          description: "Must be in NNN-NNN format"
         paymentMethod:
           type: string
-          description: "(example: bank_transfer)"
+          enum: ['bank_transfer', 'direct_debit', 'credit_card']
+
+    InvoiceStatsResponse:
+      type: object
+      required: [total, draft, converted, validated, finalised]
+      properties:
+        total:
+          type: integer
+        draft:
+          type: integer
+        converted:
+          type: integer
+        validated:
+          type: integer
+        finalised:
+          type: integer
+
+    AutofillInvoiceResponse:
+      type: object
+      properties:
+        invoice:
+          type: object
+          properties:
+            buyerName:
+              type: string
+              nullable: true
+            buyerAbn:
+              type: string
+              nullable: true
+            supplierName:
+              type: string
+              nullable: true
+            supplierAbn:
+              type: string
+              nullable: true
+            issueDate:
+              type: string
+              format: date
+              nullable: true
+            paymentDueDate:
+              type: string
+              format: date
+              nullable: true
+            itemsList:
+              type: array
+              items:
+                $ref: '#/components/schemas/Item'
+            taxRate:
+              type: number
+              nullable: true
+            paymentDetails:
+              type: array
+              items:
+                $ref: '#/components/schemas/PaymentDetails'
+            additionalNotes:
+              type: string
+              nullable: true
+        missingFields:
+          type: array
+          items:
+            type: string
+        confidence:
+          type: string
+          enum: [high, medium, low]
+
+    BatchResult:
+      type: object
+      properties:
+        invoiceId:
+          type: string
+        success:
+          type: boolean
+        status:
+          type: string
+          description: "Present when success is true"
+        error:
+          type: string
+          description: "Present when success is false"
+        message:
+          type: string
+          description: "Present when success is false"
 
     Error:
       type: object
@@ -165,6 +266,8 @@ components:
           example: "Unable to complete"
 
 paths:
+
+
   /v1/health:
     get:
       summary: Health check
@@ -199,12 +302,10 @@ paths:
                     type: string
                     example: "Database connection failed"
 
+
   /v1/admin/auth/register:
     post:
       summary: Register a new admin user
-      description: >
-        Creates a new user account and returns a session token.
-        No API key or session required.
       tags: [Auth]
       security: []
       requestBody:
@@ -230,8 +331,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
-              example:
-                session: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
         '400':
           description: Invalid email, password (too short/simple), or name (invalid chars)
           content:
@@ -240,7 +339,7 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "INVALID_REQUEST"
-                message: "Invalid email, password, or name"
+                message: "The provided password does not meet the required criteria."
         '409':
           description: Email already in use
           content:
@@ -249,14 +348,11 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "CONFLICT"
-                message: "Email already in use"
+                message: "The provided email address is already registered to another user."
 
   /v1/admin/auth/login:
     post:
       summary: Login to an existing account
-      description: >
-        Authenticates a user and returns a session token.
-        No API key or session required.
       tags: [Auth]
       security: []
       requestBody:
@@ -279,8 +375,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
-              example:
-                session: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
         '401':
           description: Incorrect email or password
           content:
@@ -289,12 +383,11 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "UNAUTHORIZED"
-                message: "Incorrect email or password"
+                message: "The provided password is incorrect."
 
   /v1/admin/auth/logout:
     post:
       summary: Logout the current user
-      description: Invalidates the session token. Requires API key and a valid session.
       tags: [Auth]
       parameters:
         - $ref: '#/components/parameters/SessionHeader'
@@ -305,7 +398,6 @@ paths:
             application/json:
               schema:
                 type: object
-                example: {}
         '401':
           description: Invalid or missing session token
           content:
@@ -314,12 +406,12 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "UNAUTHORIZED"
-                message: "Invalid or missing session token"
+                message: "The provided session token does not refer to a valid logged in user session."
+
 
   /v1/admin/user/details:
     get:
       summary: Get current user details
-      description: Returns the profile of the currently logged-in user. Requires API key and a valid session.
       tags: [User]
       parameters:
         - $ref: '#/components/parameters/SessionHeader'
@@ -334,17 +426,16 @@ paths:
                   user:
                     $ref: '#/components/schemas/User'
         '401':
-          description: Invalid or empty session token
+          description: Invalid or missing session token
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "UNAUTHORIZED"
-                message: "Invalid or empty session token"
+                message: "No session token has been provided."
     put:
       summary: Update user details
-      description: Updates the email and/or name of the currently logged-in user. Requires API key and a valid session.
       tags: [User]
       parameters:
         - $ref: '#/components/parameters/SessionHeader'
@@ -367,7 +458,6 @@ paths:
             application/json:
               schema:
                 type: object
-                example: {}
         '400':
           description: Invalid name or email format
           content:
@@ -376,7 +466,7 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "INVALID_REQUEST"
-                message: "Invalid name or email format"
+                message: "The provided email address is not in a valid format."
         '401':
           description: Unauthorized
           content:
@@ -385,7 +475,7 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "UNAUTHORIZED"
-                message: "Invalid or empty session token"
+                message: "No session token has been provided."
         '409':
           description: Email already taken by another user
           content:
@@ -394,12 +484,88 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "CONFLICT"
-                message: "Email already taken by another user"
+                message: "The provided email address is already registered to another user."
+
+  /v2/admin/user/details:
+    get:
+      summary: Get current user details (v2)
+      tags: [User]
+      parameters:
+        - $ref: '#/components/parameters/SessionHeader'
+      responses:
+        '200':
+          description: Successfully retrieved details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Invalid or missing session token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: "No session token has been provided."
+    put:
+      summary: Update user details (v2)
+      tags: [User]
+      parameters:
+        - $ref: '#/components/parameters/SessionHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Details updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Invalid name or email format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "INVALID_REQUEST"
+                message: "The provided email address is not in a valid format."
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: "No session token has been provided."
+        '409':
+          description: Email already taken by another user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "CONFLICT"
+                message: "The provided email address is already registered to another user."
 
   /v1/admin/user/password:
     put:
       summary: Update user password
-      description: Updates the password of the currently logged-in user. Requires API key and a valid session.
       tags: [User]
       parameters:
         - $ref: '#/components/parameters/SessionHeader'
@@ -418,21 +584,20 @@ paths:
                   minLength: 8
       responses:
         '200':
-          description: Password updated successfully
+          description: Password updated
           content:
             application/json:
               schema:
                 type: object
-                example: {}
         '400':
-          description: Incorrect old password, or new password is same as old/invalid
+          description: Incorrect old password, or new password is same as old / invalid
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "INVALID_REQUEST"
-                message: "Incorrect old password or new password is invalid"
+                message: "The old password provided is incorrect."
         '401':
           description: Unauthorized
           content:
@@ -441,14 +606,67 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "UNAUTHORIZED"
-                message: "Invalid or empty session token"
+                message: "No session token has been provided."
+
+
+  /v1/invoice/autofill:
+    post:
+      summary: AI autofill invoice data from raw text or partial data
+      tags: [Invoice Creation]
+      parameters:
+        - $ref: '#/components/parameters/SessionHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rawText:
+                  type: string
+                  description: "Raw unstructured text to extract invoice data from"
+                partial:
+                  type: object
+                  description: "Partially filled invoice fields to merge and complete"
+      responses:
+        '200':
+          description: Autofill result with extracted invoice data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutofillInvoiceResponse'
+        '400':
+          description: Neither rawText nor partial provided, or invalid field types
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "INVALID_REQUEST"
+                message: "Provide at least one of rawText or partial with content."
+        '401':
+          description: Invalid or missing API key or session token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: "Invalid or missing API key."
+        '500':
+          description: AI model error or JSON parse failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "INTERNAL_SERVER_ERROR"
+                message: "Failed to parse AI response as JSON."
 
   /v1/invoice:
     post:
       summary: Create a new invoice
-      description: >
-        Creates a new invoice in draft status.
-        Requires API key and a valid session token.
+      description: Creates a new invoice from manually entered data in draft status.
       tags: [Invoice Creation]
       parameters:
         - $ref: '#/components/parameters/SessionHeader'
@@ -473,6 +691,9 @@ paths:
                   type: string
                 buyerAbn:
                   type: string
+                buyerEmail:
+                  type: string
+                  format: email
                 supplierName:
                   type: string
                 supplierAbn:
@@ -489,7 +710,7 @@ paths:
                     $ref: '#/components/schemas/Item'
                 taxRate:
                   type: number
-                  description: "Decimal value, e.g. 0.1 for 10% GST"
+                  description: "Decimal value e.g. 0.1 for 10% GST"
                 paymentDetails:
                   type: array
                   items:
@@ -506,6 +727,7 @@ paths:
                 properties:
                   invoiceId:
                     type: string
+                    format: uuid
                   status:
                     type: string
                     example: draft
@@ -522,14 +744,23 @@ paths:
                 error: "INVALID_REQUEST"
                 message: "Missing or Invalid Fields"
         '401':
-          description: Unauthorized - missing or invalid API key or session
+          description: Invalid or missing API key or session token
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "UNAUTHORIZED"
-                message: "No session token has been provided."
+                message: "Invalid or missing API key."
+        '422':
+          description: Inconsistent totals or insufficient data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "INSUFFICIENT_DATA"
+                message: "Invoice totals are inconsistent. Item totals must equal quantity * unitPrice."
         '500':
           description: Internal server error
           content:
@@ -541,10 +772,8 @@ paths:
                 message: "Unexpected error on the server side."
 
     get:
-      summary: List all invoices
-      description: >
-        Returns a paginated list of invoices with optional date filters.
-        Requires API key and a valid session token.
+      summary: List invoices
+      description: Returns a paginated list of the authenticated user's invoices with optional date filters.
       tags: [Invoice Management]
       parameters:
         - $ref: '#/components/parameters/SessionHeader'
@@ -553,11 +782,13 @@ paths:
           schema:
             type: string
             format: date
+          description: "Filter invoices created on or after this date"
         - in: query
           name: toDate
           schema:
             type: string
             format: date
+          description: "Filter invoices created on or before this date"
         - in: query
           name: page
           schema:
@@ -580,6 +811,18 @@ paths:
                     type: array
                     items:
                       type: object
+                      properties:
+                        invoiceId:
+                          type: string
+                        buyerName:
+                          type: string
+                        status:
+                          $ref: '#/components/schemas/InvoiceStatus'
+                        createdAt:
+                          type: string
+                          format: date-time
+                        totalPayable:
+                          type: number
                   total:
                     type: integer
                   page:
@@ -603,10 +846,190 @@ paths:
                 error: "UNAUTHORIZED"
                 message: "No session token has been provided."
 
+  /v1/invoice/bulk:
+    post:
+      summary: Bulk create invoices
+      description: Creates multiple invoices in a single request. All invoices are validated before any are saved.
+      tags: [Invoice Creation]
+      parameters:
+        - $ref: '#/components/parameters/SessionHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [invoices]
+              properties:
+                invoices:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - buyerName
+                      - buyerAbn
+                      - supplierName
+                      - supplierAbn
+                      - issueDate
+                      - paymentDueDate
+                      - itemsList
+                      - taxRate
+                      - paymentDetails
+                    properties:
+                      buyerName:
+                        type: string
+                      buyerAbn:
+                        type: string
+                      buyerEmail:
+                        type: string
+                        format: email
+                      supplierName:
+                        type: string
+                      supplierAbn:
+                        type: string
+                      issueDate:
+                        type: string
+                        format: date
+                      paymentDueDate:
+                        type: string
+                        format: date
+                      itemsList:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Item'
+                      taxRate:
+                        type: number
+                      paymentDetails:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PaymentDetails'
+                      additionalNotes:
+                        type: string
+      responses:
+        '201':
+          description: All invoices created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoices:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Invoice'
+        '400':
+          description: Missing or invalid fields in one or more invoices
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "INVALID_REQUEST"
+                message: "Missing or Invalid Fields"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: "Invalid or missing API key."
+        '422':
+          description: Inconsistent totals or insufficient data in one or more invoices
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "INSUFFICIENT_DATA"
+                message: "Invoice totals are inconsistent."
+
+
+  /v1/invoices/stats:
+    get:
+      summary: Get invoice statistics for the current user
+      tags: [Invoice Management]
+      parameters:
+        - $ref: '#/components/parameters/SessionHeader'
+      responses:
+        '200':
+          description: Invoice counts by status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceStatsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: "No session token has been provided."
+
+  /v1/invoices/batch/{action}:
+    post:
+      summary: Batch process invoices
+      description: Apply a convert, validate, or finalise action to multiple invoices. Each invoice is processed independently; failures do not block others.
+      tags: [Invoice Management]
+      parameters:
+        - $ref: '#/components/parameters/SessionHeader'
+        - in: path
+          name: action
+          required: true
+          schema:
+            type: string
+            enum: [convert, validate, finalise]
+          description: "Action to apply to all provided invoice IDs"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [invoiceIds]
+              properties:
+                invoiceIds:
+                  type: array
+                  items:
+                    type: string
+                  example: ["uuid-1", "uuid-2"]
+      responses:
+        '200':
+          description: Batch processing complete (individual results may contain errors)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BatchResult'
+        '400':
+          description: Invalid or missing invoiceIds, or unknown action
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "INVALID_REQUEST"
+                message: "Missing or Invalid Fields"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: "Invalid or missing API key."
+
   /v1/invoice/{invoiceId}:
     get:
       summary: Get a specific invoice
-      description: Returns full details of an invoice by ID. Requires API key and a valid session token.
       tags: [Invoice Management]
       parameters:
         - $ref: '#/components/parameters/SessionHeader'
@@ -630,7 +1053,7 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "UNAUTHORIZED"
-                message: "No session token has been provided."
+                message: "Invalid or missing API key."
         '404':
           description: Invoice not found
           content:
@@ -639,11 +1062,11 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "NOT_FOUND"
-                message: "Invoice not found"
+                message: "The provided invoice ID does not refer to an existing invoice."
 
     put:
       summary: Update an invoice
-      description: Updates fields of a draft invoice. Requires API key and a valid session token.
+      description: Update fields on a draft invoice using its ID.
       tags: [Invoice Management]
       parameters:
         - $ref: '#/components/parameters/SessionHeader'
@@ -717,7 +1140,7 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "UNAUTHORIZED"
-                message: "No session token has been provided."
+                message: "Invalid or missing API key."
         '404':
           description: Invoice not found
           content:
@@ -726,7 +1149,7 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "NOT_FOUND"
-                message: "Invoice not found"
+                message: "The provided invoice ID does not refer to an existing invoice."
         '409':
           description: Invoice already finalised
           content:
@@ -735,11 +1158,11 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "ALREADY_FINALISED"
-                message: "Invoice has already been finalised"
+                message: "Invoice has already been finalised."
 
     delete:
       summary: Delete an invoice
-      description: Permanently deletes an invoice. Requires API key and a valid session token.
+      description: Permanently delete an invoice and its associated XML from storage.
       tags: [Invoice Management]
       parameters:
         - $ref: '#/components/parameters/SessionHeader'
@@ -761,6 +1184,15 @@ paths:
                   message:
                     type: string
                     example: "Invoice successfully deleted"
+        '400':
+          description: Invalid invoice ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "INVALID_REQUEST"
+                message: "Invalid invoice ID format."
         '401':
           description: Unauthorized
           content:
@@ -769,7 +1201,7 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "UNAUTHORIZED"
-                message: "No session token has been provided."
+                message: "Invalid or missing API key."
         '404':
           description: Invoice not found
           content:
@@ -778,15 +1210,13 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "NOT_FOUND"
-                message: "Invoice not found"
+                message: "The provided invoice ID does not refer to an existing invoice."
 
-  /v1/invoice/{invoiceId}/convert:
-    post:
-      summary: Convert invoice to UBL XML
-      description: Converts a draft invoice to UBL 2.1 XML format. Requires API key and a valid session token.
-      tags: [Invoice Conversion]
+  /v1/invoice/{invoiceId}/history:
+    get:
+      summary: Get invoice status history
+      tags: [Invoice Management]
       parameters:
-        - $ref: '#/components/parameters/SessionHeader'
         - in: path
           name: invoiceId
           required: true
@@ -794,7 +1224,7 @@ paths:
             type: string
       responses:
         '200':
-          description: Invoice converted successfully
+          description: Status history for the invoice
           content:
             application/json:
               schema:
@@ -802,85 +1232,10 @@ paths:
                 properties:
                   invoiceId:
                     type: string
-                  ublXml:
-                    type: string
-                  status:
-                    type: string
-                    example: "converted"
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              example:
-                error: "UNAUTHORIZED"
-                message: "No session token has been provided."
-        '404':
-          description: Invoice not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              example:
-                error: "NOT_FOUND"
-                message: "Invoice not found"
-        '409':
-          description: Invoice already converted
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              example:
-                error: "ALREADY_CONVERTED"
-                message: "Invoice has already been converted"
-        '422':
-          description: Insufficient data for conversion
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              example:
-                error: "INSUFFICIENT_DATA"
-                message: "Not enough data has been provided for one or more of the invoice fields."
-
-  /v1/invoice/{invoiceId}/validate:
-    post:
-      summary: Validate an invoice
-      description: Validates a converted invoice against UBL rules. Requires API key and a valid session token.
-      tags: [Invoice Validation]
-      parameters:
-        - $ref: '#/components/parameters/SessionHeader'
-        - in: path
-          name: invoiceId
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Validation result
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  invoiceId:
-                    type: string
-                  valid:
-                    type: boolean
-                  errors:
+                  statusHistory:
                     type: array
                     items:
-                      type: object
-                      properties:
-                        field:
-                          type: string
-                        message:
-                          type: string
-                    description: "Empty array if valid"
-                  status:
-                    type: string
-                    example: "validated"
+                      $ref: '#/components/schemas/StatusHistoryEntry'
         '401':
           description: Unauthorized
           content:
@@ -889,7 +1244,7 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "UNAUTHORIZED"
-                message: "No session token has been provided."
+                message: "Invalid or missing API key."
         '404':
           description: Invoice not found
           content:
@@ -899,143 +1254,11 @@ paths:
               example:
                 error: "NOT_FOUND"
                 message: "Invoice not found"
-        '409':
-          description: Invoice not yet converted
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              example:
-                error: "INVALID_REQUEST"
-                message: "The invoice has not yet been converted."
-
-  /v1/invoice/{invoiceId}/final:
-    post:
-      summary: Finalise a validated invoice
-      description: Marks a validated invoice as finalised and ready to download. Requires API key and a valid session token.
-      tags: [Invoice Finalisation]
-      parameters:
-        - $ref: '#/components/parameters/SessionHeader'
-        - in: path
-          name: invoiceId
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Invoice finalised
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  invoiceId:
-                    type: string
-                  ublXml:
-                    type: string
-                  status:
-                    type: string
-                    example: "finalised"
-                  finalisedAt:
-                    type: string
-                    format: date-time
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              example:
-                error: "UNAUTHORIZED"
-                message: "No session token has been provided."
-        '404':
-          description: Invoice not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              example:
-                error: "NOT_FOUND"
-                message: "Invoice not found"
-        '409':
-          description: Invoice not yet validated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              example:
-                error: "INVOICE_NOT_VALIDATED"
-                message: "The invoice has not yet been validated."
-
-  /v1/invoice/{invoiceId}/download:
-    get:
-      summary: Download a finalised invoice
-      description: Downloads a finalised invoice as XML or JSON. Requires API key and a valid session token.
-      tags: [Invoice Download]
-      parameters:
-        - $ref: '#/components/parameters/SessionHeader'
-        - in: path
-          name: invoiceId
-          required: true
-          schema:
-            type: string
-        - in: query
-          name: format
-          schema:
-            type: string
-            enum: [xml, json]
-            default: xml
-      responses:
-        '200':
-          description: Invoice file content
-          content:
-            application/xml:
-              schema:
-                type: string
-            application/json:
-              schema:
-                type: object
-        '400':
-          description: Invalid format
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              example:
-                error: "INVALID_REQUEST"
-                message: "Missing or Invalid Fields"
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              example:
-                error: "UNAUTHORIZED"
-                message: "No session token has been provided."
-        '404':
-          description: Invoice not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              example:
-                error: "NOT_FOUND"
-                message: "Invoice not found"
-        '409':
-          description: Invoice not yet finalised
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              example:
-                error: "INVOICE_NOT_READY"
-                message: "Invoice not yet converted/validated to UBL XML format"
 
   /v1/invoice/{invoiceId}/summary:
     get:
       summary: Get invoice summary
-      description: Returns a concise summary including totals and item count. Requires API key and a valid session token.
+      description: Returns a condensed summary of the invoice including totals and metadata.
       tags: [Invoice Management]
       parameters:
         - $ref: '#/components/parameters/SessionHeader'
@@ -1046,7 +1269,7 @@ paths:
             type: string
       responses:
         '200':
-          description: Invoice summary retrieved successfully
+          description: Invoice summary
           content:
             application/json:
               schema:
@@ -1084,7 +1307,7 @@ paths:
                     format: date-time
                   finalisedAt:
                     type: string
-                    format: date-time
+                    format: date
                     nullable: true
         '401':
           description: Unauthorized
@@ -1094,7 +1317,7 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "UNAUTHORIZED"
-                message: "No session token has been provided."
+                message: "Invalid or missing API key."
         '404':
           description: Invoice not found
           content:
@@ -1103,4 +1326,714 @@ paths:
                 $ref: '#/components/schemas/Error'
               example:
                 error: "NOT_FOUND"
-                message: "Invoice not found"
+                message: "The provided invoice ID does not refer to an existing invoice."
+
+  /v1/invoice/{invoiceId}/send:
+    post:
+      summary: Send invoice via email
+      description: Generates a PDF of the finalised invoice and emails it to the specified recipient.
+      tags: [Invoice Management]
+      parameters:
+        - $ref: '#/components/parameters/SessionHeader'
+        - in: path
+          name: invoiceId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [recipientEmail]
+              properties:
+                recipientEmail:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Invoice sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoiceId:
+                    type: string
+                  sent:
+                    type: boolean
+                    example: true
+                  recipientEmail:
+                    type: string
+                    format: email
+                  pdfAttached:
+                    type: boolean
+                    example: true
+                  sentAt:
+                    type: string
+                    format: date-time
+        '400':
+          description: Missing or invalid recipient email
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "INVALID_REQUEST"
+                message: "recipientEmail is not a valid email address."
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: "Invalid or missing API key."
+        '404':
+          description: Invoice not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "NOT_FOUND"
+                message: "The provided invoice ID does not refer to an existing invoice."
+        '409':
+          description: Invoice not yet finalised
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "INVOICE_NOT_READY"
+                message: "Invoice must be finalised before it can be sent."
+        '500':
+          description: Email service not configured or failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "INTERNAL_SERVER_ERROR"
+                message: "Email service is not configured."
+
+  # ─── Invoice Conversion ────────────────────────────────────────────────────
+
+  /v1/invoice/{invoiceId}/convert:
+    post:
+      summary: Convert invoice to UBL XML
+      description: Converts a draft invoice into UBL 2.1 compliant XML format and stores it.
+      tags: [Invoice Conversion]
+      parameters:
+        - $ref: '#/components/parameters/SessionHeader'
+        - in: path
+          name: invoiceId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invoice converted to UBL XML successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoiceId:
+                    type: string
+                  status:
+                    type: string
+                    example: "converted"
+                  ublXml:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: "Invalid or missing API key."
+        '404':
+          description: Invoice not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "NOT_FOUND"
+                message: "The provided invoice ID does not refer to an existing invoice."
+        '409':
+          description: Invoice already converted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "ALREADY_CONVERTED"
+                message: "Invoice has already been converted."
+        '422':
+          description: Insufficient data for conversion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "INSUFFICIENT_DATA"
+                message: "Not enough data has been provided for one or more of the invoice fields."
+
+  /v1/invoice/{invoiceId}/validate:
+    post:
+      summary: Validate an invoice
+      description: Validates a converted invoice against business rules. Returns validation errors if any.
+      tags: [Invoice Validation]
+      parameters:
+        - $ref: '#/components/parameters/SessionHeader'
+        - in: path
+          name: invoiceId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoiceId:
+                    type: string
+                  valid:
+                    type: boolean
+                  errors:
+                    type: array
+                    description: "Empty array if valid"
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          type: string
+                        message:
+                          type: string
+                  status:
+                    $ref: '#/components/schemas/InvoiceStatus'
+        '400':
+          description: Invoice has not yet been converted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "INVALID_REQUEST"
+                message: "The invoice has not yet been converted."
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: "Invalid or missing API key."
+        '404':
+          description: Invoice not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "NOT_FOUND"
+                message: "The provided invoice ID does not refer to an existing invoice."
+
+
+  /v1/invoice/{invoiceId}/final:
+    post:
+      summary: Finalise a validated invoice
+      description: Marks a validated invoice as finalised and triggers an email to the buyer.
+      tags: [Invoice Finalisation]
+      parameters:
+        - $ref: '#/components/parameters/SessionHeader'
+        - in: path
+          name: invoiceId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invoice finalised
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoiceId:
+                    type: string
+                  status:
+                    type: string
+                    example: "finalised"
+                  ublXml:
+                    type: string
+                  finalisedAt:
+                    type: string
+                    format: date-time
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: "Invalid or missing API key."
+        '404':
+          description: Invoice not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "NOT_FOUND"
+                message: "The provided invoice ID does not refer to an existing invoice."
+        '409':
+          description: Invoice not yet validated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "INVOICE_NOT_VALIDATED"
+                message: "The invoice has not yet been validated."
+
+
+  /v1/invoice/{invoiceId}/download:
+    get:
+      summary: Download a finalised invoice
+      description: Downloads the invoice as either UBL XML or JSON. Invoice must be finalised.
+      tags: [Invoice Download]
+      parameters:
+        - $ref: '#/components/parameters/SessionHeader'
+        - in: path
+          name: invoiceId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: format
+          schema:
+            type: string
+            enum: [xml, json]
+            default: xml
+      responses:
+        '200':
+          description: Invoice file downloaded successfully
+          content:
+            application/xml:
+              schema:
+                type: string
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+        '400':
+          description: Invalid format parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "INVALID_REQUEST"
+                message: "Missing or Invalid Fields"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: "Invalid or missing API key."
+        '404':
+          description: Invoice not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "NOT_FOUND"
+                message: "The provided invoice ID does not refer to an existing invoice."
+        '409':
+          description: Invoice not yet finalised
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "INVOICE_NOT_READY"
+                message: "Invoice not yet converted/validated to UBL XML format"
+
+
+  /v2/invoice:
+    post:
+      summary: Create invoice (v2)
+      description: Creates a new invoice scoped to the authenticated user's account.
+      tags: [Invoice Creation]
+      parameters:
+        - $ref: '#/components/parameters/SessionHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - buyerName
+                - buyerAbn
+                - supplierName
+                - supplierAbn
+                - issueDate
+                - paymentDueDate
+                - itemsList
+                - taxRate
+                - paymentDetails
+              properties:
+                buyerName:
+                  type: string
+                buyerAbn:
+                  type: string
+                buyerEmail:
+                  type: string
+                  format: email
+                supplierName:
+                  type: string
+                supplierAbn:
+                  type: string
+                issueDate:
+                  type: string
+                  format: date
+                paymentDueDate:
+                  type: string
+                  format: date
+                itemsList:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Item'
+                taxRate:
+                  type: number
+                paymentDetails:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/PaymentDetails'
+                additionalNotes:
+                  type: string
+      responses:
+        '201':
+          description: Invoice created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoiceId:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    example: draft
+                  createdAt:
+                    type: string
+                    format: date-time
+        '400':
+          description: Missing or invalid fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "INVALID_REQUEST"
+                message: "Missing or Invalid Fields"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: "Invalid or missing API key."
+        '422':
+          description: Inconsistent totals or insufficient data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "INSUFFICIENT_DATA"
+                message: "Invoice totals are inconsistent."
+
+    get:
+      summary: List invoices (v2)
+      description: Returns a paginated, filterable list of invoices with extended filter support.
+      tags: [Invoice Management]
+      parameters:
+        - $ref: '#/components/parameters/SessionHeader'
+        - in: query
+          name: fromDate
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: toDate
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limitPerPage
+          schema:
+            type: integer
+            default: 20
+        - in: query
+          name: filter
+          schema:
+            type: string
+          description: "Keyword search across buyer name, supplier name, and ABN fields"
+        - in: query
+          name: status
+          schema:
+            $ref: '#/components/schemas/InvoiceStatus'
+        - in: query
+          name: buyerName
+          schema:
+            type: string
+          description: "Exact match filter on buyer name"
+        - in: query
+          name: supplierName
+          schema:
+            type: string
+          description: "Exact match filter on supplier name"
+        - in: query
+          name: minAmount
+          schema:
+            type: number
+          description: "Minimum totalPayable filter"
+        - in: query
+          name: maxAmount
+          schema:
+            type: number
+          description: "Maximum totalPayable filter"
+      responses:
+        '200':
+          description: Filtered list of invoices
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoices:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        invoiceId:
+                          type: string
+                        buyerName:
+                          type: string
+                        status:
+                          $ref: '#/components/schemas/InvoiceStatus'
+                        createdAt:
+                          type: string
+                          format: date-time
+                        totalPayable:
+                          type: number
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+        '400':
+          description: Invalid filter values
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "INVALID_REQUEST"
+                message: "Missing or Invalid Fields"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: "No session token has been provided."
+
+  /v2/invoice/bulk:
+    post:
+      summary: Bulk create invoices (v2)
+      description: Creates multiple invoices scoped to the authenticated user. All invoices are validated before any are saved.
+      tags: [Invoice Creation]
+      parameters:
+        - $ref: '#/components/parameters/SessionHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [invoices]
+              properties:
+                invoices:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - buyerName
+                      - buyerAbn
+                      - supplierName
+                      - supplierAbn
+                      - issueDate
+                      - paymentDueDate
+                      - itemsList
+                      - taxRate
+                      - paymentDetails
+                    properties:
+                      buyerName:
+                        type: string
+                      buyerAbn:
+                        type: string
+                      buyerEmail:
+                        type: string
+                        format: email
+                      supplierName:
+                        type: string
+                      supplierAbn:
+                        type: string
+                      issueDate:
+                        type: string
+                        format: date
+                      paymentDueDate:
+                        type: string
+                        format: date
+                      itemsList:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Item'
+                      taxRate:
+                        type: number
+                      paymentDetails:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PaymentDetails'
+                      additionalNotes:
+                        type: string
+      responses:
+        '201':
+          description: All invoices created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoices:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Invoice'
+        '400':
+          description: Missing or invalid fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "INVALID_REQUEST"
+                message: "Missing or Invalid Fields"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: "Invalid or missing API key."
+        '422':
+          description: Inconsistent totals or insufficient data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "INSUFFICIENT_DATA"
+                message: "Invoice totals are inconsistent."
+
+  /v2/invoice/{invoiceId}/convert:
+    post:
+      summary: Convert invoice to UBL XML (v2)
+      description: Converts a draft invoice into UBL 2.1 compliant XML format and stores it.
+      tags: [Invoice Conversion]
+      parameters:
+        - $ref: '#/components/parameters/SessionHeader'
+        - in: path
+          name: invoiceId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invoice converted to UBL XML successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoiceId:
+                    type: string
+                  status:
+                    type: string
+                    example: "converted"
+                  ublXml:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "UNAUTHORIZED"
+                message: "Invalid or missing API key."
+        '404':
+          description: Invoice not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "NOT_FOUND"
+                message: "The provided invoice ID does not refer to an existing invoice."
+        '409':
+          description: Invoice already converted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "ALREADY_CONVERTED"
+                message: "Invoice has already been converted."
+        '422':
+          description: Insufficient data for conversion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "INSUFFICIENT_DATA"
+                message: "Not enough data has been provided for one or more of the invoice fields."

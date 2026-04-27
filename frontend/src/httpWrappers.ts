@@ -8,7 +8,7 @@ export async function requestUserRegister(email: string, password: string, name:
     headers: {
       'Content-Type': 'application/json',
       'x-api-key': import.meta.env.VITE_API_KEY
-     },
+    },
     body: JSON.stringify({ email, password, name }),
   });
   const data = await res.json().catch(() => ({}));
@@ -57,7 +57,7 @@ export async function requestListInvoice(filters: {
       'Content-Type': 'application/json',
       'session': localStorage.getItem('session') ?? '',
       'x-api-key': import.meta.env.VITE_API_KEY
-     },
+    },
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -73,7 +73,7 @@ export async function requestDashboardStats() {
       'Content-Type': 'application/json',
       'session': localStorage.getItem('session') ?? '',
       'x-api-key': import.meta.env.VITE_API_KEY
-     },
+    },
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
