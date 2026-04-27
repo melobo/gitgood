@@ -83,6 +83,7 @@ export interface CreateInvoiceInput {
 export interface UpdateInvoiceInput {
   buyerName?: string;
   buyerAbn?: string;
+  buyerEmail?: string;
   supplierName?: string;
   supplierAbn?: string;
   issueDate?: string;

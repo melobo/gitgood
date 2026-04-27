@@ -1,13 +1,22 @@
 // import { UserInfo, Session } from '../../backend/src/invoiceInterface';
 
-import type { InvoiceStatus } from '../../backend/src/invoiceInterface';
+import type { Invoice, InvoiceItem, InvoiceStatus, PaymentDetails } from '../../backend/src/invoiceInterface';
 
 export { validBanks } from '../../backend/src/invoiceInterface';
 
-export type { InvoiceStatus, UserInfo, Session, Invoice, InvoiceItem, PaymentDetails, CreateInvoiceInput, UpdateInvoiceInput, InvoiceListFilters, PartialInvoice, AutofillResponse, AutofillInput } from '../../backend/src/invoiceInterface';
+export type { ValidationError, InvoiceStatus, UserInfo, Session, Invoice, InvoiceItem, PaymentDetails, CreateInvoiceInput, UpdateInvoiceInput, InvoiceListFilters, PartialInvoice, AutofillResponse, AutofillInput } from '../../backend/src/invoiceInterface';
 
 export type UserMode = 'login' | 'register';
 export type CreateMode = 'manual' | 'autofill' | 'bulk';
+
+export const statusColors: Record<Invoice['status'], string> = {
+  draft: 'status-draft',
+  converted: 'status-converted',
+  validated: 'status-validated',
+  finalised: 'status-finalised',
+};
+
+export const invoiceStatusWorkflows = ['draft', 'converted', 'validated', 'finalised'];
 
 export interface FormFieldProperties {
   label: string;
@@ -63,6 +72,20 @@ export interface ActivityTimelineItem {
   buyerName: string;
 }
 
+export interface InvoiceInput {
+  buyerName: string;
+  buyerAbn: string;
+  buyerEmail?: string;
+  supplierName: string;
+  supplierAbn: string;
+  issueDate: string;
+  paymentDueDate: string;
+  itemsList: InvoiceItem[];
+  taxRate: number;
+  paymentDetails: PaymentDetails[];
+  additionalNotes?: string;
+}
+
 export interface InvoiceFormInput {
   buyerName: string;
   buyerAbn: string;
@@ -87,5 +110,8 @@ export interface PaymentDetailsErrors {
 }
 
 export interface CreateInvoiceProperties {
+  initialData?: Invoice;
+  title?: string;
+  description?: string;
   onSuccess: () => void;
 }
