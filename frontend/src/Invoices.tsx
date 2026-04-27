@@ -36,7 +36,9 @@ export function InvoicesTable(): React.ReactElement {
     }
   }
   useEffect(() => {
-    loadInvoices();
+    (async () => {
+      await loadInvoices();
+    })();
   }, []);
 
   async function handleDelete(id: string): Promise<void> {
