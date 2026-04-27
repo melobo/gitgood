@@ -1,6 +1,9 @@
 export type InvoiceStatus = 'draft' | 'converted' | 'validated' | 'finalised';
-export const validBanks = ['ANZ', 'CommBank', 'Westpac', 'StGeorge', 'ApplePay', 'NAB', 'PayPal'];
-export const validPaymentMethods = ['bank_transfer', 'direct_debit', 'credit_card'];
+// export const validBanks = ['ANZ', 'CommBank', 'Westpac', 'StGeorge', 'ApplePay', 'NAB', 'PayPal'];
+export const validBanks = ['ANZ', 'CommBank', 'Westpac', 'StGeorge', 'NAB'];
+export type ValidBank = typeof validBanks[number];
+// export const validPaymentMethods = ['bank_transfer', 'direct_debit', 'credit_card'];
+export const validPaymentMethods = ['bank_transfer'];
 export const MIN_PASSWORD_LENGTH = 8;
 
 export interface UserInfo {
@@ -27,10 +30,10 @@ export interface InvoiceItem {
 }
 
 export interface PaymentDetails {
-  bankName: string;
+  bankName: ValidBank;
   accountNumber: string;
   bsbAbnNumber: string;
-  paymentMethod: string;
+  paymentMethod: typeof validPaymentMethods[number];
 }
 
 export interface Invoice {
@@ -114,6 +117,16 @@ export interface ValidationError {
   message: string;
 }
 
+export interface ListInvoiceResponse {
+  invoiceId: string;
+  buyerName: string;
+  status: InvoiceStatus;
+  createdAt: string;
+  totalPayable: number;
+  issueDate: string;
+  paymentDueDate: string;
+}
+
 export interface ValidateInvoiceResponse {
   invoiceId: string;
   valid: boolean;
@@ -139,6 +152,41 @@ export interface InvoiceStatsResponse {
   converted: number;
   validated: number;
   finalised: number;
+}
+
+export interface PartialInvoice {
+  buyerName?: string;
+  buyerAbn?: string;
+  supplierName?: string;
+  supplierAbn?: string;
+  issueDate?: string;
+  paymentDueDate?: string;
+  itemsList?: Array<{
+    itemName: string;
+    quantity: number;
+    unitPrice: number;
+    unitCode: string;
+    totalPrice: number;
+  }>;
+  taxRate?: number;
+  paymentDetails?: Array<{
+    bankName: string;
+    accountNumber: string;
+    bsbAbnNumber: string;
+    paymentMethod: string;
+  }>;
+  additionalNotes?: string;
+}
+
+export interface AutofillInput {
+  rawText?: string;
+  partial?: PartialInvoice;
+}
+
+export interface AutofillResponse {
+  invoice: PartialInvoice;
+  missingFields: string[];
+  confidence: 'high' | 'medium' | 'low';
 }
 
 export interface ErrorObject {

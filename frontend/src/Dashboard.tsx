@@ -4,15 +4,6 @@ import { IconFile, IconFileDescription, IconListCheckFilled, IconPencil, IconRef
 import { BarChart, Bar, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Cell, Tooltip } from 'recharts';
 import { requestDashboardStats } from './httpWrappers';
 
-/* function buildActivityTimeline(invoices: Invoice[]) {
-  return invoices.flatMap(i => i.statusHistory.map((entry) => ({
-    invoiceId: i.invoiceId,
-    status: entry.status,
-    changedAt: entry.changedAt,
-    buyerName: i.buyerName,
-  }))).sort((a,b) => new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime()).slice(0, 5);
-} */
-
 export function DashboardLayout(): React.ReactElement {
   return (
     <div className='dashboard-page'>
@@ -54,16 +45,6 @@ export function DashboardHome(): React.ReactElement {
     { name: 'Finalised', value: stats.finalised, fill: 'var(--data4)' },
   ]
 
-  /* const [items, setItems] = useState<ActivityTimelineItem[]>([]);
-  useEffect(() => {
-    const loadInvoices = async () => {
-      const invoices = await requestListInvoice();
-      setItems(buildActivityTimeline(invoices));
-    };
-
-    loadInvoices().catch(console.error);
-  }, []); */
-
   return (
     <div className='dashboard-stats'>
       <div className='invoice-stat-card'>
@@ -91,18 +72,18 @@ export function DashboardHome(): React.ReactElement {
         <div className='stat-value'>{stats.finalised}</div>
         <div className='stat-icon'><IconFile size={36} /></div>
       </div>
-      <div className='large-stat-card' style={{padding: 0}}>
-        <div className='chart-wrapper'>
-          <ResponsiveContainer width='100%' height='100%'>
-            <BarChart data={barData} margin={{ top: 15, right: 15, left: 10, bottom: 3 }} barCategoryGap="20%">
-              <Bar dataKey="value" barSize={50} radius={[6, 6, 0, 0]}>
+      <div className='large-card' style={{padding: 0}}>
+        <div className='chart-wrapper' style={{height: '100%'}}>
+          <ResponsiveContainer width='100%' height='100%' minWidth={0} minHeight={150}>
+            <BarChart data={barData} margin={{ top: 15, right: 15, left: 10, bottom: 3 }} barCategoryGap='20%'>
+              <Bar dataKey='value' barSize={50} radius={[6, 6, 0, 0]}>
                 {barData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.fill} />
                 ))}
               </Bar>
               <CartesianGrid />
-              <XAxis dataKey="name" />
-              <YAxis tickLine={false} axisLine={false} width={20} />
+              <XAxis dataKey='name' />
+              <YAxis tickLine={false} axisLine={false} width={20} allowDecimals={false} />
               <Tooltip />
             </BarChart>
           </ResponsiveContainer>

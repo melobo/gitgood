@@ -11,7 +11,8 @@ import {
   validPaymentMethods,
   CreateInvoiceInput,
   InvoiceStatus,
-  InvoiceStatsResponse
+  InvoiceStatsResponse,
+  ListInvoiceResponse
 } from './invoiceInterface';
 
 import {
@@ -55,7 +56,7 @@ function pushStatus(invoice: Invoice, newStatus: InvoiceStatus): void {
 }
 
 export async function listInvoice(userId: string, filters: InvoiceListFilters): Promise<{
-  invoices: Pick<Invoice, 'invoiceId' | 'buyerName' | 'status' | 'createdAt'>[];
+  invoices: ListInvoiceResponse[];
   total: number;
   page: number;
 }> {
@@ -145,8 +146,14 @@ export async function listInvoice(userId: string, filters: InvoiceListFilters): 
   const paginated = result.slice(offset, offset + limitPerPage);
 
   return {
-    invoices: paginated.map(({ invoiceId, buyerName, status, createdAt, totalPayable }) => ({
-      invoiceId, buyerName, status, createdAt, totalPayable,
+    invoices: paginated.map(i => ({
+      invoiceId: i.invoiceId,
+      buyerName: i.buyerName,
+      status: i.status,
+      createdAt: i.createdAt,
+      totalPayable: i.totalPayable,
+      issueDate: i.issueDate,
+      paymentDueDate: i.paymentDueDate 
     })),
     total,
     page,

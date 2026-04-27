@@ -8,17 +8,17 @@ interface SearchBarProperties {
 
 export function SearchBar({ onSearch }: SearchBarProperties): React.ReactElement {
   const [isFiltering, setIsFiltering] = useState(false);
-  const [filters, setFilters] = useState({
-    fromDate: undefined as string | undefined,
-    toDate: undefined as string | undefined,
+  const [filters, setFilters] = useState<InvoiceListFilters>({
+    fromDate: undefined,
+    toDate: undefined,
     page: 1,
     limitPerPage: 20,
-    filter: undefined as string | undefined,
-    status: undefined as InvoiceStatus | undefined,
-    buyerName: undefined as string | undefined,
-    supplierName: undefined as string | undefined,
-    minAmount: undefined as number | undefined,
-    maxAmount: undefined as number | undefined,
+    filter: undefined,
+    status: undefined,
+    buyerName: undefined,
+    supplierName: undefined,
+    minAmount: undefined,
+    maxAmount: undefined,
   });
 
   function handleSearch() {
