@@ -1,4 +1,3 @@
-import validator from 'validator';
 import {
   InvoiceListFilters,
   Invoice,
