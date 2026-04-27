@@ -330,7 +330,7 @@ describe('PUT /v1/invoice/:invoice_id', () => {
         paymentDate: '2025-02-02',
         itemDetails: [{ itemName: 'new item', quantity: 3, unitPrice: 75.0, unitCode: 'hi', totalPrice: 225.0 }],
         taxRate: 0.15,
-        paymentDetails: [{ bankName: 'CommBank', accountNumber: '123456788', bsbAbnNumber: '012-346', paymentMethod: 'direct_debit' }],
+        paymentDetails: [{ bankName: 'CommBank', accountNumber: '123456788', bsbAbnNumber: '012-346', paymentMethod: 'bank_transfer' }],
       }) as HttpReturnObject<{ invoiceId: string; status: string; updatedAt: string }>;
       expect(res.statusCode).toStrictEqual(200);
 
@@ -346,7 +346,7 @@ describe('PUT /v1/invoice/:invoice_id', () => {
       expect(updatedInfo.body.taxRate).toStrictEqual(0.15);
       expect(updatedInfo.body.taxAmount).toStrictEqual(33.75);
       expect(updatedInfo.body.totalPayable).toStrictEqual(258.75);
-      expect(updatedInfo.body.paymentDetails).toStrictEqual([{ bankName: 'CommBank', accountNumber: '123456788', bsbAbnNumber: '012-346', paymentMethod: 'direct_debit' }]);
+      expect(updatedInfo.body.paymentDetails).toStrictEqual([{ bankName: 'CommBank', accountNumber: '123456788', bsbAbnNumber: '012-346', paymentMethod: 'bank_transfer' }]);
     });
   });
 });

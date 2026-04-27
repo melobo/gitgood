@@ -1,9 +1,13 @@
 // import { UserInfo, Session } from '../../backend/src/invoiceInterface';
 
-export type { UserInfo, Session, Invoice, InvoiceItem, PaymentDetails, CreateInvoiceInput, UpdateInvoiceInput, InvoiceListFilters } from '../../backend/src/invoiceInterface';
+import type { InvoiceStatus } from '../../backend/src/invoiceInterface';
+
+export { validBanks } from '../../backend/src/invoiceInterface';
+
+export type { InvoiceStatus, UserInfo, Session, Invoice, InvoiceItem, PaymentDetails, CreateInvoiceInput, UpdateInvoiceInput, InvoiceListFilters, PartialInvoice, AutofillResponse, AutofillInput } from '../../backend/src/invoiceInterface';
 
 export type UserMode = 'login' | 'register';
-export type InvoiceStatus = 'draft' | 'converted' | 'validated' | 'finalised';
+export type CreateMode = 'manual' | 'autofill' | 'bulk';
 
 export interface FormFieldProperties {
   label: string;
@@ -53,8 +57,35 @@ export interface AuthProperties {
 }
 
 export interface ActivityTimelineItem {
-  invoiceId: string,
-  status: InvoiceStatus,
-  changedAt: string,
-  buyerName: string,
+  invoiceId: string;
+  status: InvoiceStatus;
+  changedAt: string;
+  buyerName: string;
+}
+
+export interface InvoiceFormInput {
+  buyerName: string;
+  buyerAbn: string;
+  buyerEmail: string;
+  supplierName: string;
+  supplierAbn: string;
+  issueDate: string;
+  paymentDueDate: string;
+  taxRate: number;
+  additionalNotes: string;
+};
+
+export interface InvoiceItemErrors {
+  itemName?: string;
+  quantity?: string;
+  unitPrice?: string;
+}
+
+export interface PaymentDetailsErrors {
+  accountNumber?: string;
+  bsbAbnNumber?: string;
+}
+
+export interface CreateInvoiceProperties {
+  onSuccess: () => void;
 }

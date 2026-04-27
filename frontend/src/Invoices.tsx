@@ -1,5 +1,5 @@
 import { Outlet, useNavigate } from 'react-router-dom';
-import { Invoice } from './types';
+import { Invoice, InvoiceListFilters } from './types';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { requestDeleteInvoice, requestListInvoice } from './httpWrappers';
@@ -16,7 +16,7 @@ export function InvoiceLayout(): React.ReactElement {
     <div className='invoices-page'>
       <header>
         <h1> Invoices </h1>
-        <p> Take a look! </p>
+        <p> View invoice details and monitor progress from draft to finalised. </p>
       </header>
       <Outlet />
     </div>
@@ -27,16 +27,18 @@ export function InvoicesTable(): React.ReactElement {
   const navigate = useNavigate();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
 
-  useEffect(() => {
-    async function retrieveInvoices() {
-      try {
-        const data = await requestListInvoice();
-        setInvoices(data.invoices ?? []); 
-      } catch (error) {
-        console.error('Failed to fetch invoices:', error);
-      }
+  async function loadInvoices(filters?: InvoiceListFilters) {
+    try {
+      const data: Invoice[] = await requestListInvoice(filters);
+      setInvoices(data);
+    } catch (error) {
+      console.error('Failed to fetch invoices:', error);
     }
-    retrieveInvoices();
+  }
+  useEffect(() => {
+    (async () => {
+      await loadInvoices();
+    })();
   }, []);
 
   async function handleDelete(id: string): Promise<void> {
@@ -47,7 +49,6 @@ export function InvoicesTable(): React.ReactElement {
       setInvoices(prev => prev.filter(i => i.invoiceId !== id));
     } catch (error) {
       console.error('Delete failed:', error);
-      alert('Delete failed');
     }
   }
 
@@ -56,8 +57,8 @@ export function InvoicesTable(): React.ReactElement {
   }
 
   return (
-    <div className="table-card">
-      <table className="invoice-table">
+    <div className='table-card'>
+      <table className='invoice-table'>
         <thead>
           <tr>
             <th>Invoice ID</th>
@@ -70,12 +71,12 @@ export function InvoicesTable(): React.ReactElement {
           </tr>
         </thead>
         <tbody>
-          {invoices.map((i) => (
+          {invoices.map(i => (
             <tr key={i.invoiceId}>
-              <td>{i.invoiceId}</td>
+              <td>{i.invoiceId.slice(0, 8)}{i.invoiceId.length > 8 ? '...' : ''}</td>
               <td>{i.buyerName}</td>
-              <td>{new Date(i.issueDate).toLocaleDateString()}</td>
-              <td>{new Date(i.paymentDueDate).toLocaleDateString()}</td>
+              <td>{i.issueDate}</td>
+              <td>{i.paymentDueDate}</td>
               <td>
                 <span className={`status-badge ${statusColors[i.status]}`}>
                   {i.status}
@@ -83,11 +84,11 @@ export function InvoicesTable(): React.ReactElement {
               </td>
               <td>${i.totalPayable.toFixed(2)}</td>
               <td className='actions'>
-                <button className='icon-button' onClick={() => handleEdit(i.invoiceId)}>
-                  <IconEdit size={16} />
+                <button className='edit-icon-button' onClick={() => handleEdit(i.invoiceId)}>
+                  <IconEdit size={12} />
                 </button>
-                <button className='icon-button' onClick={() => handleDelete(i.invoiceId)}>
-                  <IconTrash size={16} />
+                <button className='delete-icon-button' onClick={() => handleDelete(i.invoiceId)}>
+                  <IconTrash size={12} />
                 </button>
               </td>
             </tr>
