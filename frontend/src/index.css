@@ -12,11 +12,13 @@
   --text-h: #000000;
   --text-inverse: #ffffff;
   --container-text: #ffffff;
+  --table-h: #808080;
   --error: #cc0000;
   --final: #2e9e59;
   --valid: #3878de;
   --convert: #aba96b;
   --draft: #8c8c8c;
+  --warning: #9f6000;
 
   --bg: #ffffff;
   --bg2: #f2e9dd;
@@ -26,10 +28,16 @@
   --active-bg: #4d4d4d;
   --bg-inverse: #111111;
   --table-h-bg: #f7f7f7;
+  --button-bg: #f2f2f2;
+  --delete-button-bg: #e57373;
+  --edit-button-bg: #aed6e8;
   --final-bg: #e0f0e6;
   --valid-bg: #e1ebfa;
   --convert-bg: #f8f4db;
   --draft-bg: #eeeeee;
+  --high-conf-bg: #e8f5ee;
+  --med-conf-bg: #fff6de;
+  --low-conf-bg: #ffe6e6;
 
   --border: #000000;
   --border-muted: #666666;
@@ -37,6 +45,9 @@
   --active-border: #ffffff;
   --code-bg: #f4f3ec;
   --table-i-border: #e0e0e0;
+  --high-conf-border: #b8dbbf;
+  --med-conf-border: #f5d7a2;
+  --low-conf-border: #e6a0a0;
   --data1: #2a5b8c;
   --data2: #8c5b2a;
   --data3: #8c8c2a;
@@ -73,7 +84,13 @@
     --text-h: #ffffff;
     --text-inverse: #111111;
     --container-text: #ffffff;
+    --table-h: #a6a6a6;
     --error: #e55555;
+    --final: #56e080;
+    --valid: #82b8ff;
+    --convert: #d4c985;
+    --draft: #a6a6a6;
+    --warning: #f5b35a;
 
     --bg: #121212;
     --bg2: #241c17;
@@ -82,12 +99,27 @@
     --container-bg: #454545;
     --active-bg: #403932;
     --bg-inverse: #f5f1eb;
+    --table-h-bg: #1e1e1e;
+    --button-bg: #2c2c2c;
+    --delete-button-bg: #5a2a25;
+    --edit-button-bg: #29425c;
+    --final-bg: #193625;
+    --valid-bg: #12253c;
+    --convert-bg: #2c2915;
+    --draft-bg: #2d2d2d;
+    --high-conf-bg: #193625;
+    --med-conf-bg: #2e2200;
+    --low-conf-bg: #2d1918;
 
     --border: #3a332c;
     --border-muted: #5a5048;
     --input-border: #4a4038;
     --active-border: #ffffff;
     --code-bg: #1f2028;
+    --table-i-border: #404040;
+    --high-conf-border: #2d563a;
+    --med-conf-border: #4a3912;
+    --low-conf-border: #4a2724;
     --data1: #82add8;
     --data2: #d8ad82;
     --data3: #d8d882;

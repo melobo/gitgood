@@ -1,39 +1,5 @@
 import { ServerError } from './errors';
-
-interface PartialInvoice {
-  buyerName?: string;
-  buyerAbn?: string;
-  supplierName?: string;
-  supplierAbn?: string;
-  issueDate?: string;
-  paymentDueDate?: string;
-  itemsList?: Array<{
-    itemName: string;
-    quantity: number;
-    unitPrice: number;
-    unitCode: string;
-    totalPrice: number;
-  }>;
-  taxRate?: number;
-  paymentDetails?: Array<{
-    bankName: string;
-    accountNumber: string;
-    bsbAbnNumber: string;
-    paymentMethod: string;
-  }>;
-  additionalNotes?: string;
-}
-
-interface AutofillInput {
-  rawText?: string;
-  partial?: PartialInvoice;
-}
-
-interface AutofillResponse {
-  invoice: PartialInvoice;
-  missingFields: string[];
-  confidence: 'high' | 'medium' | 'low';
-}
+import { PartialInvoice, AutofillResponse, AutofillInput } from './invoiceInterface';
 
 const REQUIRED_FIELDS = [
   'buyerName', 'buyerAbn', 'supplierName', 'supplierAbn',

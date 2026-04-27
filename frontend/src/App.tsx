@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-route
 import { LoginInput, RegisterInput } from './types';
 import { requestUserRegister, requestUserLogin } from './httpWrappers';
 import { InvoiceLayout, InvoicesTable } from './Invoices';
+import { CreateInvoice, CreateInvoiceAutofill, CreateInvoiceBulk, CreateLayout } from './CreateInvoice';
 
 function AppRoutes(): React.ReactElement {
   const navigate = useNavigate();
@@ -41,13 +42,16 @@ function AppRoutes(): React.ReactElement {
           </Authenticate>
         }
       >
-        <Route path="/dashboard" element={<DashboardLayout />}>
+        <Route path='/dashboard' element={<DashboardLayout />}>
           <Route index element={<DashboardHome />} />
         </Route>
         <Route path='/invoices' element={<InvoiceLayout />}>
           <Route index element={<InvoicesTable />} />
         </Route>
-        <Route path='/invoices/create' element={<div>Create invoice page</div>} />
+        <Route path='/invoices/create' element={<CreateLayout />} />
+        <Route path='/invoices/create/manual' element={<CreateInvoice onSuccess={() => { navigate('/invoices'); }} />} />
+        <Route path='/invoices/create/autofill' element={<CreateInvoiceAutofill />} />
+        <Route path='/invoices/create/bulk' element={<CreateInvoiceBulk />} />
       </Route>
 
       <Route path='*' element={<Navigate to='/login' replace />} />
