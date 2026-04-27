@@ -1,15 +1,8 @@
-import { Outlet, useNavigate } from 'react-router-dom';
-import { Invoice, InvoiceListFilters } from './types';
+import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { Invoice, InvoiceListFilters, statusColors } from './types';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { requestDeleteInvoice, requestListInvoice } from './httpWrappers';
-
-const statusColors: Record<Invoice['status'], string> = {
-  draft: 'status-draft',
-  converted: 'status-converted',
-  validated: 'status-validated',
-  finalised: 'status-finalised',
-};
 
 export function InvoiceLayout(): React.ReactElement {
   return (
@@ -73,7 +66,11 @@ export function InvoicesTable(): React.ReactElement {
         <tbody>
           {invoices.map(i => (
             <tr key={i.invoiceId}>
-              <td>{i.invoiceId.slice(0, 8)}{i.invoiceId.length > 8 ? '...' : ''}</td>
+              <td>
+                <Link to={`/invoices/${i.invoiceId}`} className='navigate'>
+                  {i.invoiceId.slice(0, 8)}{i.invoiceId.length > 8 ? '...' : ''}
+                </Link>
+              </td>
               <td>{i.buyerName}</td>
               <td>{i.issueDate}</td>
               <td>{i.paymentDueDate}</td>
@@ -83,13 +80,15 @@ export function InvoicesTable(): React.ReactElement {
                 </span>
               </td>
               <td>${i.totalPayable.toFixed(2)}</td>
-              <td className='actions'>
-                <button className='edit-icon-button' onClick={() => handleEdit(i.invoiceId)}>
-                  <IconEdit size={12} />
-                </button>
-                <button className='delete-icon-button' onClick={() => handleDelete(i.invoiceId)}>
-                  <IconTrash size={12} />
-                </button>
+              <td>
+                <div className='actions'>
+                  <button className='edit-icon-button' onClick={() => handleEdit(i.invoiceId)}>
+                    <IconEdit size={12} />
+                  </button>
+                  <button className='delete-icon-button' onClick={() => handleDelete(i.invoiceId)}>
+                    <IconTrash size={12} />
+                  </button>
+                </div>
               </td>
             </tr>
           ))}

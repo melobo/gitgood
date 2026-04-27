@@ -1,4 +1,4 @@
-import { Invoice, InvoiceItem, InvoiceStatus, PaymentDetails } from "./types";
+import { Invoice, InvoiceInput, InvoiceStatus } from "./types";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -98,18 +98,7 @@ export async function requestDeleteInvoice(invoiceId: string) {
   return data;
 };
 
-export async function requestCreateInvoice(
-  buyerName: string,
-  buyerAbn: string,
-  supplierName: string,
-  supplierAbn: string,
-  issueDate: string,
-  paymentDueDate: string,
-  itemsList: InvoiceItem[],
-  taxRate: number,
-  paymentDetails: PaymentDetails[],
-  additionalNotes?: string
-): Promise<string> {
+export async function requestCreateInvoice(input: InvoiceInput): Promise<string> {
   const res = await fetch(`${BASE_URL}/v2/invoice`, {
     method: 'POST',
     headers: {
@@ -117,18 +106,7 @@ export async function requestCreateInvoice(
       'x-api-key': import.meta.env.VITE_API_KEY,
       'session': localStorage.getItem('session') ?? '',
     },
-    body: JSON.stringify({
-      buyerName,
-      buyerAbn,
-      supplierName,
-      supplierAbn,
-      issueDate,
-      paymentDueDate,
-      itemsList,
-      taxRate,
-      paymentDetails,
-      ...(additionalNotes && { additionalNotes }),
-    }),
+    body: JSON.stringify(input),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
@@ -193,6 +171,105 @@ export async function requestAiAutofill(body: object): Promise<{
     body: JSON.stringify(body),
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.message ?? 'Autofill failed.');
+  if (!res.ok) {
+    throw new Error(data.message ?? 'Autofill failed.');
+  }
+  return data;
+};
+
+export async function requestGetInvoice(invoiceId: string) {
+  const res = await fetch(`${BASE_URL}/v1/invoice/${invoiceId}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': import.meta.env.VITE_API_KEY,
+      'session': localStorage.getItem('session') ?? '',
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.message ?? 'Get invoice failed.');
+  }
+  return data;
+};
+
+export async function requestValidateInvoice(invoiceId: string) {
+  const res = await fetch(`${BASE_URL}/v1/invoice/${invoiceId}/validate`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': import.meta.env.VITE_API_KEY,
+      'session': localStorage.getItem('session') ?? '',
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.message ?? 'Validate invoice failed.');
+  }
+  return data;
+};
+
+export async function requestConvertInvoice(invoiceId: string) {
+  const res = await fetch(`${BASE_URL}/v1/invoice/${invoiceId}/convert`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': import.meta.env.VITE_API_KEY,
+      'session': localStorage.getItem('session') ?? '',
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.message ?? 'Convert invoice failed.');
+  }
+  return data;
+};
+
+export async function requestFinaliseInvoice(invoiceId: string) {
+  const res = await fetch(`${BASE_URL}/v1/invoice/${invoiceId}/final`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': import.meta.env.VITE_API_KEY,
+      'session': localStorage.getItem('session') ?? '',
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.message ?? 'Finalise invoice failed.');
+  }
+  return data;
+};
+
+export async function requestDownloadInvoice(invoiceId: string, format: string) {
+  const res = await fetch(`${BASE_URL}/v1/invoice/${invoiceId}/download?format=${format}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': import.meta.env.VITE_API_KEY,
+      'session': localStorage.getItem('session') ?? '',
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.message ?? 'Download failed.');
+  }
+  return data;
+};
+
+export async function requestUpdateInvoice(invoiceId: string, input: InvoiceInput) {
+  const res = await fetch(`${BASE_URL}/v1/invoice/${invoiceId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': import.meta.env.VITE_API_KEY,
+      'session': localStorage.getItem('session') ?? '',
+    },
+    body: JSON.stringify(input),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.message ?? 'Update failed.');
+  }
   return data;
 };

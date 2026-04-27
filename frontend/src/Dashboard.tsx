@@ -35,7 +35,6 @@ export function DashboardHome(): React.ReactElement {
 
     requestDashboardStats()
       .then(setStats)
-      .catch(console.error);
   }, [navigate]);
 
   const barData = [

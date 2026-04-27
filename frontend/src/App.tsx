@@ -9,6 +9,7 @@ import { LoginInput, RegisterInput } from './types';
 import { requestUserRegister, requestUserLogin } from './httpWrappers';
 import { InvoiceLayout, InvoicesTable } from './Invoices';
 import { CreateInvoice, CreateInvoiceAutofill, CreateInvoiceBulk, CreateLayout } from './CreateInvoice';
+import { EditInvoicePage, InvoiceDetailsPage } from './InvoiceDetails';
 
 function AppRoutes(): React.ReactElement {
   const navigate = useNavigate();
@@ -35,13 +36,11 @@ function AppRoutes(): React.ReactElement {
         element={<RegisterPage onRegister={handleRegister} />}
       />
 
-      <Route
-        element={
-          <Authenticate>
-            <Layout />
-          </Authenticate>
-        }
-      >
+      <Route element={
+        <Authenticate>
+          <Layout />
+        </Authenticate>
+      }>
         <Route path='/dashboard' element={<DashboardLayout />}>
           <Route index element={<DashboardHome />} />
         </Route>
@@ -52,6 +51,8 @@ function AppRoutes(): React.ReactElement {
         <Route path='/invoices/create/manual' element={<CreateInvoice onSuccess={() => { navigate('/invoices'); }} />} />
         <Route path='/invoices/create/autofill' element={<CreateInvoiceAutofill />} />
         <Route path='/invoices/create/bulk' element={<CreateInvoiceBulk />} />
+        <Route path='/invoices/:invoiceId' element={<InvoiceDetailsPage />} />
+        <Route path='/invoices/:invoiceId/edit' element={<EditInvoicePage />} />
       </Route>
 
       <Route path='*' element={<Navigate to='/login' replace />} />

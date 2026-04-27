@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { IconTrash, IconSparkles, IconUpload, IconPencil, IconArrowLeft, IconPlusFilled, IconFile, IconFileX } from '@tabler/icons-react';
-import { validBanks, InvoiceItem, PaymentDetails, CreateInvoiceProperties, InvoiceFormInput, InvoiceItemErrors, PaymentDetailsErrors,AutofillResponse, PartialInvoice, CreateInvoiceInput } from './types';
-import { requestCreateInvoice, requestAiAutofill, requestBulkCreateInvoice } from './httpWrappers';
+import { validBanks, InvoiceItem, PaymentDetails, CreateInvoiceProperties, InvoiceFormInput, InvoiceItemErrors, PaymentDetailsErrors,AutofillResponse, PartialInvoice, CreateInvoiceInput, InvoiceInput } from './types';
+import { requestCreateInvoice, requestAiAutofill, requestBulkCreateInvoice, requestUpdateInvoice } from './httpWrappers';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 export function CreateLayout(): React.ReactElement {
@@ -33,23 +33,23 @@ export function CreateLayout(): React.ReactElement {
   );
 }
 
-export function CreateInvoice({ onSuccess }: CreateInvoiceProperties) {
+export function CreateInvoice({ initialData, title = 'New Invoice', description = 'Fill in the details below to create your invoice.', onSuccess }: CreateInvoiceProperties) {
   const navigate = useNavigate();
   const location = useLocation();
   const autofill = location.state?.autofill as AutofillResponse | undefined;;
   const [formInput, setFormInput] = useState<InvoiceFormInput>({
-    buyerName: autofill?.invoice.buyerName ?? '',
-    buyerAbn: autofill?.invoice.buyerAbn ?? '',
-    buyerEmail: '',
-    supplierName: autofill?.invoice.supplierName ?? '',
-    supplierAbn: autofill?.invoice.supplierAbn ?? '',
-    issueDate: autofill?.invoice.issueDate ?? '',
-    paymentDueDate: autofill?.invoice.paymentDueDate ?? '',
-    taxRate: autofill?.invoice.taxRate ?? 0.10,
-    additionalNotes: autofill?.invoice.additionalNotes ?? '',
+    buyerName: initialData?.buyerName ?? autofill?.invoice.buyerName ?? '',
+    buyerAbn: initialData?.buyerAbn ?? autofill?.invoice.buyerAbn ?? '',
+    buyerEmail: initialData?.buyerEmail ?? '',
+    supplierName: initialData?.supplierName ?? autofill?.invoice.supplierName ?? '',
+    supplierAbn: initialData?.supplierAbn ?? autofill?.invoice.supplierAbn ?? '',
+    issueDate: initialData?.issueDate ?? autofill?.invoice.issueDate ?? '',
+    paymentDueDate: initialData?.paymentDueDate ?? autofill?.invoice.paymentDueDate ?? '',
+    taxRate: initialData?.taxRate ?? autofill?.invoice.taxRate ?? 0.10,
+    additionalNotes: initialData?.additionalNotes ?? autofill?.invoice.additionalNotes ?? '',
   });
-  const [items, setItems] = useState<InvoiceItem[]>(autofill?.invoice.itemsList ?? []);
-  const [payment, setPayment] = useState<PaymentDetails>(autofill?.invoice.paymentDetails?.[0] ?? {
+  const [items, setItems] = useState<InvoiceItem[]>(initialData?.itemsList ?? autofill?.invoice.itemsList ?? []);
+  const [payment, setPayment] = useState<PaymentDetails>(initialData?.paymentDetails?.[0] ?? autofill?.invoice.paymentDetails?.[0] ?? {
     bankName: validBanks[0],
     accountNumber: '',
     bsbAbnNumber: '',
@@ -190,29 +190,33 @@ export function CreateInvoice({ onSuccess }: CreateInvoiceProperties) {
       return;
     }
 
-    await requestCreateInvoice(
-      formInput.buyerName,
-      formInput.buyerAbn,
-      formInput.supplierName,
-      formInput.supplierAbn,
-      new Date(formInput.issueDate).toISOString().split('T')[0],
-      new Date(formInput.paymentDueDate).toISOString().split('T')[0],
-      items.map(i => ({
-        ...i,
-        totalPrice: i.quantity * i.unitPrice,
-      })),
-      formInput.taxRate,
-      [payment],
-      formInput.additionalNotes
-    );
-    onSuccess();
+    const payload: InvoiceInput = {
+      buyerName: formInput.buyerName,
+      buyerAbn: formInput.buyerAbn,
+      buyerEmail: formInput.buyerEmail,
+      supplierName: formInput.supplierName,
+      supplierAbn: formInput.supplierAbn,
+      issueDate: new Date(formInput.issueDate).toISOString().split('T')[0],
+      paymentDueDate: new Date(formInput.paymentDueDate).toISOString().split('T')[0],
+      itemsList: items.map(i => ({ ...i, totalPrice: i.quantity * i.unitPrice })),
+      taxRate: formInput.taxRate,
+      paymentDetails: [payment],
+      ...(formInput.additionalNotes && { additionalNotes: formInput.additionalNotes }),
+    };
+
+    if (initialData) {
+      await requestUpdateInvoice(initialData.invoiceId, payload);
+    } else {
+      await requestCreateInvoice(payload);
+      onSuccess();
+    }
   }
 
   return (
     <form className='create-page' onSubmit={handleSubmit}>
       <header>
-        <h1> New Invoice </h1>
-        <p> Fill in the details below to create your invoice. </p>
+        <h1> {title} </h1>
+        <p> {description} </p>
       </header>
       <button className='back-button' type='button' onClick={() => navigate('/invoices/create')}>
         <IconArrowLeft size={14}/>
@@ -504,7 +508,7 @@ export function CreateInvoice({ onSuccess }: CreateInvoiceProperties) {
         </div>
       </div>
       <button className= 'submit-button' type='submit'>
-        Create Invoice
+        {initialData ? 'Save Changes' : 'Create Invoice'}
       </button>
     </form>
   );

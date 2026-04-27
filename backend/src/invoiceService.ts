@@ -21,7 +21,8 @@ import {
   validateDates,
   validateItems,
   validateTotalPayable,
-  validatePaymentDetails
+  validatePaymentDetails,
+  validateEmail
 } from './validation';
 
 import {
@@ -343,6 +344,7 @@ export async function validateInvoice(invoiceId: string): Promise<ValidateInvoic
   try {
     validateName(invoice.buyerName, 'BUYER');
     validateABN(invoice.buyerAbn, 'BUYER');
+    validateEmail(invoice.buyerEmail, null);
   } catch (err) {
     if (err instanceof ServerError) errors.push({ field: 'buyer', message: err.message });
   }
@@ -555,6 +557,7 @@ export async function convertInvoice(invoiceId: string): Promise<{
 export async function updateInvoice(invoiceId: string, updates: {
   buyerName?: string;
   buyerAbn?: string;
+  buyerEmail?: string;
   supplierName?: string;
   supplierAbn?: string;
   issueDate?: string;
@@ -581,6 +584,11 @@ export async function updateInvoice(invoiceId: string, updates: {
   if (updates.buyerAbn !== undefined) {
     validateABN(updates.buyerAbn, 'BUYER');
     invoice.buyerAbn = updates.buyerAbn;
+  }
+
+  if (updates.buyerEmail !== undefined) {
+    validateEmail(updates.buyerEmail, null);
+    invoice.buyerEmail = updates.buyerEmail;
   }
 
   if (updates.supplierName !== undefined) {
