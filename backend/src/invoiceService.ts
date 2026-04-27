@@ -153,7 +153,7 @@ export async function listInvoice(userId: string, filters: InvoiceListFilters): 
       createdAt: i.createdAt,
       totalPayable: i.totalPayable,
       issueDate: i.issueDate,
-      paymentDueDate: i.paymentDueDate 
+      paymentDueDate: i.paymentDueDate
     })),
     total,
     page,
