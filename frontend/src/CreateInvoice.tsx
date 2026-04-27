@@ -697,7 +697,7 @@ export function CreateInvoiceBulk() {
         setFilenames(prev => [...prev, file.name]);
         setFileErrors(prev => [...prev, validationError]);
       } catch {
-        setInvoices(prev => [...prev, null as any]);
+        setInvoices(prev => [...prev, {} as CreateInvoiceInput]);
         setFilenames(prev => [...prev, file.name]);
         setFileErrors(prev => [...prev, 'Invalid JSON file – please check the format and try again.']);
       }
@@ -720,8 +720,11 @@ export function CreateInvoiceBulk() {
     try {
       await requestBulkCreateInvoice(invoices);
       navigate('/invoices');
-    } catch (err: any) {
-      setSubmitError(err.message ?? 'Something went wrong.');
+    } catch (err) {
+      if (err instanceof Error) {
+        setSubmitError(err.message ?? 'Something went wrong.');
+      }
+      setSubmitError('Something went wrong.');
     }
   }
 
